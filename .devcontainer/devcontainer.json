@@ -1,0 +1,48 @@
+{
+    "name": "pydiagral Dev",
+    "context": "..",
+    "dockerFile": "./Dockerfile.dev",
+    "features": {
+      "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "postCreateCommand": "pip install -e .",
+    "runArgs": ["-e", "GIT_EDITOR=code --wait"],
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "charliermarsh.ruff",
+          "ms-python.vscode-pylance",
+          "visualstudioexptteam.vscodeintellicode",
+          "redhat.vscode-yaml",
+          "esbenp.prettier-vscode",
+          "GitHub.vscode-pull-request-github",
+          "GitHub.copilot"
+        ],
+        // Please keep this file in sync with settings in .vscode/settings.default.json
+        "settings": {
+          "python.defaultInterpreterPath": "/usr/local/bin/python",
+          "python.pythonPath": "/usr/local/bin/python",
+          "python.terminal.activateEnvInCurrentTerminal": true,
+          "python.testing.pytestArgs": ["--no-cov"],
+          "pylint.importStrategy": "fromEnvironment",
+          "python.linting.enabled": true,
+          "python.linting.ruffEnabled": true,
+          "python.linting.pylintEnabled": false,
+          "python.linting.flake8Enabled": false,
+          "editor.formatOnPaste": false,
+          "editor.formatOnSave": true,
+          "editor.formatOnType": true,
+          "files.trimTrailingWhitespace": true,
+          "terminal.integrated.profiles.linux": {
+            "zsh": {
+              "path": "/usr/bin/zsh"
+            }
+          },
+          "terminal.integrated.defaultProfile.linux": "zsh",
+          "[python]": {
+            "editor.defaultFormatter": "charliermarsh.ruff"
+          }
+        }
+      }
+    }
+  }

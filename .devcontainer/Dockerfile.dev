@@ -1,0 +1,30 @@
+# Use the Python 3.12 base image for development containers
+ARG VARIANT="3.12"
+FROM mcr.microsoft.com/devcontainers/python:1-${VARIANT}
+
+# Configure the shell for RUN commands
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Set the working directory
+WORKDIR /workspaces
+
+# Copy files into the container
+COPY pyproject.toml ./
+COPY LICENSE ./
+COPY README.md ./
+
+# Install pip-tools
+RUN pip install --upgrade pip && pip install pip-tools
+
+# Generate requirements.txt from pyproject.toml and install dependencies
+RUN pip-compile pyproject.toml -o requirements.txt && \
+    pip install -r requirements.txt
+
+# Install the project in editable mode
+RUN pip install -e .[dev]
+
+# Set the default shell to bash instead of sh
+ENV SHELL /bin/bash
+
+# Keep the container running
+CMD ["bash"]
