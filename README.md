@@ -99,6 +99,10 @@ And run the [example_code.py](https://github.com/mguyard/pydiagral/blob/main/exa
 
 Official Diagral API is available [here](https://appv3.tt-monitor.com/emerald/redoc).
 
+## Development Documentation
+
+Library documentation is available [here](https://mguyard.github.io/pydiagral/).
+
 ## How to find Serial on DIAG56AAX
 
 The serial number can only be found with physical access to the box. You need to open it, and you will find a label with a QR Code.
