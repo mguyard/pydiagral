@@ -1,3 +1,10 @@
+# [1.2.0-beta.1](https://github.com/mguyard/pydiagral/compare/v1.1.0...v1.2.0-beta.1) (2025-02-23)
+
+
+### Features
+
+* Upgrade release ([bf300de](https://github.com/mguyard/pydiagral/commit/bf300de439c11b5bb2874043e1d2fe649d8f3073))
+
 # [1.1.0](https://github.com/mguyard/pydiagral/compare/v1.0.0...v1.1.0) (2025-02-23)
 
 
