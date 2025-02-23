@@ -2,9 +2,6 @@
   <img src="https://raw.githubusercontent.com/mguyard/pydiagral/main/docs/pydiagral-Logo.png" width="400" />
 </p>
 <p align="center">
-    <h1 align="center">PyDiagral</h1>
-</p>
-<p align="center">
     A powerful and easy-to-use Python library for seamless integration with the Diagral alarm system.
 </p>
 <p align="center">
