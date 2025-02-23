@@ -1,3 +1,10 @@
+# [1.0.0-beta.4](https://github.com/mguyard/pydiagral/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2025-02-23)
+
+
+### Features
+
+* **pencil:** Enable semantic debugs ([3d46b6e](https://github.com/mguyard/pydiagral/commit/3d46b6e220a7a26bea9f67112bfaea87419a9717))
+
 # [1.0.0-beta.3](https://github.com/mguyard/pydiagral/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2025-02-23)
 
 
