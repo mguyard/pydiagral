@@ -25,19 +25,19 @@
 </p>
 <br /><br />
 
-# Documentation pydiagral
+# pydiagral
 
 Welcome to the documentation for pydiagral, a Python library for interacting with the Diagral API.
 
-## About pydiagral
+## 📍 About pydiagral
 
-pydiagral is an asynchronous Python interface for the Diagral alarm system. This library allows users to control and monitor their Diagral alarm system through the official API.
+`pydiagral` is an asynchronous Python interface for the Diagral alarm system. This library allows users to control and monitor their Diagral alarm system through the official API.
 
-## Requirement
+## ✅ Requirement
 
 To use this library, which leverages the Diagral APIs, you must have a Diagral box (DIAG56AAX). This box connects your Diagral alarm system to the internet, enabling interaction with the alarm system via the API. You can find more information about the Diagral box [here](https://www.diagral.fr/commande/box-alerte-et-pilotage).
 
-## Key Features
+## 📦 Key Features
 
 The `DiagralAPI` class offers the following functionalities:
 
@@ -62,7 +62,7 @@ The `DiagralAPI` class offers the following functionalities:
   - Activate or Desactivate system (partially or globally)
   - Automatism actions
 
-## Quick Start
+## 🚀 Quick Start
 
 To get started with pydiagral, follow these steps:
 
@@ -92,13 +92,25 @@ And run the [example_code.py](https://github.com/mguyard/pydiagral/blob/main/exa
 >
 > You can customize the actions performed by [example_code.py](https://github.com/mguyard/pydiagral/blob/main/example_code.py) by modifying the parameters in the code, as indicated by the `CUSTOMIZE THE TESTS` section title.
 
+# 📖 Documentations
+
+## Package Documentation
+
+Library documentation is available [here](https://mguyard.github.io/pydiagral/).
+
+### Package Structure
+
+For detailed library documentation, please refer to the following sections:
+
+- [API Reference](https://mguyard.github.io/pydiagral/api/): Comprehensive documentation of the DiagralAPI class and its methods
+- [Data Models](https://mguyard.github.io/pydiagral/models/): Description of the data structures used
+- [Exceptions](https://mguyard.github.io/pydiagral/exceptions/): List of package exceptions
+
 ## Diagral API Official documentation
 
 Official Diagral API is available [here](https://appv3.tt-monitor.com/emerald/redoc).
 
-## Development Documentation
-
-Library documentation is available [here](https://mguyard.github.io/pydiagral/).
+# 🙋 FAQ
 
 ## How to find Serial on DIAG56AAX
 
@@ -112,18 +124,40 @@ On this label, there is a 15-character code that represents the serial number of
 >
 > This code is necessary to use this library and Diagral API.
 
-## Library Structure
+# 🤝 Contribution
 
-For detailed library documentation, please refer to the following sections:
+Contributions are welcome! Here are several ways you can contribute:
 
-- [API Reference](https://mguyard.github.io/pydiagral/api/): Comprehensive documentation of the DiagralAPI class and its methods
-- [Data Models](https://mguyard.github.io/pydiagral/models/): Description of the data structures used
-- [Exceptions](https://mguyard.github.io/pydiagral/exceptions/): List of package exceptions
+- **Submit Pull Requests**: Review open PRs, and submit your own PRs.
+- **Report Issues**: Submit bugs found or log feature requests.
 
-## Contribution
+<details closed>
+    <summary>Contributing Guidelines</summary>
 
-Contributions to pydiagral are welcome! Please check our contribution guidelines for more information on how to participate in the development of this library.
+1. **Fork the Repository**: Start by forking the project repository to your GitHub account.
+2. **Clone Locally**: Clone the forked repository to your local machine using a Git client.
+   ```sh
+   git clone https://github.com/mguyard/pydiagral
+   ```
+3. **Create a New Branch**: Always work on a new branch, giving it a descriptive name.
+   ```sh
+   git checkout -b new-feature-x
+   ```
+4. **Make Your Changes**: Develop and test your changes locally.
+5. **Commit Your Changes**: Commit your changes with a clear and concise message that follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) guidelines.
+   ```sh
+   git commit -m 'feat: Implemented new feature x.'
+   ```
+6. **Push to GitHub**: Push the changes to your forked repository.
+   ```sh
+   git push origin new-feature-x
+   ```
+7. **Submit a Pull Request**: Create a PR against the original project repository. Clearly describe the changes and their motivations.
 
-## License
+Once your PR is reviewed and approved, it will be merged into the `beta` branch. After final testing, it will be merged into the `main` branch.
+
+</details>
+
+# 📄 License
 
 pydiagral is distributed under the GPL-v3 License. See the [LICENSE](https://github.com/mguyard/pydiagral/blob/main/LICENSE) file for more details.

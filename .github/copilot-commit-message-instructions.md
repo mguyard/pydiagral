@@ -21,3 +21,5 @@ Guidelines:
 Commit messages should be clear, informative, and professional, aiding readability and project tracking.
 
 Limit the first line to 72 characters or less.
+
+Always write in English to maintain consistency and clarity across the project.

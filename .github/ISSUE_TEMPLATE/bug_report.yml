@@ -1,0 +1,101 @@
+---
+name: "Bug report"
+description: "Report a bug with the pydiagral package"
+title: "[Bug]:  "
+labels: [bug]
+assignees: mguyard
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!NOTE]
+        >
+        > This issue form is for reporting bugs only!
+        >
+        > Before you open a new issue, search through the [existing issues][ei] to see if others have had the same problem.
+        >
+        > [ei]: https://github.com/mguyard/pydiagral/issues?q=label%3Abug
+
+  - type: textarea
+    attributes:
+      label: Reproduction steps
+      description: "Without steps to reproduce, it will be hard to fix, it is very important that you fill out this part, issues without it will be closed"
+      value: |
+        1.
+        2.
+        3.
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: The problem
+      description: >-
+        Describe the issue you are experiencing here, to communicate to the
+        maintainers. Tell us what you were trying to do and what happened.
+
+        Provide a clear and concise description of what the problem is.
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Environment
+
+  - type: input
+    id: version
+    validations:
+      required: true
+    attributes:
+      label: What version of pydiagral has the issue?
+
+  - type: input
+    attributes:
+      label: What was the last working version of pydiagral?
+      description: >
+        If known, otherwise leave blank.
+
+  - type: input
+    id: python-version
+    validations:
+      required: true
+    attributes:
+      label: What version of python are you running?
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Details
+
+  - type: textarea
+    id: script-log
+    validations:
+      required: true
+    attributes:
+      label: Script Log
+      description: >
+        Copy and paste the relevant parts of the script log here.
+
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: >
+        If you have any additional information for us, use the field below.
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Confirmation
+
+  - type: checkboxes
+    attributes:
+      label: Checklist
+      options:
+        - label: I have filled out the issue template to the best of my ability.
+          required: true
+        - label: This issue only contains 1 issue (if you have multiple issues, open one issue for each issue).
+          required: true
+        - label: This issue is not a duplicate issue of currently [previous issues](https://github.com/mguyard/pydiagral/issues?q=label%3Abug)..
+          required: true
