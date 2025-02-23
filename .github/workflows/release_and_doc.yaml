@@ -83,7 +83,7 @@ jobs:
           pip install -e .
 
       - name: Build documentation
-        run: mkdocs build --strict --verbose
+        run: mkdocs build --strict #--verbose
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
