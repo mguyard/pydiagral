@@ -1,0 +1,18 @@
+site_name: pydiagral
+site_description: A Python library for interacting with Diagral systems
+site_author: Marc Guyard
+repo_url: https://github.com/mguyard/pydiagral
+theme:
+  name: material
+  logo: pydiagral-Logo.png
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+
+nav:
+  - Home: index.md
+  - DiagralAPI Reference: api.md
+  - Models Reference: models.md
+  - Exceptions Reference: exceptions.md

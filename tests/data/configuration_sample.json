@@ -1,0 +1,354 @@
+{
+    "alarm": {
+        "box": {
+            "serial": "18139037029D91",
+            "vendor": "diagral",
+            "firmwares": {
+                "BOX": "1.6.0"
+            }
+        },
+        "tls": false,
+        "name": "Sample Alarm",
+        "plug": {
+            "vendor": "diagral"
+        },
+        "central": {
+            "name": "",
+            "serial": "SAMPLESERIAL",
+            "vendor": "diagral",
+            "firmwares": {
+                "CENTRAL": "6.3.2",
+                "CENTRALRADIO": "11"
+            }
+        },
+        "forcePushConfig": false
+    },
+    "groups": [
+        {
+            "name": "Group1",
+            "index": 1,
+            "inputDelay": 90,
+            "outputDelay": 90
+        },
+        {
+            "name": "Group2",
+            "index": 2,
+            "inputDelay": 90,
+            "outputDelay": 90
+        },
+        {
+            "name": "Group3",
+            "index": 3,
+            "inputDelay": 90,
+            "outputDelay": 90
+        },
+        {
+            "name": "Group4",
+            "index": 4,
+            "inputDelay": 90,
+            "outputDelay": 90
+        }
+    ],
+    "sirens": [
+        {
+            "type": 4,
+            "gamme": 2,
+            "index": 1,
+            "label": "SIREN1",
+            "serial": "SIREN1SERIAL",
+            "refCode": "900B",
+            "anomalies": {
+                "radioAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        }
+    ],
+    "sensors": [
+        {
+            "uid": "1AAE7A",
+            "type": 2,
+            "gamme": 2,
+            "group": 4,
+            "index": 1,
+            "label": "SENSOR1",
+            "serial": "SENSOR1SERIAL",
+            "isVideo": true,
+            "refCode": "903A",
+            "subtype": 0,
+            "anomalies": {
+                "loopAlert": false,
+                "maskAlert": false,
+                "radioAlert": false,
+                "sensorAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        },
+        {
+            "uid": "2AAE7A",
+            "type": 2,
+            "gamme": 2,
+            "group": 3,
+            "index": 2,
+            "label": "SENSOR2",
+            "serial": "SENSOR2SERIAL",
+            "isVideo": false,
+            "refCode": "9001",
+            "subtype": 0,
+            "anomalies": {
+                "loopAlert": false,
+                "maskAlert": false,
+                "radioAlert": false,
+                "sensorAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        },
+        {
+            "uid": "3AAE7A",
+            "type": 2,
+            "gamme": 2,
+            "group": 3,
+            "index": 3,
+            "label": "SENSOR3",
+            "serial": "SENSOR3SERIAL",
+            "isVideo": false,
+            "refCode": "9001",
+            "subtype": 0,
+            "anomalies": {
+                "loopAlert": false,
+                "maskAlert": false,
+                "radioAlert": false,
+                "sensorAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        },
+        {
+            "uid": "4AAE7A",
+            "type": 2,
+            "gamme": 2,
+            "group": 1,
+            "index": 4,
+            "label": "SENSOR4",
+            "serial": "SENSOR4SERIAL",
+            "isVideo": false,
+            "refCode": "9003",
+            "subtype": 0,
+            "anomalies": {
+                "loopAlert": false,
+                "maskAlert": false,
+                "radioAlert": false,
+                "sensorAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        },
+        {
+            "uid": "5AAE7A",
+            "type": 2,
+            "gamme": 2,
+            "group": 1,
+            "index": 5,
+            "label": "SENSOR5",
+            "serial": "SENSOR5SERIAL",
+            "isVideo": false,
+            "refCode": "9003",
+            "subtype": 0,
+            "anomalies": {
+                "loopAlert": false,
+                "maskAlert": false,
+                "radioAlert": false,
+                "sensorAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        },
+        {
+            "uid": "6AAE7A",
+            "type": 2,
+            "gamme": 2,
+            "group": 1,
+            "index": 6,
+            "label": "SENSOR6",
+            "serial": "SENSOR6SERIAL",
+            "isVideo": false,
+            "refCode": "9003",
+            "subtype": 0,
+            "anomalies": {
+                "loopAlert": false,
+                "maskAlert": false,
+                "radioAlert": false,
+                "sensorAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        },
+        {
+            "uid": "7AAE7A",
+            "type": 2,
+            "gamme": 2,
+            "group": 1,
+            "index": 7,
+            "label": "SENSOR7",
+            "serial": "SENSOR7SERIAL",
+            "isVideo": false,
+            "refCode": "9003",
+            "subtype": 0,
+            "anomalies": {
+                "loopAlert": false,
+                "maskAlert": false,
+                "radioAlert": false,
+                "sensorAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        },
+        {
+            "uid": "8AAE7A",
+            "type": 2,
+            "gamme": 2,
+            "group": 1,
+            "index": 8,
+            "label": "SENSOR8",
+            "serial": "SENSOR8SERIAL",
+            "isVideo": false,
+            "refCode": "9003",
+            "subtype": 0,
+            "anomalies": {
+                "loopAlert": false,
+                "maskAlert": false,
+                "radioAlert": false,
+                "sensorAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        },
+        {
+            "uid": "9AAE7A",
+            "type": 2,
+            "gamme": 2,
+            "group": 1,
+            "index": 9,
+            "label": "SENSOR9",
+            "serial": "SENSOR9SERIAL",
+            "isVideo": false,
+            "refCode": "9003",
+            "subtype": 0,
+            "anomalies": {
+                "loopAlert": false,
+                "maskAlert": false,
+                "radioAlert": false,
+                "sensorAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        }
+    ],
+    "commands": [
+        {
+            "type": 3,
+            "gamme": 2,
+            "index": 1,
+            "label": "COMMAND1",
+            "serial": "COMMAND1SERIAL",
+            "refCode": "9012",
+            "subType": 2,
+            "anomalies": {
+                "radioAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        },
+        {
+            "type": 3,
+            "gamme": 2,
+            "index": 2,
+            "label": "COMMAND2",
+            "serial": "COMMAND2SERIAL",
+            "refCode": "9012",
+            "subType": 2,
+            "anomalies": {
+                "radioAlert": false,
+                "powerSupplyAlert": false,
+                "autoprotectionMechanicalAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": true
+        }
+    ],
+    "transmitters": [
+        {
+            "type": 5,
+            "gamme": 2,
+            "index": 1,
+            "label": "BOX1",
+            "isPlug": false,
+            "serial": "BOX1SERIAL",
+            "refCode": "9037",
+            "anomalies": {
+                "radioAlert": false,
+                "autoprotectionMechanicalAlert": false,
+                "mediaGSMAlert": false,
+                "mediaRTCAlert": false,
+                "mediaADSLAlert": false,
+                "outOfOrderAlert": false,
+                "mainPowerSupplyAlert": false,
+                "secondaryPowerSupplyAlert": false
+            },
+            "inhibited": false,
+            "canInhibit": false
+        }
+    ],
+    "grpMarchePresence": [
+        1,
+        2,
+        4
+    ],
+    "installationState": 2,
+    "centralInformation": {
+        "hasPlug": false,
+        "plugGSM": false,
+        "plugRTC": false,
+        "plugADSL": false,
+        "anomalies": {
+            "autoprotectionMechanicalAlert": false,
+            "mainPowerSupplyAlert": false,
+            "secondaryPowerSupplyAlert": false,
+            "defaultMediaAlert": false,
+            "autoprotectionWiredAlert": false
+        },
+        "relayCard": false,
+        "canInhibit": false,
+        "parameterGsmSaved": false
+    },
+    "grpMarchePartielle1": [
+        1
+    ],
+    "grpMarchePartielle2": [
+        2
+    ]
+}

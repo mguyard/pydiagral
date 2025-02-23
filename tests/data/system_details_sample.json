@@ -1,0 +1,13 @@
+{
+    "DeviceType": "PLUG_IP~DIAGRAL",
+    "FirmwareVersion": "V1.6.0_V13_V1.1.20",
+    "IpAddress": "1.1.1.1",
+    "IpodaVersion": "3.0",
+    "Mode": "900",
+    "FirstVocalContact": "0",
+    "IsAlarmFilePresent": "False",
+    "IsMJPEGArchiveVideoSupported": "False",
+    "IsMassStoragePresent": "False",
+    "IsRemoteStartupShutdownAllowed": "False",
+    "IsVideoPasswordProtected": "False"
+}
