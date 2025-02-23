@@ -106,6 +106,7 @@ Library documentation is available [here](https://mguyard.github.io/pydiagral/).
 ## How to find Serial on DIAG56AAX
 
 The serial number can only be found with physical access to the box. You need to open it, and you will find a label with a QR Code.
+
 On this label, there is a 15-character code that represents the serial number of the box.
 
 ![How to find your Diagral Serial](docs/how-to-find-diagral-serial.png)
