@@ -114,13 +114,13 @@ On this label, there is a 15-character code that represents the serial number of
 >
 > This code is necessary to use this library and Diagral API.
 
-## API Structure
+## Library Structure
 
-For detailed API documentation, please refer to the following sections:
+For detailed library documentation, please refer to the following sections:
 
-- [API Reference](https://XXXXXXXXXXXXXXXX): Comprehensive documentation of the DiagralAPI class and its methods
-- [Data Models](https://XXXXXXXXXXXXXXXX): Description of the data structures used
-- [Exceptions](https://XXXXXXXXXXXXXXXX): List of package exceptions
+- [API Reference](https://mguyard.github.io/pydiagral/api/): Comprehensive documentation of the DiagralAPI class and its methods
+- [Data Models](https://mguyard.github.io/pydiagral/models/): Description of the data structures used
+- [Exceptions](https://mguyard.github.io/pydiagral/exceptions/): List of package exceptions
 
 ## Contribution
 
