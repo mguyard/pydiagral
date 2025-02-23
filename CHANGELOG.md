@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/mguyard/pydiagral/compare/v1.3.0...v1.4.0) (2025-02-23)
+
+
+### Features
+
+* Remove unused files ([18075d4](https://github.com/mguyard/pydiagral/commit/18075d49fafadf85639c677c600415abd894ccac))
+
 # [1.3.0](https://github.com/mguyard/pydiagral/compare/v1.2.0...v1.3.0) (2025-02-23)
 
 
