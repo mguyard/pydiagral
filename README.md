@@ -109,7 +109,7 @@ The serial number can only be found with physical access to the box. You need to
 
 On this label, there is a 15-character code that represents the serial number of the box.
 
-![How to find your Diagral Serial](docs/how-to-find-diagral-serial.png)
+![How to find your Diagral Serial](https://raw.githubusercontent.com/mguyard/pydiagral/main/docs/how-to-find-diagral-serial.png)
 
 > [!IMPORTANT]
 >
