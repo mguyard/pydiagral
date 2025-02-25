@@ -35,7 +35,7 @@ Welcome to the documentation for pydiagral, a Python library for interacting wit
 
 > [!CAUTION]
 >
-> Please note that the Diagral alarm system is a security system, and it may be preferable not to connect it to the Home Assistant home automation platform for security reasons.
+> Please note that the Diagral alarm system is a security system, and it may be preferable not to connect it to any automation platform for security reasons.
 > In no event shall the developer of [`pydiagral`](https://github.com/mguyard/pydiagral) library be held liable for any issues arising from the use of this [`pydiagral`](https://github.com/mguyard/pydiagral) library.
 > The user installs and uses this integration at their own risk and with full knowledge of the potential implications.
 
