@@ -109,7 +109,6 @@ class DiagralAPI:
         # Initialize session and access_token
         self.session: aiohttp.ClientSession | None = None
         self.__access_token: str | None = None
-        self.access_token_expires: datetime | None = None
 
         # Set default values for other attributes
         self.alarm_configuration: AlarmConfiguration | None = None
@@ -260,9 +259,7 @@ class DiagralAPI:
     async def set_apikey(self) -> ApiKeyWithSecret:
         """Asynchronously set the API key for the Diagral API.
 
-        This method first ensures that the access token is valid and not expired.
-        If the access token is expired, it attempts to log in again to refresh it.
-        Then, it sends a request to create a new API key using the current access token.
+        It sends a request to create a new API key using the current access token.
         If the API key is successfully created, it verifies the API key to ensure its validity.
 
         Returns:
@@ -274,14 +271,6 @@ class DiagralAPI:
         """
 
         if not self.__access_token:
-            await self.login()
-
-        if (
-            self.__access_token
-            and self.access_token_expires
-            and datetime.now() >= self.access_token_expires
-        ):
-            _LOGGER.warning("Access token has expired, attempting to login again")
             await self.login()
 
         _DATA = {"serial_id": self.serial_id}
