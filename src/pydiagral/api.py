@@ -36,6 +36,7 @@ from .models import (
     Rudes,
     SystemDetails,
     SystemStatus,
+    TryConnectResult,
     Webhook,
 )
 from .utils import generate_hmac_signature
@@ -400,48 +401,48 @@ class DiagralAPI:
             self.__secret_key = None
 
     async def try_connection(self, ephemeral: bool = True) -> bool:
-        """Establish a connection with the Diagral system.
+        """Test connection with the Diagral system.
 
-        This method tries to connect to the Diagral API by:
-        1. Checking if API keys are provided
-        2. If not, generating temporary API keys
-        3. Validating the connection by checking system status
-        4. Optionally cleaning up temporary keys if requested
+        This method tests the connection by either using provided API credentials or generating
+        temporary ones. It validates the connection by checking the system status.
 
         Args:
-            ephemeral (bool, optional): If True and using temporary API keys,
-                deletes them after validation. Defaults to True.
+            ephemeral (bool, optional): If True, temporary API keys will be deleted after
+                connection test. Defaults to True.
 
         Returns:
-            bool: True if connection is successful
+            TryConnectResult: Object containing connection test results and optionally API keys
+                if non-ephemeral temporary keys were generated.
 
         Raises:
-            DiagralAPIError: If connection fails or system status check fails
+            DiagralAPIError: If connection attempt fails or system status check fails.
+
+        Note:
+            If API credentials are not provided during client initialization, temporary
+            keys will be generated (if ephemeral) for the connection test. These keys will be:
+            - Deleted after the test if ephemeral=True
+            - Returned in the result if ephemeral=False
 
         """
 
+        result: TryConnectResult = TryConnectResult()
         api_keys_provided = bool(self.__apikey and self.__secret_key)
-        _LOGGER.warning("API keys provided: %s", api_keys_provided)
         try:
+            # If API keys are not provided, generate temporary keys
             if not api_keys_provided:
                 api_key_response: ApiKeyWithSecret = await self.set_apikey()
-                _LOGGER.debug(
-                    "TEST CONNECTION - Successfully created temporary API key : %s",
-                    api_key_response,
-                )
-                if await self.validate_apikey(apikey=api_key_response.api_key):
-                    _LOGGER.debug(
-                        "TEST CONNECTION - Successfully validated temporary API key"
-                    )
-                    self.__apikey: str = api_key_response.api_key
-                    self.__secret_key: str = api_key_response.secret_key
 
+            # Retrieve system status to validate connection
             await self.get_system_status()
+            # If connection is successful, clean up temporary keys if requested (ephemeral)
             if ephemeral and not api_keys_provided:
                 await self.delete_apikey(apikey=self.__apikey)
+            elif not ephemeral and not api_keys_provided:
+                result.keys = api_key_response
         except DiagralAPIError as e:
             raise DiagralAPIError(f"Failed to connect to the system: {e}") from e
-        return True
+        result.result = True
+        return result
 
     async def get_configuration(self) -> None:
         """Asynchronously retrieve the configuration of the Diagral system.

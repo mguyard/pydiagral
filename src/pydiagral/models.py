@@ -355,6 +355,30 @@ class ApiKeys(CamelCaseModel):
         )
 
 
+@dataclass
+class TryConnectResult(CamelCaseModel):
+    """A class representing the result of an API connection attempt.
+
+    This class is used to store the result of an API connection attempt
+    and the associated API keys if the connection was successful.
+
+    Attributes:
+        result (bool | None): Whether the connection attempt was successful. Defaults to False.
+        keys (ApiKeyWithSecret | None): The API keys associated with the successful connection. Defaults to None.
+
+    Example:
+        >>> result = TryConnectResult(result=True, keys=api_key_obj)
+        >>> print(result.result)
+        True
+        >>> print(result.keys)
+        ApiKeyWithSecret(api_key='abc123', api_secret='xyz789')
+
+    """
+
+    result: bool | None = False
+    keys: ApiKeyWithSecret | None = None
+
+
 #####################################
 # Data models for alarm configuration
 #####################################
