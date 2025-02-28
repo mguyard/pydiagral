@@ -74,7 +74,7 @@ if (
     SECRET_KEY = None
 
 
-async def test_diagral_api() -> None:  # noqa: D103
+async def test_diagral_api() -> None:  # noqa: D103,C901
     try:
         # Initialization of the DiagralAPI object
         diagral = DiagralAPI(
