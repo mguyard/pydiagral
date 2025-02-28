@@ -400,7 +400,7 @@ class DiagralAPI:
             self.__apikey = None
             self.__secret_key = None
 
-    async def try_connection(self, ephemeral: bool = True) -> bool:
+    async def try_connection(self, ephemeral: bool = True) -> TryConnectResult:
         """Test connection with the Diagral system.
 
         This method tests the connection by either using provided API credentials or generating
@@ -488,6 +488,28 @@ class DiagralAPI:
             "Successfully retrieved configuration: %s", self.alarm_configuration
         )
         return self.alarm_configuration
+
+    async def get_alarm_name(self) -> str:
+        """Get the name of the alarm from the configuration.
+
+        Returns:
+            str: The name of the alarm from the configuration.
+
+        Raises:
+            ConfigurationError: If unable to retrieve the alarm configuration.
+
+        Note:
+            This method will attempt to fetch the configuration if it hasn't been loaded yet.
+
+        """
+
+        if not self.alarm_configuration:
+            await self.get_configuration()
+
+        if not self.alarm_configuration:
+            raise ConfigurationError("Failed to retrieve alarm configuration")
+
+        return self.alarm_configuration.alarm.name
 
     async def get_devices_info(self) -> DeviceList:
         """Asynchronously retrieves information about various device types from the alarm configuration.
