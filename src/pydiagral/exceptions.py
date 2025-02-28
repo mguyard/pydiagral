@@ -10,8 +10,8 @@ class DiagralAPIError(Exception):
         :param message: The error message.
         :param status_code: The status code of the error, if any.
         """
-        self.message = message
-        self.status_code = status_code
+        self.message: str = message
+        self.status_code: int | None = status_code
         super().__init__(self.message)
 
 

@@ -40,7 +40,7 @@ from .models import (
 )
 from .utils import generate_hmac_signature
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER: logging.Logger = logging.getLogger(__name__)
 
 # Minimum Python version: 3.10
 
@@ -83,17 +83,17 @@ class DiagralAPI:
             or not self.__is_valid_email(username)
         ):
             raise ConfigurationError("username must be a valid non-empty email address")
-        self.username = username
+        self.username: str = username
 
         # Validate password
         if not password or not isinstance(password, str):
             raise ConfigurationError("password must be a non-empty string")
-        self.__password = password
+        self.__password: str = password
 
         # Validate serial_id
         if not serial_id or not isinstance(serial_id, str):
             raise ConfigurationError("serial_id must be a non-empty string")
-        self.serial_id = serial_id
+        self.serial_id: str = serial_id
 
         # Set apikey and secret_key
         self.__apikey = apikey
@@ -103,7 +103,7 @@ class DiagralAPI:
         if pincode is not None:
             if not isinstance(pincode, int):
                 raise ConfigurationError("pincode must be an integer")
-        self.__pincode = pincode
+        self.__pincode: int | None = pincode
 
         # Initialize session and access_token
         self.session: aiohttp.ClientSession | None = None
@@ -118,7 +118,7 @@ class DiagralAPI:
         _LOGGER.info("Successfully initialized DiagralAPI session")
         return self
 
-    async def __aexit__(self, exc_type, exc, tb):
+    async def __aexit__(self, exc_type, exc, tb) -> None:
         """Close the aiohttp ClientSession."""
         if self.session:
             await self.session.close()
@@ -154,8 +154,8 @@ class DiagralAPI:
             _LOGGER.error(error_msg)
             raise SessionError(error_msg)
 
-        url = f"{BASE_URL}/{API_VERSION}/{endpoint}"
-        headers = kwargs.pop("headers", {})
+        url: str = f"{BASE_URL}/{API_VERSION}/{endpoint}"
+        headers: Any = kwargs.pop("headers", {})
         _LOGGER.debug(
             "Sending %s request to %s with headers %s and data %s",
             method,
@@ -168,7 +168,7 @@ class DiagralAPI:
             async with self.session.request(
                 method, url, headers=headers, timeout=timeout, **kwargs
             ) as response:
-                response_data = await response.json()
+                response_data: Any = await response.json()
                 if response.status == 400:
                     response = HTTPErrorResponse(**response_data)
                     raise DiagralAPIError(
@@ -234,13 +234,13 @@ class DiagralAPI:
             raise SessionError(error_msg)
 
         _LOGGER.debug("Attempting to login to Diagral API")
-        _DATA = {"username": self.username, "password": self.__password}
+        _DATA: dict[str, str] = {"username": self.username, "password": self.__password}
         try:
             response_data, *_ = await self._request(
                 "POST", "users/authenticate/login?vendor=DIAGRAL", json=_DATA
             )
             _LOGGER.debug("Login Response data: %s", response_data)
-            login_response = LoginResponse.from_dict(response_data)
+            login_response: LoginResponse = LoginResponse.from_dict(response_data)
             _LOGGER.debug("Login response: %s", login_response)
 
             self.__access_token = login_response.access_token
@@ -251,7 +251,7 @@ class DiagralAPI:
 
             _LOGGER.info("Successfully logged in to Diagral API")
         except DiagralAPIError as e:
-            error_msg = f"Failed to login : {e!s}"
+            error_msg: str = f"Failed to login : {e!s}"
             _LOGGER.error(error_msg)
             raise AuthenticationError(error_msg) from e
 
@@ -272,8 +272,8 @@ class DiagralAPI:
         if not self.__access_token:
             await self.login()
 
-        _DATA = {"serial_id": self.serial_id}
-        _HEADERS = {
+        _DATA: dict[str, str] = {"serial_id": self.serial_id}
+        _HEADERS: dict[str, str] = {
             "Authorization": f"Bearer {self.__access_token}",
         }
 
@@ -281,7 +281,9 @@ class DiagralAPI:
             response_data, *_ = await self._request(
                 "POST", "users/api_key", json=_DATA, headers=_HEADERS
             )
-            set_apikey_response = ApiKeyWithSecret.from_dict(response_data)
+            set_apikey_response: ApiKeyWithSecret = ApiKeyWithSecret.from_dict(
+                response_data
+            )
             self.__apikey = set_apikey_response.api_key
             if not self.__apikey:
                 error_msg = "API key not found in response"
@@ -305,7 +307,7 @@ class DiagralAPI:
                 self.__apikey = None
                 raise
         except DiagralAPIError as e:
-            error_msg = f"Failed to create API key: {e!s}"
+            error_msg: str = f"Failed to create API key: {e!s}"
             _LOGGER.error(error_msg)
             raise AuthenticationError(error_msg) from e
 
@@ -329,7 +331,7 @@ class DiagralAPI:
 
         """
 
-        apikey_to_validate = apikey or self.__apikey
+        apikey_to_validate: str = apikey or self.__apikey
 
         if not apikey_to_validate:
             _LOGGER.warning("No API key provided to validate")
@@ -338,7 +340,7 @@ class DiagralAPI:
         if not self.__access_token:
             await self.login()
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "Authorization": f"Bearer {self.__access_token}",
         }
         response_data, *_ = await self._request(
@@ -346,7 +348,7 @@ class DiagralAPI:
             f"users/systems/{self.serial_id}/api_keys",
             headers=_HEADERS,
         )
-        validate_apikey_response = ApiKeys.from_dict(response_data)
+        validate_apikey_response: ApiKeys = ApiKeys.from_dict(response_data)
         is_valid = any(
             key_info.api_key == apikey_to_validate
             for key_info in validate_apikey_response.api_keys
@@ -375,7 +377,7 @@ class DiagralAPI:
 
         """
 
-        apikey_to_delete = apikey or self.__apikey
+        apikey_to_delete: str = apikey or self.__apikey
 
         if not apikey_to_delete:
             raise AuthenticationError("An API key is required to delete it")
@@ -383,7 +385,7 @@ class DiagralAPI:
         if not self.__access_token:
             await self.login()
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "Authorization": f"Bearer {self.__access_token}",
         }
         await self._request(
@@ -465,14 +467,14 @@ class DiagralAPI:
             )
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
@@ -507,13 +509,13 @@ class DiagralAPI:
         if not self.alarm_configuration:
             raise ConfigurationError("Failed to retrieve alarm configuration")
 
-        device_types = sorted(
+        device_types: list[str] = sorted(
             ["cameras", "commands", "sensors", "sirens", "transmitters"]
         )
         devices_infos = {}
         for device_type in device_types:
             _LOGGER.debug("Retrieving devices information for %s", device_type)
-            devices = getattr(self.alarm_configuration, device_type, None)
+            devices: Any | None = getattr(self.alarm_configuration, device_type, None)
             if devices is not None:
                 devices_infos[device_type] = [
                     {"index": device.index, "label": device.label} for device in devices
@@ -547,14 +549,14 @@ class DiagralAPI:
             raise AuthenticationError("PIN code required to get system details")
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-PIN-CODE": str(self.__pincode),
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
@@ -590,14 +592,14 @@ class DiagralAPI:
             raise AuthenticationError("PIN code required to get system details")
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-PIN-CODE": str(self.__pincode),
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
@@ -644,14 +646,14 @@ class DiagralAPI:
             raise AuthenticationError(f"PIN code required to do system action {action}")
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-PIN-CODE": str(self.__pincode),
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
@@ -768,7 +770,7 @@ class DiagralAPI:
             await self.get_configuration()
 
         # Check if the groups are valid
-        invalid_groups = [
+        invalid_groups: list[int] = [
             group
             for group in groups
             if group not in [g.index for g in self.alarm_configuration.groups]
@@ -779,20 +781,20 @@ class DiagralAPI:
             )
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-PIN-CODE": str(self.__pincode),
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
         }
-        data = {"groups": groups}
+        data: dict[str, list[int]] = {"groups": groups}
         response_data, *_ = await self._request(
             "POST",
             f"systems/{self.serial_id}/{action}",
@@ -886,14 +888,14 @@ class DiagralAPI:
             raise AuthenticationError("PIN code required to get system details")
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-PIN-CODE": str(self.__pincode),
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
@@ -967,14 +969,14 @@ class DiagralAPI:
             )
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
@@ -1022,14 +1024,14 @@ class DiagralAPI:
             )
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
@@ -1075,14 +1077,14 @@ class DiagralAPI:
             )
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
@@ -1140,14 +1142,14 @@ class DiagralAPI:
             )
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
@@ -1248,14 +1250,14 @@ class DiagralAPI:
             )
 
         _TIMESTAMP = str(int(time.time()))
-        _HMAC = generate_hmac_signature(
+        _HMAC: str = generate_hmac_signature(
             timestamp=_TIMESTAMP,
             serial_id=self.serial_id,
             api_key=self.__apikey,
             secret_key=self.__secret_key,
         )
 
-        _HEADERS = {
+        _HEADERS: dict[str, str] = {
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,

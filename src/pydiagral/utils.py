@@ -10,5 +10,5 @@ def generate_hmac_signature(
 ) -> str:
     """Generate an HMAC signature for the given parameters."""
     timestamp = str(int(time.time()))
-    message = f"{timestamp}.{serial_id}.{api_key}"
+    message: str = f"{timestamp}.{serial_id}.{api_key}"
     return hmac.new(secret_key.encode(), message.encode(), hashlib.sha256).hexdigest()
