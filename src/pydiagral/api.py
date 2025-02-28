@@ -7,7 +7,6 @@ retrieving system status, and controlling various aspects of the alarm system.
 
 from __future__ import annotations
 
-from datetime import datetime
 import logging
 import re
 import time
@@ -397,6 +396,50 @@ class DiagralAPI:
         if apikey is None:
             self.__apikey = None
             self.__secret_key = None
+
+    async def try_connection(self, ephemeral: bool = True) -> bool:
+        """Establish a connection with the Diagral system.
+
+        This method tries to connect to the Diagral API by:
+        1. Checking if API keys are provided
+        2. If not, generating temporary API keys
+        3. Validating the connection by checking system status
+        4. Optionally cleaning up temporary keys if requested
+
+        Args:
+            ephemeral (bool, optional): If True and using temporary API keys,
+                deletes them after validation. Defaults to True.
+
+        Returns:
+            bool: True if connection is successful
+
+        Raises:
+            DiagralAPIError: If connection fails or system status check fails
+
+        """
+
+        api_keys_provided = bool(self.__apikey and self.__secret_key)
+        _LOGGER.warning("API keys provided: %s", api_keys_provided)
+        try:
+            if not api_keys_provided:
+                api_key_response: ApiKeyWithSecret = await self.set_apikey()
+                _LOGGER.debug(
+                    "TEST CONNECTION - Successfully created temporary API key : %s",
+                    api_key_response,
+                )
+                if await self.validate_apikey(apikey=api_key_response.api_key):
+                    _LOGGER.debug(
+                        "TEST CONNECTION - Successfully validated temporary API key"
+                    )
+                    self.__apikey: str = api_key_response.api_key
+                    self.__secret_key: str = api_key_response.secret_key
+
+            await self.get_system_status()
+            if ephemeral and not api_keys_provided:
+                await self.delete_apikey(apikey=self.__apikey)
+        except DiagralAPIError as e:
+            raise DiagralAPIError(f"Failed to connect to the system: {e}") from e
+        return True
 
     async def get_configuration(self) -> None:
         """Asynchronously retrieve the configuration of the Diagral system.
