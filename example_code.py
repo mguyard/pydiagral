@@ -239,6 +239,9 @@ async def test_diagral_api() -> None:  # noqa: D103,C901
                 stop_result = await alarm.stop_system()
                 _LOGGER.info("Stop System with result: %s", stop_result)
 
+            alarm_name: str = await alarm.get_alarm_name()  # Get the alarm name
+            _LOGGER.info("Alarm Name: %s", alarm_name)
+
             if (
                 APIKEY_DELETION and APIKEY_CREATION
             ):  # Only when the API key has been created
