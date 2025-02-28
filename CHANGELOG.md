@@ -1,3 +1,10 @@
+# [1.5.0-beta.3](https://github.com/mguyard/pydiagral/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2025-02-28)
+
+
+### Features
+
+* **api:** 🚀 Add `get_alarm_name` method and log alarm name in tests ([96e727f](https://github.com/mguyard/pydiagral/commit/96e727fe851a1086d8689c6fb7204efdb702938d))
+
 # [1.5.0-beta.2](https://github.com/mguyard/pydiagral/compare/v1.5.0-beta.1...v1.5.0-beta.2) (2025-02-28)
 
 
