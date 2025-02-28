@@ -15,7 +15,7 @@ import re
 import types
 from typing import TypeVar, Union, get_args, get_origin, get_type_hints
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 #######################################################

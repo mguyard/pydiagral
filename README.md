@@ -33,6 +33,12 @@ Welcome to the documentation for pydiagral, a Python library for interacting wit
 
 `pydiagral` is an asynchronous Python interface for the Diagral alarm system. This library allows users to control and monitor their Diagral alarm system through the official API.
 
+> [!CAUTION]
+>
+> Please note that the Diagral alarm system is a security system, and it may be preferable not to connect it to any automation platform for security reasons.
+> In no event shall the developer of [`pydiagral`](https://github.com/mguyard/pydiagral) library be held liable for any issues arising from the use of this [`pydiagral`](https://github.com/mguyard/pydiagral) library.
+> The user installs and uses this integration at their own risk and with full knowledge of the potential implications.
+
 ## ✅ Requirement
 
 To use this library, which leverages the Diagral APIs, you must have a Diagral box (DIAG56AAX). This box connects your Diagral alarm system to the internet, enabling interaction with the alarm system via the API. You can find more information about the Diagral box [here](https://www.diagral.fr/commande/box-alerte-et-pilotage).
