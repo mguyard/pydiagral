@@ -1118,8 +1118,7 @@ system status, and controlling various aspects of the alarm system.</p>
 
               <details class="quote">
                 <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  48</span>
-<span class="normal">  49</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  49</span>
 <span class="normal">  50</span>
 <span class="normal">  51</span>
 <span class="normal">  52</span>
@@ -2353,7 +2352,8 @@ system status, and controlling various aspects of the alarm system.</p>
 <span class="normal">1280</span>
 <span class="normal">1281</span>
 <span class="normal">1282</span>
-<span class="normal">1283</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DiagralAPI</span><span class="p">:</span>
+<span class="normal">1283</span>
+<span class="normal">1284</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DiagralAPI</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Provide interface for interacting with the Diagral API.</span>
 
 <span class="sd">    This class encapsulates all the functionality for communicating with</span>
@@ -2708,48 +2708,48 @@ system status, and controlling various aspects of the alarm system.</p>
             <span class="bp">self</span><span class="o">.</span><span class="n">__secret_key</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">try_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ephemeral</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Establish a connection with the Diagral system.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test connection with the Diagral system.</span>
 
-<span class="sd">        This method tries to connect to the Diagral API by:</span>
-<span class="sd">        1. Checking if API keys are provided</span>
-<span class="sd">        2. If not, generating temporary API keys</span>
-<span class="sd">        3. Validating the connection by checking system status</span>
-<span class="sd">        4. Optionally cleaning up temporary keys if requested</span>
+<span class="sd">        This method tests the connection by either using provided API credentials or generating</span>
+<span class="sd">        temporary ones. It validates the connection by checking the system status.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            ephemeral (bool, optional): If True and using temporary API keys,</span>
-<span class="sd">                deletes them after validation. Defaults to True.</span>
+<span class="sd">            ephemeral (bool, optional): If True, temporary API keys will be deleted after</span>
+<span class="sd">                connection test. Defaults to True.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            bool: True if connection is successful</span>
+<span class="sd">            TryConnectResult: Object containing connection test results and optionally API keys</span>
+<span class="sd">                if non-ephemeral temporary keys were generated.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            DiagralAPIError: If connection fails or system status check fails</span>
+<span class="sd">            DiagralAPIError: If connection attempt fails or system status check fails.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            If API credentials are not provided during client initialization, temporary</span>
+<span class="sd">            keys will be generated (if ephemeral) for the connection test. These keys will be:</span>
+<span class="sd">            - Deleted after the test if ephemeral=True</span>
+<span class="sd">            - Returned in the result if ephemeral=False</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
+        <span class="n">result</span><span class="p">:</span> <span class="n">TryConnectResult</span> <span class="o">=</span> <span class="n">TryConnectResult</span><span class="p">()</span>
         <span class="n">api_keys_provided</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__apikey</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__secret_key</span><span class="p">)</span>
-        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;API keys provided: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">api_keys_provided</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># If API keys are not provided, generate temporary keys</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">api_keys_provided</span><span class="p">:</span>
                 <span class="n">api_key_response</span><span class="p">:</span> <span class="n">ApiKeyWithSecret</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_apikey</span><span class="p">()</span>
-                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="s2">&quot;TEST CONNECTION - Successfully created temporary API key : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="n">api_key_response</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_apikey</span><span class="p">(</span><span class="n">apikey</span><span class="o">=</span><span class="n">api_key_response</span><span class="o">.</span><span class="n">api_key</span><span class="p">):</span>
-                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                        <span class="s2">&quot;TEST CONNECTION - Successfully validated temporary API key&quot;</span>
-                    <span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">__apikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">api_key_response</span><span class="o">.</span><span class="n">api_key</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">__secret_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">api_key_response</span><span class="o">.</span><span class="n">secret_key</span>
 
+            <span class="c1"># Retrieve system status to validate connection</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_system_status</span><span class="p">()</span>
+            <span class="c1"># If connection is successful, clean up temporary keys if requested (ephemeral)</span>
             <span class="k">if</span> <span class="n">ephemeral</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">api_keys_provided</span><span class="p">:</span>
                 <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete_apikey</span><span class="p">(</span><span class="n">apikey</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__apikey</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">ephemeral</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">api_keys_provided</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="n">api_key_response</span>
         <span class="k">except</span> <span class="n">DiagralAPIError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">DiagralAPIError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to connect to the system: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-        <span class="k">return</span> <span class="kc">True</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">result</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Asynchronously retrieve the configuration of the Diagral system.</span>
@@ -3753,8 +3753,7 @@ system status, and controlling various aspects of the alarm system.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 56</span>
-<span class="normal"> 57</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 57</span>
 <span class="normal"> 58</span>
 <span class="normal"> 59</span>
 <span class="normal"> 60</span>
@@ -3810,7 +3809,8 @@ system status, and controlling various aspects of the alarm system.</p>
 <span class="normal">110</span>
 <span class="normal">111</span>
 <span class="normal">112</span>
-<span class="normal">113</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">113</span>
+<span class="normal">114</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -3893,11 +3893,11 @@ system status, and controlling various aspects of the alarm system.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">115</span>
-<span class="normal">116</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">116</span>
 <span class="normal">117</span>
 <span class="normal">118</span>
-<span class="normal">119</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aenter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="normal">119</span>
+<span class="normal">120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aenter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the aiohttp ClientSession.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientSession</span><span class="p">()</span>
     <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully initialized DiagralAPI session&quot;</span><span class="p">)</span>
@@ -3927,10 +3927,10 @@ system status, and controlling various aspects of the alarm system.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">121</span>
-<span class="normal">122</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">122</span>
 <span class="normal">123</span>
-<span class="normal">124</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aexit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">tb</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">124</span>
+<span class="normal">125</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__aexit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">tb</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Close the aiohttp ClientSession.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">:</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -4146,8 +4146,7 @@ system status, and controlling various aspects of the alarm system.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">126</span>
-<span class="normal">127</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">127</span>
 <span class="normal">128</span>
 <span class="normal">129</span>
 <span class="normal">130</span>
@@ -4237,7 +4236,8 @@ system status, and controlling various aspects of the alarm system.</p>
 <span class="normal">214</span>
 <span class="normal">215</span>
 <span class="normal">216</span>
-<span class="normal">217</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_request</span><span class="p">(</span>
+<span class="normal">217</span>
+<span class="normal">218</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_request</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Make an asynchronous HTTP request to the specified endpoint.</span>
@@ -4380,8 +4380,7 @@ If the login fails, it raises an appropriate error.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">219</span>
-<span class="normal">220</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">220</span>
 <span class="normal">221</span>
 <span class="normal">222</span>
 <span class="normal">223</span>
@@ -4417,7 +4416,8 @@ If the login fails, it raises an appropriate error.</p>
 <span class="normal">253</span>
 <span class="normal">254</span>
 <span class="normal">255</span>
-<span class="normal">256</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">login</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">256</span>
+<span class="normal">257</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">login</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously logs in to the Diagral API using the provided username and password.</span>
 
 <span class="sd">    This method sends a POST request to the authentication endpoint with the necessary credentials.</span>
@@ -4528,8 +4528,7 @@ If the API key is successfully created, it verifies the API key to ensure its va
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">258</span>
-<span class="normal">259</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">259</span>
 <span class="normal">260</span>
 <span class="normal">261</span>
 <span class="normal">262</span>
@@ -4584,7 +4583,8 @@ If the API key is successfully created, it verifies the API key to ensure its va
 <span class="normal">311</span>
 <span class="normal">312</span>
 <span class="normal">313</span>
-<span class="normal">314</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">set_apikey</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiKeyWithSecret</span><span class="p">:</span>
+<span class="normal">314</span>
+<span class="normal">315</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">set_apikey</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ApiKeyWithSecret</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously set the API key for the Diagral API.</span>
 
 <span class="sd">    It sends a request to create a new API key using the current access token.</span>
@@ -4726,8 +4726,7 @@ If the API key is successfully created, it verifies the API key to ensure its va
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">316</span>
-<span class="normal">317</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">317</span>
 <span class="normal">318</span>
 <span class="normal">319</span>
 <span class="normal">320</span>
@@ -4771,7 +4770,8 @@ If the API key is successfully created, it verifies the API key to ensure its va
 <span class="normal">358</span>
 <span class="normal">359</span>
 <span class="normal">360</span>
-<span class="normal">361</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validate_apikey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">361</span>
+<span class="normal">362</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">validate_apikey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the current or provided API key by checking it against the list of valid keys.</span>
 
 <span class="sd">    This method performs the following steps:</span>
@@ -4901,8 +4901,7 @@ it logs an informational message and sets the <code>apikey</code> and <code>secr
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">363</span>
-<span class="normal">364</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">364</span>
 <span class="normal">365</span>
 <span class="normal">366</span>
 <span class="normal">367</span>
@@ -4938,7 +4937,8 @@ it logs an informational message and sets the <code>apikey</code> and <code>secr
 <span class="normal">397</span>
 <span class="normal">398</span>
 <span class="normal">399</span>
-<span class="normal">400</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_apikey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">400</span>
+<span class="normal">401</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_apikey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously delete the specified or current API key.</span>
 
 <span class="sd">    This method deletes the API key associated with the instance or the provided API key.</span>
@@ -4997,12 +4997,9 @@ it logs an informational message and sets the <code>apikey</code> and <code>secr
 
     <div class="doc doc-contents ">
 
-        <p>Establish a connection with the Diagral system.</p>
-<p>This method tries to connect to the Diagral API by:
-1. Checking if API keys are provided
-2. If not, generating temporary API keys
-3. Validating the connection by checking system status
-4. Optionally cleaning up temporary keys if requested</p>
+        <p>Test connection with the Diagral system.</p>
+<p>This method tests the connection by either using provided API credentials or generating
+temporary ones. It validates the connection by checking the system status.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -5025,8 +5022,8 @@ it logs an informational message and sets the <code>apikey</code> and <code>secr
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If True and using temporary API keys,
-deletes them after validation. Defaults to True.</p>
+                <p>If True, temporary API keys will be deleted after
+connection test. Defaults to True.</p>
               </div>
             </td>
             <td>
@@ -5047,12 +5044,13 @@ deletes them after validation. Defaults to True.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-<td><code>bool</code></td>            <td>
+<td><code>TryConnectResult</code></td>            <td>
                   <code><span title="bool">bool</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>True if connection is successful</p>
+                <p>Object containing connection test results and optionally API keys
+if non-ephemeral temporary keys were generated.</p>
               </div>
             </td>
           </tr>
@@ -5075,17 +5073,24 @@ deletes them after validation. Defaults to True.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If connection fails or system status check fails</p>
+                <p>If connection attempt fails or system status check fails.</p>
               </div>
             </td>
           </tr>
       </tbody>
     </table>
 
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>If API credentials are not provided during client initialization, temporary
+keys will be generated (if ephemeral) for the connection test. These keys will be:
+- Deleted after the test if ephemeral=True
+- Returned in the result if ephemeral=False</p>
+</details>
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">402</span>
-<span class="normal">403</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">403</span>
 <span class="normal">404</span>
 <span class="normal">405</span>
 <span class="normal">406</span>
@@ -5126,49 +5131,50 @@ deletes them after validation. Defaults to True.</p>
 <span class="normal">441</span>
 <span class="normal">442</span>
 <span class="normal">443</span>
-<span class="normal">444</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">try_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ephemeral</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Establish a connection with the Diagral system.</span>
+<span class="normal">444</span>
+<span class="normal">445</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">try_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ephemeral</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test connection with the Diagral system.</span>
 
-<span class="sd">    This method tries to connect to the Diagral API by:</span>
-<span class="sd">    1. Checking if API keys are provided</span>
-<span class="sd">    2. If not, generating temporary API keys</span>
-<span class="sd">    3. Validating the connection by checking system status</span>
-<span class="sd">    4. Optionally cleaning up temporary keys if requested</span>
+<span class="sd">    This method tests the connection by either using provided API credentials or generating</span>
+<span class="sd">    temporary ones. It validates the connection by checking the system status.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        ephemeral (bool, optional): If True and using temporary API keys,</span>
-<span class="sd">            deletes them after validation. Defaults to True.</span>
+<span class="sd">        ephemeral (bool, optional): If True, temporary API keys will be deleted after</span>
+<span class="sd">            connection test. Defaults to True.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        bool: True if connection is successful</span>
+<span class="sd">        TryConnectResult: Object containing connection test results and optionally API keys</span>
+<span class="sd">            if non-ephemeral temporary keys were generated.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        DiagralAPIError: If connection fails or system status check fails</span>
+<span class="sd">        DiagralAPIError: If connection attempt fails or system status check fails.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        If API credentials are not provided during client initialization, temporary</span>
+<span class="sd">        keys will be generated (if ephemeral) for the connection test. These keys will be:</span>
+<span class="sd">        - Deleted after the test if ephemeral=True</span>
+<span class="sd">        - Returned in the result if ephemeral=False</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">result</span><span class="p">:</span> <span class="n">TryConnectResult</span> <span class="o">=</span> <span class="n">TryConnectResult</span><span class="p">()</span>
     <span class="n">api_keys_provided</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__apikey</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__secret_key</span><span class="p">)</span>
-    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;API keys provided: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">api_keys_provided</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># If API keys are not provided, generate temporary keys</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">api_keys_provided</span><span class="p">:</span>
             <span class="n">api_key_response</span><span class="p">:</span> <span class="n">ApiKeyWithSecret</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_apikey</span><span class="p">()</span>
-            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                <span class="s2">&quot;TEST CONNECTION - Successfully created temporary API key : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">api_key_response</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_apikey</span><span class="p">(</span><span class="n">apikey</span><span class="o">=</span><span class="n">api_key_response</span><span class="o">.</span><span class="n">api_key</span><span class="p">):</span>
-                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="s2">&quot;TEST CONNECTION - Successfully validated temporary API key&quot;</span>
-                <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__apikey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">api_key_response</span><span class="o">.</span><span class="n">api_key</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__secret_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">api_key_response</span><span class="o">.</span><span class="n">secret_key</span>
 
+        <span class="c1"># Retrieve system status to validate connection</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_system_status</span><span class="p">()</span>
+        <span class="c1"># If connection is successful, clean up temporary keys if requested (ephemeral)</span>
         <span class="k">if</span> <span class="n">ephemeral</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">api_keys_provided</span><span class="p">:</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete_apikey</span><span class="p">(</span><span class="n">apikey</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__apikey</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">ephemeral</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">api_keys_provided</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="n">api_key_response</span>
     <span class="k">except</span> <span class="n">DiagralAPIError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">DiagralAPIError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to connect to the system: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="k">return</span> <span class="kc">True</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">result</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5246,8 +5252,7 @@ session without needing to collect it multiple times.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">446</span>
-<span class="normal">447</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">447</span>
 <span class="normal">448</span>
 <span class="normal">449</span>
 <span class="normal">450</span>
@@ -5289,7 +5294,8 @@ session without needing to collect it multiple times.</p>
 <span class="normal">486</span>
 <span class="normal">487</span>
 <span class="normal">488</span>
-<span class="normal">489</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">489</span>
+<span class="normal">490</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously retrieve the configuration of the Diagral system.</span>
 
 <span class="sd">    This method retrieves the configuration of the Diagral system by sending a GET</span>
@@ -5416,8 +5422,7 @@ transmitters) from the alarm configuration, and compiles this information into a
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">491</span>
-<span class="normal">492</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">492</span>
 <span class="normal">493</span>
 <span class="normal">494</span>
 <span class="normal">495</span>
@@ -5451,7 +5456,8 @@ transmitters) from the alarm configuration, and compiles this information into a
 <span class="normal">523</span>
 <span class="normal">524</span>
 <span class="normal">525</span>
-<span class="normal">526</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_devices_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeviceList</span><span class="p">:</span>
+<span class="normal">526</span>
+<span class="normal">527</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_devices_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeviceList</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously retrieves information about various device types from the alarm configuration.</span>
 
 <span class="sd">    The method retrieve information for each device type (cameras, commands, sensors, sirens,</span>
@@ -5561,8 +5567,7 @@ request headers.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">528</span>
-<span class="normal">529</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">529</span>
 <span class="normal">530</span>
 <span class="normal">531</span>
 <span class="normal">532</span>
@@ -5602,7 +5607,8 @@ request headers.</p>
 <span class="normal">566</span>
 <span class="normal">567</span>
 <span class="normal">568</span>
-<span class="normal">569</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_system_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemDetails</span><span class="p">:</span>
+<span class="normal">569</span>
+<span class="normal">570</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_system_details</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemDetails</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously retrieves the system details.</span>
 
 <span class="sd">    This method fetches the system details using the provided API key, secret key,</span>
@@ -5718,8 +5724,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">571</span>
-<span class="normal">572</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">572</span>
 <span class="normal">573</span>
 <span class="normal">574</span>
 <span class="normal">575</span>
@@ -5759,7 +5764,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">609</span>
 <span class="normal">610</span>
 <span class="normal">611</span>
-<span class="normal">612</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_system_status</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
+<span class="normal">612</span>
+<span class="normal">613</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_system_status</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously retrieves the system status.</span>
 
 <span class="sd">    This method fetches the current status of the system using the provided API key,</span>
@@ -5913,8 +5919,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">614</span>
-<span class="normal">615</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">615</span>
 <span class="normal">616</span>
 <span class="normal">617</span>
 <span class="normal">618</span>
@@ -5967,7 +5972,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">665</span>
 <span class="normal">666</span>
 <span class="normal">667</span>
-<span class="normal">668</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__system_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
+<span class="normal">668</span>
+<span class="normal">669</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__system_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform a system action such as start, stop, presence, partial start 1, or partial start 2.</span>
 
 <span class="sd">    Args:</span>
@@ -6104,8 +6110,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">670</span>
-<span class="normal">671</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">671</span>
 <span class="normal">672</span>
 <span class="normal">673</span>
 <span class="normal">674</span>
@@ -6118,7 +6123,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">681</span>
 <span class="normal">682</span>
 <span class="normal">683</span>
-<span class="normal">684</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start_system</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
+<span class="normal">684</span>
+<span class="normal">685</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start_system</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously starts the system.</span>
 
 <span class="sd">    This method sends a request to start the system and returns the system status.</span>
@@ -6215,8 +6221,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">686</span>
-<span class="normal">687</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">687</span>
 <span class="normal">688</span>
 <span class="normal">689</span>
 <span class="normal">690</span>
@@ -6229,7 +6234,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">697</span>
 <span class="normal">698</span>
 <span class="normal">699</span>
-<span class="normal">700</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop_system</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
+<span class="normal">700</span>
+<span class="normal">701</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop_system</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously stops the system.</span>
 
 <span class="sd">    This method sends a request to stop the system and returns the system status.</span>
@@ -6325,8 +6331,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">702</span>
-<span class="normal">703</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">703</span>
 <span class="normal">704</span>
 <span class="normal">705</span>
 <span class="normal">706</span>
@@ -6337,7 +6342,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">711</span>
 <span class="normal">712</span>
 <span class="normal">713</span>
-<span class="normal">714</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">presence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
+<span class="normal">714</span>
+<span class="normal">715</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">presence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously starts the system in presence mode.</span>
 
 <span class="sd">    Returns:</span>
@@ -6452,8 +6458,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">716</span>
-<span class="normal">717</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">717</span>
 <span class="normal">718</span>
 <span class="normal">719</span>
 <span class="normal">720</span>
@@ -6469,7 +6474,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">730</span>
 <span class="normal">731</span>
 <span class="normal">732</span>
-<span class="normal">733</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">partial_start_system</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>  <span class="c1"># NOT-TESTED</span>
+<span class="normal">733</span>
+<span class="normal">734</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">partial_start_system</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>  <span class="c1"># NOT-TESTED</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Initiate a partial start of the system.</span>
 
 <span class="sd">    Args:</span>
@@ -6616,8 +6622,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">735</span>
-<span class="normal">736</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">736</span>
 <span class="normal">737</span>
 <span class="normal">738</span>
 <span class="normal">739</span>
@@ -6688,7 +6693,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">804</span>
 <span class="normal">805</span>
 <span class="normal">806</span>
-<span class="normal">807</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__action_group_system</span><span class="p">(</span>
+<span class="normal">807</span>
+<span class="normal">808</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__action_group_system</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>  <span class="c1"># TO-TEST</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform an action on a group of systems.</span>
@@ -6873,8 +6879,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">809</span>
-<span class="normal">810</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">810</span>
 <span class="normal">811</span>
 <span class="normal">812</span>
 <span class="normal">813</span>
@@ -6893,7 +6898,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">826</span>
 <span class="normal">827</span>
 <span class="normal">828</span>
-<span class="normal">829</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">activate_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
+<span class="normal">829</span>
+<span class="normal">830</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">activate_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously activates a group of systems.</span>
 
 <span class="sd">    Args:</span>
@@ -7026,8 +7032,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">831</span>
-<span class="normal">832</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">832</span>
 <span class="normal">833</span>
 <span class="normal">834</span>
 <span class="normal">835</span>
@@ -7046,7 +7051,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">848</span>
 <span class="normal">849</span>
 <span class="normal">850</span>
-<span class="normal">851</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">disable_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
+<span class="normal">851</span>
+<span class="normal">852</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">disable_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously disables a group of systems.</span>
 
 <span class="sd">    Args:</span>
@@ -7212,8 +7218,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">853</span>
-<span class="normal">854</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">854</span>
 <span class="normal">855</span>
 <span class="normal">856</span>
 <span class="normal">857</span>
@@ -7268,7 +7273,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">906</span>
 <span class="normal">907</span>
 <span class="normal">908</span>
-<span class="normal">909</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__action_product</span><span class="p">(</span>
+<span class="normal">909</span>
+<span class="normal">910</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__action_product</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">product_id</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>  <span class="c1"># NOT-TESTED</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform an action on a product in the Diagral system.</span>
@@ -7453,8 +7459,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">911</span>
-<span class="normal">912</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">912</span>
 <span class="normal">913</span>
 <span class="normal">914</span>
 <span class="normal">915</span>
@@ -7472,7 +7477,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">927</span>
 <span class="normal">928</span>
 <span class="normal">929</span>
-<span class="normal">930</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">enable_product</span><span class="p">(</span>
+<span class="normal">930</span>
+<span class="normal">931</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">enable_product</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">product_id</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>  <span class="c1"># NOT-TESTED</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously enables a product in the system.</span>
@@ -7620,8 +7626,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">932</span>
-<span class="normal">933</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">933</span>
 <span class="normal">934</span>
 <span class="normal">935</span>
 <span class="normal">936</span>
@@ -7639,7 +7644,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">948</span>
 <span class="normal">949</span>
 <span class="normal">950</span>
-<span class="normal">951</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">disable_product</span><span class="p">(</span>
+<span class="normal">951</span>
+<span class="normal">952</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">disable_product</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">product_id</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SystemStatus</span><span class="p">:</span>  <span class="c1"># NOT-TESTED</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously enables a product in the system.</span>
@@ -7731,8 +7737,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">953</span>
-<span class="normal">954</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">954</span>
 <span class="normal">955</span>
 <span class="normal">956</span>
 <span class="normal">957</span>
@@ -7772,7 +7777,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">991</span>
 <span class="normal">992</span>
 <span class="normal">993</span>
-<span class="normal">994</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_anomalies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Anomalies</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="normal">994</span>
+<span class="normal">995</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_anomalies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Anomalies</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously retrieves anomalies for the system.</span>
 
 <span class="sd">    This method fetches the anomalies associated with the system identified by the serial ID. It requires valid API key and secret key for authentication.</span>
@@ -7863,8 +7869,7 @@ sends a GET request to the system status endpoint.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 996</span>
-<span class="normal"> 997</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 997</span>
 <span class="normal"> 998</span>
 <span class="normal"> 999</span>
 <span class="normal">1000</span>
@@ -7872,7 +7877,8 @@ sends a GET request to the system status endpoint.</p>
 <span class="normal">1002</span>
 <span class="normal">1003</span>
 <span class="normal">1004</span>
-<span class="normal">1005</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_anomalies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anomaly_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># NOT-IMPLEMENTED</span>
+<span class="normal">1005</span>
+<span class="normal">1006</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_anomalies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anomaly_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># NOT-IMPLEMENTED</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously delete the list of anomalies.</span>
 
 <span class="sd">    This method is currently not implemented.</span>
@@ -7955,8 +7961,7 @@ It requires valid API and secret keys for authentication.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1007</span>
-<span class="normal">1008</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1008</span>
 <span class="normal">1009</span>
 <span class="normal">1010</span>
 <span class="normal">1011</span>
@@ -7992,7 +7997,8 @@ It requires valid API and secret keys for authentication.</p>
 <span class="normal">1041</span>
 <span class="normal">1042</span>
 <span class="normal">1043</span>
-<span class="normal">1044</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_automatism_rudes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rudes</span><span class="p">:</span>  <span class="c1"># NOT-TESTED</span>
+<span class="normal">1044</span>
+<span class="normal">1045</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_automatism_rudes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Rudes</span><span class="p">:</span>  <span class="c1"># NOT-TESTED</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously retrieves the automatism Rudes for the system.</span>
 
 <span class="sd">    This method fetches the Rudes data for the system identified by the serial ID.</span>
@@ -8126,8 +8132,7 @@ It requires valid API and secret keys for authentication.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1046</span>
-<span class="normal">1047</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1047</span>
 <span class="normal">1048</span>
 <span class="normal">1049</span>
 <span class="normal">1050</span>
@@ -8141,7 +8146,8 @@ It requires valid API and secret keys for authentication.</p>
 <span class="normal">1058</span>
 <span class="normal">1059</span>
 <span class="normal">1060</span>
-<span class="normal">1061</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">set_automatism_action</span><span class="p">(</span>
+<span class="normal">1061</span>
+<span class="normal">1062</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">set_automatism_action</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">canal</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># NOT-IMPLEMENTED</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the automatism action.</span>
@@ -8228,8 +8234,7 @@ It requires valid API and secret keys for authentication.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1063</span>
-<span class="normal">1064</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1064</span>
 <span class="normal">1065</span>
 <span class="normal">1066</span>
 <span class="normal">1067</span>
@@ -8262,7 +8267,8 @@ It requires valid API and secret keys for authentication.</p>
 <span class="normal">1094</span>
 <span class="normal">1095</span>
 <span class="normal">1096</span>
-<span class="normal">1097</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_webhook</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Webhook</span><span class="p">:</span>
+<span class="normal">1097</span>
+<span class="normal">1098</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_webhook</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Webhook</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the webhook subscription details for the system.</span>
 
 <span class="sd">    Returns:</span>
@@ -8483,8 +8489,7 @@ It requires valid API and secret keys for authentication.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1099</span>
-<span class="normal">1100</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1100</span>
 <span class="normal">1101</span>
 <span class="normal">1102</span>
 <span class="normal">1103</span>
@@ -8564,7 +8569,8 @@ It requires valid API and secret keys for authentication.</p>
 <span class="normal">1177</span>
 <span class="normal">1178</span>
 <span class="normal">1179</span>
-<span class="normal">1180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__webhook_action_create_update</span><span class="p">(</span>
+<span class="normal">1180</span>
+<span class="normal">1181</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">__webhook_action_create_update</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">webhook_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -8773,8 +8779,7 @@ It requires valid API and secret keys for authentication.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1182</span>
-<span class="normal">1183</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1183</span>
 <span class="normal">1184</span>
 <span class="normal">1185</span>
 <span class="normal">1186</span>
@@ -8798,7 +8803,8 @@ It requires valid API and secret keys for authentication.</p>
 <span class="normal">1204</span>
 <span class="normal">1205</span>
 <span class="normal">1206</span>
-<span class="normal">1207</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">register_webhook</span><span class="p">(</span>
+<span class="normal">1207</span>
+<span class="normal">1208</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">register_webhook</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">webhook_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">subscribe_to_anomaly</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -8951,8 +8957,7 @@ It requires valid API and secret keys for authentication.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1209</span>
-<span class="normal">1210</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1210</span>
 <span class="normal">1211</span>
 <span class="normal">1212</span>
 <span class="normal">1213</span>
@@ -8976,7 +8981,8 @@ It requires valid API and secret keys for authentication.</p>
 <span class="normal">1231</span>
 <span class="normal">1232</span>
 <span class="normal">1233</span>
-<span class="normal">1234</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_webhook</span><span class="p">(</span>
+<span class="normal">1234</span>
+<span class="normal">1235</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_webhook</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">webhook_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">subscribe_to_anomaly</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -9073,8 +9079,7 @@ It requires valid API and secret keys for authentication.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1236</span>
-<span class="normal">1237</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1237</span>
 <span class="normal">1238</span>
 <span class="normal">1239</span>
 <span class="normal">1240</span>
@@ -9106,7 +9111,8 @@ It requires valid API and secret keys for authentication.</p>
 <span class="normal">1266</span>
 <span class="normal">1267</span>
 <span class="normal">1268</span>
-<span class="normal">1269</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_webhook</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">1269</span>
+<span class="normal">1270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_webhook</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Asynchronously deletes the webhook subscription for the current system.</span>
 
 <span class="sd">    Raises:</span>
@@ -9219,8 +9225,7 @@ It requires valid API and secret keys for authentication.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1271</span>
-<span class="normal">1272</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1272</span>
 <span class="normal">1273</span>
 <span class="normal">1274</span>
 <span class="normal">1275</span>
@@ -9231,7 +9236,8 @@ It requires valid API and secret keys for authentication.</p>
 <span class="normal">1280</span>
 <span class="normal">1281</span>
 <span class="normal">1282</span>
-<span class="normal">1283</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">1283</span>
+<span class="normal">1284</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">__is_valid_email</span><span class="p">(</span><span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the format of an email address.</span>
 
