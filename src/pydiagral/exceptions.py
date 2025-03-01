@@ -37,3 +37,11 @@ class ServerError(DiagralAPIError):
 
 class ClientError(DiagralAPIError):
     """Raised when client returns error."""
+
+
+class APIKeyCreationError(DiagralAPIError):
+    """Raised when API key creation fails."""
+
+
+class APIValidationError(DiagralAPIError):
+    """Raised when API validation fails."""
