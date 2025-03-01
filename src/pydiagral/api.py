@@ -16,6 +16,8 @@ import aiohttp
 
 from .constants import API_VERSION, BASE_URL
 from .exceptions import (
+    APIKeyCreationError,
+    APIValidationError,
     AuthenticationError,
     ClientError,
     ConfigurationError,
@@ -266,7 +268,8 @@ class DiagralAPI:
             ApiKeyWithSecret: An instance of ApiKeyWithSecret containing the created API key and secret key.
 
         Raises:
-            AuthenticationError: If the API key is not found in the response or if the created API key fails validation.
+            APIKeyCreationError: If the API key creation fails.
+            APIValidationError: If the API key validation fails.
 
         """
 
@@ -285,16 +288,16 @@ class DiagralAPI:
             set_apikey_response: ApiKeyWithSecret = ApiKeyWithSecret.from_dict(
                 response_data
             )
-            self.__apikey = set_apikey_response.api_key
+            self.__apikey: str = set_apikey_response.api_key
             if not self.__apikey:
                 error_msg = "API key not found in response"
                 _LOGGER.error(error_msg)
-                raise AuthenticationError(error_msg)
-            self.__secret_key = set_apikey_response.secret_key
+                raise APIKeyCreationError(error_msg)
+            self.__secret_key: str = set_apikey_response.secret_key
             if not self.__secret_key:
                 error_msg = "Secret key not found in response"
                 _LOGGER.error(error_msg)
-                raise AuthenticationError(error_msg)
+                raise APIKeyCreationError(error_msg)
 
             _LOGGER.info("Successfully created new API key: ...%s", self.__apikey[-4:])
             # Verify if the API key is valid
@@ -303,14 +306,14 @@ class DiagralAPI:
                 _LOGGER.info(
                     "Successfully verified new API key: ...%s", self.__apikey[-4:]
                 )
-            except AuthenticationError as e:
+            except APIValidationError as e:
                 _LOGGER.error("Created API key failed validation: %s", e)
                 self.__apikey = None
                 raise
         except DiagralAPIError as e:
             error_msg: str = f"Failed to create API key: {e!s}"
             _LOGGER.error(error_msg)
-            raise AuthenticationError(error_msg) from e
+            raise APIKeyCreationError(error_msg) from e
 
         return ApiKeyWithSecret(api_key=self.__apikey, secret_key=self.__secret_key)
 
@@ -329,6 +332,7 @@ class DiagralAPI:
 
         Raises:
             ConfigurationError: If no API key is provided or if the API key is invalid.
+            APIValidationError: If the API key is invalid or not found in the list of valid keys.
 
         """
 
@@ -357,7 +361,7 @@ class DiagralAPI:
         if is_valid:
             _LOGGER.info("API key successfully validated")
         else:
-            raise AuthenticationError(
+            raise APIValidationError(
                 "API key is invalid or not found in the list of valid keys"
             )
 
@@ -415,7 +419,14 @@ class DiagralAPI:
                 if non-ephemeral temporary keys were generated.
 
         Raises:
-            DiagralAPIError: If connection attempt fails or system status check fails.
+            APIKeyCreationError: If creation of temporary API keys fails
+            APIValidationError: If API key validation fails
+            SessionError: If the session is not initialized.
+            DiagralAPIError: If the request results in a 400 status code or other API errors.
+            AuthenticationError: If authentication fails or request results in a 401 or 403 status code.
+            ValidationError: If the request results in a 422 status code.
+            ServerError: If the request results in a 500 or 503 status code.
+            ClientError: If there is a network error.
 
         Note:
             If API credentials are not provided during client initialization, temporary
@@ -427,20 +438,25 @@ class DiagralAPI:
 
         result: TryConnectResult = TryConnectResult()
         api_keys_provided = bool(self.__apikey and self.__secret_key)
-        try:
-            # If API keys are not provided, generate temporary keys
-            if not api_keys_provided:
-                api_key_response: ApiKeyWithSecret = await self.set_apikey()
 
-            # Retrieve system status to validate connection
+        # If API keys are not provided, generate temporary keys
+        if not api_keys_provided:
+            api_key_response: ApiKeyWithSecret = await self.set_apikey()
+
+        # Retrieve system status to validate connection
+        try:
             await self.get_system_status()
-            # If connection is successful, clean up temporary keys if requested (ephemeral)
+        except DiagralAPIError:
             if ephemeral and not api_keys_provided:
                 await self.delete_apikey(apikey=self.__apikey)
-            elif not ephemeral and not api_keys_provided:
-                result.keys = api_key_response
-        except DiagralAPIError as e:
-            raise DiagralAPIError(f"Failed to connect to the system: {e}") from e
+            raise
+
+        # If connection is successful, clean up temporary keys if requested (ephemeral)
+        if ephemeral and not api_keys_provided:
+            await self.delete_apikey(apikey=self.__apikey)
+        elif not ephemeral and not api_keys_provided:
+            result.keys = api_key_response
+
         result.result = True
         return result
 
@@ -602,17 +618,17 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the retrieved system status.
 
         Raises:
-            AuthenticationError: If the API key, secret key, or PIN code is not provided.
+            ConfigurationError: If the API key, secret key, or PIN code is not provided.
 
         """
 
         if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
+            raise ConfigurationError(
                 "API key and secret key required to get system details"
             )
 
         if not self.__pincode:
-            raise AuthenticationError("PIN code required to get system details")
+            raise ConfigurationError("PIN code required to get system details")
 
         _TIMESTAMP = str(int(time.time()))
         _HMAC: str = generate_hmac_signature(
