@@ -447,7 +447,8 @@ class DiagralAPI:
         try:
             await self.get_system_status()
         except DiagralAPIError:
-            if ephemeral and not api_keys_provided:
+            # If connection fails, clean up keys
+            if not api_keys_provided:
                 await self.delete_apikey(apikey=self.__apikey)
             raise
 
