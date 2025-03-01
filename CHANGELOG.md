@@ -1,3 +1,10 @@
+# [1.5.0-beta.5](https://github.com/mguyard/pydiagral/compare/v1.5.0-beta.4...v1.5.0-beta.5) (2025-03-01)
+
+
+### Bug Fixes
+
+* **api:** 🔧 Refactor API key handling and introduce new exceptions ([b1f6d06](https://github.com/mguyard/pydiagral/commit/b1f6d060e52c0c660e760c1dc86c5fa75613e4b2))
+
 # [1.5.0-beta.4](https://github.com/mguyard/pydiagral/compare/v1.5.0-beta.3...v1.5.0-beta.4) (2025-02-28)
 
 
