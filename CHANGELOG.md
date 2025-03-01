@@ -1,3 +1,10 @@
+# [1.5.0-beta.6](https://github.com/mguyard/pydiagral/compare/v1.5.0-beta.5...v1.5.0-beta.6) (2025-03-01)
+
+
+### Bug Fixes
+
+* **api:** 🔧 Clean up API keys on connection failure ([c8f87c6](https://github.com/mguyard/pydiagral/commit/c8f87c6b4e0091775bf948d6471bc8966c9d25ad))
+
 # [1.5.0-beta.5](https://github.com/mguyard/pydiagral/compare/v1.5.0-beta.4...v1.5.0-beta.5) (2025-03-01)
 
 
