@@ -1,3 +1,10 @@
+# [1.5.0-beta.4](https://github.com/mguyard/pydiagral/compare/v1.5.0-beta.3...v1.5.0-beta.4) (2025-02-28)
+
+
+### Bug Fixes
+
+* **api:** 🔧 Update log message for alarm name retrieval ([fca40e4](https://github.com/mguyard/pydiagral/commit/fca40e44bccd59f6399ae2b89a29c2b4fcc80172))
+
 # [1.5.0-beta.3](https://github.com/mguyard/pydiagral/compare/v1.5.0-beta.2...v1.5.0-beta.3) (2025-02-28)
 
 
