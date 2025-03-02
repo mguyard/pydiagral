@@ -15,7 +15,7 @@ import re
 import types
 from typing import TypeVar, Union, get_args, get_origin, get_type_hints
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 #######################################################
@@ -353,6 +353,30 @@ class ApiKeys(CamelCaseModel):
         return cls(
             api_keys=[ApiKey(**key_info) for key_info in data.get("api_keys", [])]
         )
+
+
+@dataclass
+class TryConnectResult(CamelCaseModel):
+    """A class representing the result of an API connection attempt.
+
+    This class is used to store the result of an API connection attempt
+    and the associated API keys if the connection was successful.
+
+    Attributes:
+        result (bool | None): Whether the connection attempt was successful. Defaults to False.
+        keys (ApiKeyWithSecret | None): The API keys associated with the successful connection. Defaults to None.
+
+    Example:
+        >>> result = TryConnectResult(result=True, keys=api_key_obj)
+        >>> print(result.result)
+        True
+        >>> print(result.keys)
+        ApiKeyWithSecret(api_key='abc123', api_secret='xyz789')
+
+    """
+
+    result: bool | None = False
+    keys: ApiKeyWithSecret | None = None
 
 
 #####################################

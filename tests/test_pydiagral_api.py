@@ -8,7 +8,12 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from pydiagral.exceptions import ConfigurationError, DiagralAPIError
+from pydiagral.exceptions import (
+    APIKeyCreationError,
+    APIValidationError,
+    ConfigurationError,
+    DiagralAPIError,
+)
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 import json
@@ -186,7 +191,7 @@ async def test_set_apikey(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        api_keys = await diagral.set_apikey()
+        api_keys: ApiKeyWithSecret = await diagral.set_apikey()
         assert isinstance(api_keys, ApiKeyWithSecret)
         assert api_keys.api_key == API_KEY
         assert api_keys.secret_key == SECRET_KEY
@@ -198,22 +203,22 @@ async def test_set_apikey_with_invalid_user_rights(mock_request):
     """Test the `set_apikey` method of the `DiagralAPI` class when the user has invalid permissions.
 
     This test simulates the scenario where a user with invalid permissions tries to set an API key.
-    It mocks the `mock_request` to raise an `AuthenticationError` indicating that the user does not have the right permissions.
+    It mocks the `mock_request` to raise an `APIKeyCreationError` indicating that the user does not have the right permissions.
 
     Args:
         mock_request (Mock): A mock object for simulating API requests.
 
     Raises:
-        AuthenticationError: If the user does not have the right permissions.
+        APIKeyCreationError: If the user does not have the right permissions.
 
     """
 
-    mock_request.side_effect = AuthenticationError(
+    mock_request.side_effect = APIKeyCreationError(
         "The user does not have the right permissions"
     )
     mock_request.side_effect = [
         ({"access_token": FAKE_TOKEN}, 200),  # Response for login
-        AuthenticationError(
+        APIKeyCreationError(
             "The user does not have the right permissions"
         ),  # Response for set_apikey
     ]
@@ -226,7 +231,7 @@ async def test_set_apikey_with_invalid_user_rights(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(AuthenticationError):
+        with pytest.raises(APIKeyCreationError):
             await diagral.set_apikey()
 
 
@@ -310,14 +315,14 @@ async def test_validate_apikey_not_existing(mock_request):
 
     This test mocks the responses for the login and validate_apikey requests. It first simulates a successful login
     response and then simulates a response for the validate_apikey request with a list of API keys that do not match
-    the provided API key. The test expects an `AuthenticationError` to be raised when the `validate_apikey` method
+    the provided API key. The test expects an `APIValidationError` to be raised when the `validate_apikey` method
     is called with a non-existing API key.
 
     Args:
         mock_request (MagicMock): A mock object to simulate HTTP requests and responses.
 
     Raises:
-        AuthenticationError: If the API key validation fails.
+        APIValidationError: If the API key validation fails.
 
     """
     mock_request.side_effect = [
@@ -336,7 +341,7 @@ async def test_validate_apikey_not_existing(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(AuthenticationError):
+        with pytest.raises(APIValidationError):
             await diagral.validate_apikey()
 
 
@@ -799,10 +804,10 @@ async def test_get_system_status_without_apikey(mock_request):
     1. Set up the mock responses for the login and get_system_status API calls.
     2. Create an instance of `DiagralAPI` with the provided credentials.
     3. Perform the login operation.
-    4. Attempt to get the system status and expect an `AuthenticationError` to be raised.
+    4. Attempt to get the system status and expect an `ConfigurationError` to be raised.
 
     Raises:
-        AuthenticationError: If the API key is not provided or invalid.
+        ConfigurationError: If the API key is not provided or invalid.
 
     """
     mock_request.side_effect = [
@@ -815,7 +820,7 @@ async def test_get_system_status_without_apikey(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(AuthenticationError):
+        with pytest.raises(ConfigurationError):
             await diagral.get_system_status()
 
 
@@ -840,10 +845,10 @@ async def test_get_system_status_without_pincode(mock_request):
         1. Create an instance of `DiagralAPI` with the provided credentials.
         2. Call the `login` method to authenticate and obtain an access token.
         3. Attempt to call the `get_system_status` method without providing a pincode.
-        4. Verify that an `AuthenticationError` is raised, indicating that a pincode is required.
+        4. Verify that an `ConfigurationError` is raised, indicating that a pincode is required.
 
     Expected Result:
-        - An `AuthenticationError` is raised when attempting to get the system status without a pincode.
+        - An `ConfigurationError` is raised when attempting to get the system status without a pincode.
 
     """
     mock_request.side_effect = [
@@ -857,7 +862,7 @@ async def test_get_system_status_without_pincode(mock_request):
         secret_key=SECRET_KEY,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(AuthenticationError):
+        with pytest.raises(ConfigurationError):
             await diagral.get_system_status()
 
 
