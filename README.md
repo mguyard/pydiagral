@@ -122,7 +122,7 @@ Official Diagral API is available [here](https://appv3.tt-monitor.com/emerald/re
 
 The serial number can only be found with physical access to the box. You need to open it, and you will find a label with a QR Code.
 
-On this label, there is a 15-character code that represents the serial number of the box.
+On this label, there is a 14-character code that represents the serial number of the box.
 
 ![How to find your Diagral Serial](https://raw.githubusercontent.com/mguyard/pydiagral/main/docs/how-to-find-diagral-serial.png)
 
