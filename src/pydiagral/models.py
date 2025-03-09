@@ -1250,8 +1250,8 @@ class WebHookNotificationUser(CamelCaseModel):
     """WebHookNotificationUser represents a user who receives webhook notifications.
 
     Attributes:
-        username (str): The username of the user.
-        user_type (str): The type of the user.
+        username (str | None): The username of the user.
+        user_type (str | None): The type of the user.
 
     Example:
         >>> user = WebHookNotificationUser(username="Dark Vador", user_type="owner")
@@ -1262,8 +1262,8 @@ class WebHookNotificationUser(CamelCaseModel):
 
     """
 
-    username: str
-    user_type: str
+    username: str | None = None
+    user_type: str | None = None
 
 
 @dataclass
@@ -1311,7 +1311,7 @@ class WebHookNotification(CamelCaseModel):
     alarm_description: str
     group_index: str
     detail: WebHookNotificationDetail
-    user: WebHookNotificationUser
+    user: WebHookNotificationUser | None
     date_time: datetime
 
     @classmethod
@@ -1372,6 +1372,17 @@ class WebHookNotification(CamelCaseModel):
                 return "STATUS"
             return "UNKNOWN"
 
+        # Create user object only if user data exists
+        user_data = data.get("user")
+        user: WebHookNotificationUser | None = (
+            WebHookNotificationUser(
+                username=user_data.get("username"),
+                user_type=user_data.get("user_type"),
+            )
+            if user_data
+            else None
+        )
+
         return cls(
             transmitter_id=data.get("transmitter_id"),
             alarm_type=alarm_type(data.get("alarm_code")),
@@ -1383,10 +1394,7 @@ class WebHookNotification(CamelCaseModel):
                 device_index=data.get("detail", {}).get("device_index", None),
                 device_label=data.get("detail", {}).get("device_label", None),
             ),
-            user=WebHookNotificationUser(
-                username=data.get("user", {}).get("username", None),
-                user_type=data.get("user", {}).get("user_type", None),
-            ),
+            user=user,
             date_time=datetime.fromisoformat(data["date_time"].replace("Z", "+00:00")),
         )
 
