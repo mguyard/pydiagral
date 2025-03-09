@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/mguyard/pydiagral/compare/v1.5.0...v1.5.1) (2025-03-09)
+
+
+### Bug Fixes
+
+* **models:** 🐛 Allow `username` and `user_type` to be optional ([d0f173c](https://github.com/mguyard/pydiagral/commit/d0f173cae4377cded21a7f4a6bc9ca0d13035df5))
+
 ## [1.5.1-beta.1](https://github.com/mguyard/pydiagral/compare/v1.5.0...v1.5.1-beta.1) (2025-03-09)
 
 
