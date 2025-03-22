@@ -323,7 +323,7 @@
             "canInhibit": false
         }
     ],
-    "grpMarchePresence": [
+    "presenceGroup": [
         1,
         2,
         4
@@ -345,10 +345,10 @@
         "canInhibit": false,
         "parameterGsmSaved": false
     },
-    "grpMarchePartielle1": [
+    "partialGroup1": [
         1
     ],
-    "grpMarchePartielle2": [
+    "partialGroup2": [
         2
     ]
 }
