@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 import logging
 import re
 import types
-from typing import TypeVar, Union, get_args, get_origin, get_type_hints
+from typing import Self, Union, get_args, get_origin, get_type_hints
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -54,9 +54,6 @@ class CamelCaseModel:
 
     """
 
-    # Type variable for the class itself
-    T = TypeVar("T", bound="CamelCaseModel")
-
     def to_dict(self) -> dict:
         """Convert the instance attributes to a dictionary, transforming attribute names.
 
@@ -90,7 +87,7 @@ class CamelCaseModel:
         return result
 
     @classmethod
-    def _from_dict_recursive(cls: type[T], data: dict, target_cls: type[T]) -> T:
+    def _from_dict_recursive(cls, data: dict, target_cls: type[Self]) -> Self:
         """Recursively converts a dictionary to an instance of the specified target class.
 
         This method handles nested dictionaries and lists, converting them to the appropriate
@@ -98,12 +95,12 @@ class CamelCaseModel:
         by handling `Union` types and removing `None` from the type hints.
 
         Args:
-            cls (type[T]): The class that this method is a part of.
+            cls (type[Self]): The class that this method is a part of.
             data (dict): The dictionary to convert.
-            target_cls (type[T]): The target class to convert the dictionary to.
+            target_cls (type[Self]): The target class to convert the dictionary to.
 
         Returns:
-            T: An instance of the target class populated with the data from the dictionary.
+            An instance of the target class populated with the data from the dictionary.
 
         Raises:
             TypeError: If the target class cannot be instantiated with the provided data.
@@ -187,15 +184,15 @@ class CamelCaseModel:
         return target_cls(**init_values)
 
     @classmethod
-    def from_dict(cls: type[T], data: dict) -> T:
+    def from_dict(cls, data: dict) -> Self:
         """Create an instance of the class from a dictionary.
 
         Args:
-            cls (type[T]): The class type to instantiate.
+            cls (type[Self]): The class type to instantiate.
             data (dict): The dictionary containing the data to populate the instance.
 
         Returns:
-            T: An instance of the class populated with the data from the dictionary.
+            An instance of the class populated with the data from the dictionary.
 
         Example:
             >>> data = {"diagral_id": 123, "user_id": 456, "access_token": "abc123"}
