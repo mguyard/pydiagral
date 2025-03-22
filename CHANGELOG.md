@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/mguyard/pydiagral/compare/v1.5.1...v1.5.2) (2025-03-22)
+
+
+### Bug Fixes
+
+* **models:** ✨ Rename fields in `AlarmConfiguration` following Diagral changes ([3a56923](https://github.com/mguyard/pydiagral/commit/3a56923c553d5d4d31508e64c55ada64c3126ba0))
+
 ## [1.5.1](https://github.com/mguyard/pydiagral/compare/v1.5.0...v1.5.1) (2025-03-09)
 
 
