@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -28,7 +28,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.8608ea7d.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
       
       
 
@@ -329,15 +329,6 @@
   <a href="#pydiagral.api.DiagralAPI.__aexit__" class="md-nav__link">
     <span class="md-ellipsis">
       __aexit__
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pydiagral.api.DiagralAPI._request" class="md-nav__link">
-    <span class="md-ellipsis">
-      _request
     </span>
   </a>
   
@@ -756,15 +747,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pydiagral.api.DiagralAPI._request" class="md-nav__link">
-    <span class="md-ellipsis">
-      _request
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#pydiagral.api.DiagralAPI.login" class="md-nav__link">
     <span class="md-ellipsis">
       login
@@ -1101,6 +1083,7 @@ retrieving system status, and controlling various aspects of the alarm system.</
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -1128,6 +1111,7 @@ retrieving system status, and controlling various aspects of the alarm system.</
 <p>This class encapsulates all the functionality for communicating with
 the Diagral alarm system API, including authentication, retrieving
 system status, and controlling various aspects of the alarm system.</p>
+
 
 
 
@@ -3832,7 +3816,7 @@ system status, and controlling various aspects of the alarm system.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3842,6 +3826,7 @@ system status, and controlling various aspects of the alarm system.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -3983,6 +3968,7 @@ system status, and controlling various aspects of the alarm system.</p>
 
         <p>Initialize the aiohttp ClientSession.</p>
 
+
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">118</span>
@@ -4017,6 +4003,7 @@ system status, and controlling various aspects of the alarm system.</p>
 
         <p>Close the aiohttp ClientSession.</p>
 
+
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">124</span>
@@ -4026,401 +4013,6 @@ system status, and controlling various aspects of the alarm system.</p>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Close the aiohttp ClientSession.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">:</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="pydiagral.api.DiagralAPI._request" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">_request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h4>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Make an asynchronous HTTP request to the specified endpoint.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>method</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The HTTP method to use for the request (e.g., 'GET', 'POST').</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>endpoint</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The API endpoint to send the request to.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>timeout</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The timeout for the request in seconds. Defaults to 30.</p>
-              </div>
-            </td>
-            <td>
-                  <code>30</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>**kwargs</code>
-            </td>
-            <td>
-                  <code><span title="any">any</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Additional keyword arguments to pass to the request.</p>
-              </div>
-            </td>
-            <td>
-                  <code>{}</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="tuple">tuple</span>[<span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>], <span title="int">int</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>tuple[dict[str, Any], int]: A tuple containing:
-- dict[str, Any]: The JSON response from the API.
-- int: The HTTP status code of the response.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.SessionError" href="../exceptions/#pydiagral.exceptions.SessionError">SessionError</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the session is not initialized.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.DiagralAPIError" href="../exceptions/#pydiagral.exceptions.DiagralAPIError">DiagralAPIError</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the request results in a 400 status code or other API errors.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the request results in a 401 or 403 status code.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ValidationError" href="../exceptions/#pydiagral.exceptions.ValidationError">ValidationError</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the request results in a 422 status code.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ServerError" href="../exceptions/#pydiagral.exceptions.ServerError">ServerError</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the request results in a 500 or 503 status code.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ClientError" href="../exceptions/#pydiagral.exceptions.ClientError">ClientError</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If there is a network error.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="aiohttp.ContentTypeError">ContentTypeError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the response is not valid JSON.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-            <details class="quote">
-              <summary>Source code in <code>src/pydiagral/api.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
-<span class="normal">177</span>
-<span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
-<span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
-<span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_request</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make an asynchronous HTTP request to the specified endpoint.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        method (str): The HTTP method to use for the request (e.g., &#39;GET&#39;, &#39;POST&#39;).</span>
-<span class="sd">        endpoint (str): The API endpoint to send the request to.</span>
-<span class="sd">        timeout (float, optional): The timeout for the request in seconds. Defaults to 30.</span>
-<span class="sd">        **kwargs (any): Additional keyword arguments to pass to the request.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        tuple[dict[str, Any], int]: A tuple containing:</span>
-<span class="sd">            - dict[str, Any]: The JSON response from the API.</span>
-<span class="sd">            - int: The HTTP status code of the response.</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        SessionError: If the session is not initialized.</span>
-<span class="sd">        DiagralAPIError: If the request results in a 400 status code or other API errors.</span>
-<span class="sd">        AuthenticationError: If the request results in a 401 or 403 status code.</span>
-<span class="sd">        ValidationError: If the request results in a 422 status code.</span>
-<span class="sd">        ServerError: If the request results in a 500 or 503 status code.</span>
-<span class="sd">        ClientError: If there is a network error.</span>
-<span class="sd">        aiohttp.ContentTypeError: If the response is not valid JSON.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">:</span>
-        <span class="n">error_msg</span> <span class="o">=</span> <span class="s2">&quot;Session not initialized from __aenter__.&quot;</span>
-        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="n">SessionError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
-
-    <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">BASE_URL</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">API_VERSION</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">headers</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-        <span class="s2">&quot;Sending </span><span class="si">%s</span><span class="s2"> request to </span><span class="si">%s</span><span class="s2"> with headers </span><span class="si">%s</span><span class="s2"> and data </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="n">method</span><span class="p">,</span>
-        <span class="n">url</span><span class="p">,</span>
-        <span class="n">headers</span><span class="p">,</span>
-        <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="p">{}),</span>
-    <span class="p">)</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span>
-            <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-        <span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
-            <span class="n">response_data</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">400</span><span class="p">:</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="n">HTTPErrorResponse</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="n">DiagralAPIError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Bad request - Detail : </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="n">HTTPErrorResponse</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="n">AuthenticationError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Unauthorized - Invalid or expired token - Detail : </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">403</span><span class="p">:</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="n">HTTPErrorResponse</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="n">AuthenticationError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Forbidden - The user does not have the right permissions - Detail : </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">422</span><span class="p">:</span>
-                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;test: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_data</span><span class="p">)</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="n">HTTPValidationError</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Validation Error - Detail : </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">500</span><span class="p">:</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="n">HTTPErrorResponse</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="n">ServerError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Internal Server Error - Detail : </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">503</span><span class="p">:</span>
-                <span class="n">response</span> <span class="o">=</span> <span class="n">HTTPErrorResponse</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="n">ServerError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Service temporarily unavailable - Detail : </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">&gt;=</span> <span class="mi">400</span><span class="p">:</span>
-                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="s2">&quot;Received response with status code: </span><span class="si">%d</span><span class="s2"> and content </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
-                    <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">(),</span>
-                <span class="p">)</span>
-                <span class="k">raise</span> <span class="n">DiagralAPIError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;API error: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2"> - Error Message : </span><span class="si">{</span><span class="k">await</span><span class="w"> </span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="n">status_code</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="k">return</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">(),</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span>
-    <span class="k">except</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ContentTypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid JSON response: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="k">except</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">ClientError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Network error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4459,7 +4051,7 @@ If the login fails, it raises an appropriate error.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4469,6 +4061,7 @@ If the login fails, it raises an appropriate error.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -4584,7 +4177,12 @@ If the API key is successfully created, it verifies the API key to ensure its va
       <tbody>
           <tr class="doc-section-item">
 <td><code>ApiKeyWithSecret</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.ApiKeyWithSecret" href="../models/#pydiagral.models.ApiKeyWithSecret">ApiKeyWithSecret</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ApiKeyWithSecret
+
+
+  
+      dataclass
+   (pydiagral.models.ApiKeyWithSecret)" href="../models/#pydiagral.models.ApiKeyWithSecret">ApiKeyWithSecret</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4607,7 +4205,7 @@ If the API key is successfully created, it verifies the API key to ensure its va
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.APIKeyCreationError" href="../exceptions/#pydiagral.exceptions.APIKeyCreationError">APIKeyCreationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="APIKeyCreationError (pydiagral.exceptions.APIKeyCreationError)" href="../exceptions/#pydiagral.exceptions.APIKeyCreationError">APIKeyCreationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4617,7 +4215,7 @@ If the API key is successfully created, it verifies the API key to ensure its va
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.APIValidationError" href="../exceptions/#pydiagral.exceptions.APIValidationError">APIValidationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="APIValidationError (pydiagral.exceptions.APIValidationError)" href="../exceptions/#pydiagral.exceptions.APIValidationError">APIValidationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4627,6 +4225,7 @@ If the API key is successfully created, it verifies the API key to ensure its va
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -4817,7 +4416,7 @@ If the API key is successfully created, it verifies the API key to ensure its va
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4827,7 +4426,7 @@ If the API key is successfully created, it verifies the API key to ensure its va
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.APIValidationError" href="../exceptions/#pydiagral.exceptions.APIValidationError">APIValidationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="APIValidationError (pydiagral.exceptions.APIValidationError)" href="../exceptions/#pydiagral.exceptions.APIValidationError">APIValidationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4837,6 +4436,7 @@ If the API key is successfully created, it verifies the API key to ensure its va
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -5004,7 +4604,7 @@ it logs an informational message and sets the <code>apikey</code> and <code>secr
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5014,6 +4614,7 @@ it logs an informational message and sets the <code>apikey</code> and <code>secr
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -5161,7 +4762,12 @@ connection test. Defaults to True.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>TryConnectResult</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.TryConnectResult" href="../models/#pydiagral.models.TryConnectResult">TryConnectResult</a></code>
+                  <code><a class="autorefs autorefs-internal" title="TryConnectResult
+
+
+  
+      dataclass
+   (pydiagral.models.TryConnectResult)" href="../models/#pydiagral.models.TryConnectResult">TryConnectResult</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5185,7 +4791,7 @@ if non-ephemeral temporary keys were generated.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.APIKeyCreationError" href="../exceptions/#pydiagral.exceptions.APIKeyCreationError">APIKeyCreationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="APIKeyCreationError (pydiagral.exceptions.APIKeyCreationError)" href="../exceptions/#pydiagral.exceptions.APIKeyCreationError">APIKeyCreationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5195,7 +4801,7 @@ if non-ephemeral temporary keys were generated.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.APIValidationError" href="../exceptions/#pydiagral.exceptions.APIValidationError">APIValidationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="APIValidationError (pydiagral.exceptions.APIValidationError)" href="../exceptions/#pydiagral.exceptions.APIValidationError">APIValidationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5205,7 +4811,7 @@ if non-ephemeral temporary keys were generated.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.SessionError" href="../exceptions/#pydiagral.exceptions.SessionError">SessionError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SessionError (pydiagral.exceptions.SessionError)" href="../exceptions/#pydiagral.exceptions.SessionError">SessionError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5215,7 +4821,7 @@ if non-ephemeral temporary keys were generated.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.DiagralAPIError" href="../exceptions/#pydiagral.exceptions.DiagralAPIError">DiagralAPIError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="DiagralAPIError (pydiagral.exceptions.DiagralAPIError)" href="../exceptions/#pydiagral.exceptions.DiagralAPIError">DiagralAPIError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5225,7 +4831,7 @@ if non-ephemeral temporary keys were generated.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5235,7 +4841,7 @@ if non-ephemeral temporary keys were generated.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ValidationError" href="../exceptions/#pydiagral.exceptions.ValidationError">ValidationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ValidationError (pydiagral.exceptions.ValidationError)" href="../exceptions/#pydiagral.exceptions.ValidationError">ValidationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5245,7 +4851,7 @@ if non-ephemeral temporary keys were generated.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ServerError" href="../exceptions/#pydiagral.exceptions.ServerError">ServerError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ServerError (pydiagral.exceptions.ServerError)" href="../exceptions/#pydiagral.exceptions.ServerError">ServerError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5255,7 +4861,7 @@ if non-ephemeral temporary keys were generated.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ClientError" href="../exceptions/#pydiagral.exceptions.ClientError">ClientError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ClientError (pydiagral.exceptions.ClientError)" href="../exceptions/#pydiagral.exceptions.ClientError">ClientError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5274,6 +4880,7 @@ keys will be generated (if ephemeral) for the connection test. These keys will b
 - Deleted after the test if ephemeral=True
 - Returned in the result if ephemeral=False</p>
 </details>
+
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">407</span>
@@ -5451,7 +5058,7 @@ session without needing to collect it multiple times.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5461,6 +5068,7 @@ session without needing to collect it multiple times.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -5609,7 +5217,7 @@ session without needing to collect it multiple times.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5625,6 +5233,7 @@ session without needing to collect it multiple times.</p>
   <summary>Note</summary>
   <p>This method will attempt to fetch the configuration if it hasn't been loaded yet.</p>
 </details>
+
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">509</span>
@@ -5705,7 +5314,12 @@ transmitters) from the alarm configuration, and compiles this information into a
       <tbody>
           <tr class="doc-section-item">
 <td><code>dict</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.DeviceList" href="../models/#pydiagral.models.DeviceList">DeviceList</a></code>
+                  <code><a class="autorefs autorefs-internal" title="DeviceList
+
+
+  
+      dataclass
+   (pydiagral.models.DeviceList)" href="../models/#pydiagral.models.DeviceList">DeviceList</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5715,7 +5329,12 @@ transmitters) from the alarm configuration, and compiles this information into a
           </tr>
           <tr class="doc-section-item">
 <td></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.DeviceList" href="../models/#pydiagral.models.DeviceList">DeviceList</a></code>
+                  <code><a class="autorefs autorefs-internal" title="DeviceList
+
+
+  
+      dataclass
+   (pydiagral.models.DeviceList)" href="../models/#pydiagral.models.DeviceList">DeviceList</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5738,7 +5357,7 @@ transmitters) from the alarm configuration, and compiles this information into a
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5748,6 +5367,7 @@ transmitters) from the alarm configuration, and compiles this information into a
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -5860,7 +5480,12 @@ request headers.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemDetails</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemDetails" href="../models/#pydiagral.models.SystemDetails">SystemDetails</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemDetails
+
+
+  
+      dataclass
+   (pydiagral.models.SystemDetails)" href="../models/#pydiagral.models.SystemDetails">SystemDetails</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5883,7 +5508,7 @@ request headers.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5893,6 +5518,7 @@ request headers.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -6017,7 +5643,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6040,7 +5671,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6050,6 +5681,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -6202,7 +5834,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6225,7 +5862,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6235,7 +5872,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6245,6 +5882,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -6393,7 +6031,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6416,7 +6059,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6426,7 +6069,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6436,6 +6079,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -6504,7 +6148,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6527,7 +6176,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6537,7 +6186,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6547,6 +6196,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -6614,7 +6264,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6637,7 +6292,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6647,7 +6302,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6657,6 +6312,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -6751,7 +6407,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6774,7 +6435,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6784,6 +6445,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -6905,7 +6567,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6928,7 +6595,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6938,7 +6605,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6948,6 +6615,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -7162,7 +6830,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7185,7 +6858,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7195,7 +6868,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7205,6 +6878,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -7315,7 +6989,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7338,7 +7017,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7348,7 +7027,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7358,6 +7037,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -7501,7 +7181,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7524,7 +7209,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7534,7 +7219,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7544,6 +7229,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -7742,7 +7428,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7765,7 +7456,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7775,7 +7466,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7785,6 +7476,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -7909,7 +7601,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>SystemStatus</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.SystemStatus" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SystemStatus
+
+
+  
+      dataclass
+   (pydiagral.models.SystemStatus)" href="../models/#pydiagral.models.SystemStatus">SystemStatus</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7932,7 +7629,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7942,7 +7639,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7952,6 +7649,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -8030,7 +7728,12 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.Anomalies" href="../models/#pydiagral.models.Anomalies">Anomalies</a> | <span title="dict">dict</span></code>
+                  <code><a class="autorefs autorefs-internal" title="Anomalies
+
+
+  
+      dataclass
+   (pydiagral.models.Anomalies)" href="../models/#pydiagral.models.Anomalies">Anomalies</a> | <span title="dict">dict</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8053,7 +7756,7 @@ sends a GET request to the system status endpoint.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8063,6 +7766,7 @@ sends a GET request to the system status endpoint.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -8196,6 +7900,7 @@ sends a GET request to the system status endpoint.</p>
       </tbody>
     </table>
 
+
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1036</span>
@@ -8254,7 +7959,12 @@ It requires valid API and secret keys for authentication.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>Rudes</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.Rudes" href="../models/#pydiagral.models.Rudes">Rudes</a></code>
+                  <code><a class="autorefs autorefs-internal" title="Rudes
+
+
+  
+      dataclass
+   (pydiagral.models.Rudes)" href="../models/#pydiagral.models.Rudes">Rudes</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8277,7 +7987,7 @@ It requires valid API and secret keys for authentication.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8287,6 +7997,7 @@ It requires valid API and secret keys for authentication.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -8459,6 +8170,7 @@ It requires valid API and secret keys for authentication.</p>
       </tbody>
     </table>
 
+
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1086</span>
@@ -8527,7 +8239,12 @@ It requires valid API and secret keys for authentication.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>Webhook</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.Webhook" href="../models/#pydiagral.models.Webhook">Webhook</a></code>
+                  <code><a class="autorefs autorefs-internal" title="Webhook
+
+
+  
+      dataclass
+   (pydiagral.models.Webhook)" href="../models/#pydiagral.models.Webhook">Webhook</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8550,7 +8267,7 @@ It requires valid API and secret keys for authentication.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8560,6 +8277,7 @@ It requires valid API and secret keys for authentication.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -8762,7 +8480,12 @@ It requires valid API and secret keys for authentication.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.Webhook" href="../models/#pydiagral.models.Webhook">Webhook</a> | None</code>
+                  <code><a class="autorefs autorefs-internal" title="Webhook
+
+
+  
+      dataclass
+   (pydiagral.models.Webhook)" href="../models/#pydiagral.models.Webhook">Webhook</a> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8785,7 +8508,7 @@ It requires valid API and secret keys for authentication.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ConfigurationError" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ConfigurationError (pydiagral.exceptions.ConfigurationError)" href="../exceptions/#pydiagral.exceptions.ConfigurationError">ConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8795,7 +8518,7 @@ It requires valid API and secret keys for authentication.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8805,7 +8528,7 @@ It requires valid API and secret keys for authentication.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.ValidationError" href="../exceptions/#pydiagral.exceptions.ValidationError">ValidationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ValidationError (pydiagral.exceptions.ValidationError)" href="../exceptions/#pydiagral.exceptions.ValidationError">ValidationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -8815,6 +8538,7 @@ It requires valid API and secret keys for authentication.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -9095,7 +8819,12 @@ It requires valid API and secret keys for authentication.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.Webhook" href="../models/#pydiagral.models.Webhook">Webhook</a> | None</code>
+                  <code><a class="autorefs autorefs-internal" title="Webhook
+
+
+  
+      dataclass
+   (pydiagral.models.Webhook)" href="../models/#pydiagral.models.Webhook">Webhook</a> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -9105,6 +8834,7 @@ It requires valid API and secret keys for authentication.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -9273,7 +9003,12 @@ It requires valid API and secret keys for authentication.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.models.Webhook" href="../models/#pydiagral.models.Webhook">Webhook</a> | None</code>
+                  <code><a class="autorefs autorefs-internal" title="Webhook
+
+
+  
+      dataclass
+   (pydiagral.models.Webhook)" href="../models/#pydiagral.models.Webhook">Webhook</a> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -9283,6 +9018,7 @@ It requires valid API and secret keys for authentication.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -9372,7 +9108,7 @@ It requires valid API and secret keys for authentication.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="pydiagral.exceptions.AuthenticationError" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="AuthenticationError (pydiagral.exceptions.AuthenticationError)" href="../exceptions/#pydiagral.exceptions.AuthenticationError">AuthenticationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -9405,6 +9141,7 @@ It requires valid API and secret keys for authentication.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
@@ -9551,6 +9288,7 @@ It requires valid API and secret keys for authentication.</p>
           </tr>
       </tbody>
     </table>
+
 
             <details class="quote">
               <summary>Source code in <code>src/pydiagral/api.py</code></summary>
