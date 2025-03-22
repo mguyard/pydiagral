@@ -830,11 +830,11 @@ class AlarmConfiguration(CamelCaseModel):
         reading_date (datetime | None): The date when the configuration was read, aliased as "readingDate".
         transceivers (list[TransceiverModel] | None): A list of transceiver models.
         transmitters (list[TransmitterModel] | None): A list of transmitter models.
-        grp_marche_presence (list[int] | None): A list of group marche presence, aliased as "grpMarchePresence".
+        presence_group (list[int] | None): A list of group marche presence, aliased as "presenceGroup".
         installation_state (int | None): The state of the installation, aliased as "installationState".
         central_information (CentralInformation | None): Information about the central unit, aliased as "centralInformation".
-        grp_marche_partielle1 (list[int] | None): A list of group marche partielle 1, aliased as "grpMarchePartielle1".
-        grp_marche_partielle2 (list[int] | None): A list of group marche partielle 2, aliased as "grpMarchePartielle2".
+        partial_group1 (list[int] | None): A list of group marche partielle 1, aliased as "partialGroup1".
+        partial_group2 (list[int] | None): A list of group marche partielle 2, aliased as "partialGroup2".
 
     Example:
         >>> alarm_config = AlarmConfiguration(
@@ -847,11 +847,11 @@ class AlarmConfiguration(CamelCaseModel):
         ...     reading_date=datetime(2023, 10, 1),
         ...     transceivers=[TransceiverModel(uid="11223", type=5)],
         ...     transmitters=[TransmitterModel(uid="44556", type=6)],
-        ...     grp_marche_presence=[1, 2, 3],
+        ...     presence_group=[1, 2, 3],
         ...     installation_state=1,
         ...     central_information=CentralInformation(has_plug=True),
-        ...     grp_marche_partielle1=[4, 5, 6],
-        ...     grp_marche_partielle2=[7, 8, 9]
+        ...     partial_group1=[4, 5, 6],
+        ...     partial_group2=[7, 8, 9]
         ... )
         >>> print(alarm_config.alarm.name)
         Home Alarm
@@ -870,8 +870,8 @@ class AlarmConfiguration(CamelCaseModel):
     )
     transceivers: list[TransceiverModel] | None = None
     transmitters: list[TransmitterModel] | None = None
-    grp_marche_presence: list[int] | None = field(
-        default=None, metadata={"alias": "grpMarchePresence"}
+    presence_group: list[int] | None = field(
+        default=None, metadata={"alias": "presenceGroup"}
     )
     installation_state: int | None = field(
         default=None, metadata={"alias": "installationState"}
@@ -879,11 +879,11 @@ class AlarmConfiguration(CamelCaseModel):
     central_information: CentralInformation | None = field(
         default=None, metadata={"alias": "centralInformation"}
     )
-    grp_marche_partielle1: list[int] | None = field(
-        default=None, metadata={"alias": "grpMarchePartielle1"}
+    partial_group1: list[int] | None = field(
+        default=None, metadata={"alias": "partialGroup1"}
     )
-    grp_marche_partielle2: list[int] | None = field(
-        default=None, metadata={"alias": "grpMarchePartielle2"}
+    partial_group2: list[int] | None = field(
+        default=None, metadata={"alias": "partialGroup2"}
     )
 
 
