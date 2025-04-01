@@ -63,7 +63,7 @@ class DiagralAPI:
         serial_id: str,
         apikey: str | None = None,
         secret_key: str | None = None,
-        pincode: int | None = None,
+        pincode: str | None = None,
     ) -> None:
         """Initialize the DiagralAPI instance.
 
@@ -73,7 +73,7 @@ class DiagralAPI:
             serial_id (str): The serial ID of the Diagral system.
             apikey (str | None, optional): The API key for additional authentication. Defaults to None.
             secret_key (str | None, optional): The secret key for additional authentication. Defaults to None.
-            pincode (int | None, optional): The PIN code for the Diagral system. Defaults to None.
+            pincode (str | None, optional): The PIN code for the Diagral system. Defaults to None.
 
         Raises:
             ConfigurationError: If any required field is empty or invalid.
@@ -104,9 +104,11 @@ class DiagralAPI:
 
         # Validate pincode
         if pincode is not None:
-            if not isinstance(pincode, int):
-                raise ConfigurationError("pincode must be an integer")
-        self.__pincode: int | None = pincode
+            if not isinstance(pincode, str) or (
+                isinstance(pincode, str) and not pincode.isdigit()
+            ):
+                raise ConfigurationError("pincode must be an string of digits")
+        self.__pincode: str | None = pincode
 
         # Initialize session and access_token
         self.session: aiohttp.ClientSession | None = None
@@ -597,7 +599,7 @@ class DiagralAPI:
         )
 
         _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": str(self.__pincode),
+            "X-PIN-CODE": self.__pincode,
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
@@ -640,7 +642,7 @@ class DiagralAPI:
         )
 
         _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": str(self.__pincode),
+            "X-PIN-CODE": self.__pincode,
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
@@ -694,7 +696,7 @@ class DiagralAPI:
         )
 
         _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": str(self.__pincode),
+            "X-PIN-CODE": self.__pincode,
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
@@ -829,7 +831,7 @@ class DiagralAPI:
         )
 
         _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": str(self.__pincode),
+            "X-PIN-CODE": self.__pincode,
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
@@ -936,7 +938,7 @@ class DiagralAPI:
         )
 
         _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": str(self.__pincode),
+            "X-PIN-CODE": self.__pincode,
             "X-HMAC": _HMAC,
             "X-TIMESTAMP": _TIMESTAMP,
             "X-APIKEY": self.__apikey,
