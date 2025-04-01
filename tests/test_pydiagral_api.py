@@ -45,7 +45,7 @@ PASSWORD = "test_password"
 SERIAL_ID = "test_serial_id"
 API_KEY = "test_api_key"
 SECRET_KEY = "test_secret_key"
-PIN_CODE = 1234
+PIN_CODE = "1234"
 FAKE_TOKEN = "test_fake_token"
 WEBHOOK_URL = "https://hook.example.com/webhook"
 
