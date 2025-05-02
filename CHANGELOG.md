@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/mguyard/pydiagral/compare/v1.5.2...v1.6.0) (2025-05-02)
+
+
+### Features
+
+* **api:** ✨ Change `pincode` type from `int` to `str` in `DiagralAPI` ([d5e8afe](https://github.com/mguyard/pydiagral/commit/d5e8afe47c727202b91b9dbd24ac3b60762cfa16))
+
 # [1.6.0-beta.1](https://github.com/mguyard/pydiagral/compare/v1.5.2...v1.6.0-beta.1) (2025-04-01)
 
 
