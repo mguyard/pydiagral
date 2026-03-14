@@ -11,6 +11,14 @@ on:
         description: 'Branch to run pyTest on'
         required: true
         default: 'dev'
+        type: choice
+        options:
+          - main
+          - beta
+          - dev
+  schedule:
+    # Test every week on Monday at 1:00 AM
+    - cron: '0 1 * * 1'
 
 jobs:
   pytest:
