@@ -22,6 +22,7 @@ tests/
 ```
 
 **Key patterns:**
+
 - The private method `_request()` centralizes all HTTP calls and HTTP error handling → never bypass it.
 - `CamelCaseModel` handles bidirectional snake_case ↔ camelCase conversion for all models.
 - All Diagral API calls go through the `DiagralAPI` class — never call the Diagral API directly.
@@ -65,11 +66,11 @@ Full Ruff configuration is in [pyproject.toml](../pyproject.toml). Do not disabl
 
 ## CI/CD
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `lint.yaml` | push `dev` / PR to `main`, `beta` | Ruff linting |
-| `pytest.yaml` | push `dev` / PR to `main`, `beta` | pytest + Codecov upload |
-| `release_and_doc.yaml` | tag push | semantic-release + MkDocs |
+| Workflow               | Trigger                           | Purpose                   |
+| ---------------------- | --------------------------------- | ------------------------- |
+| `lint.yaml`            | push `dev` / PR to `main`, `beta` | Ruff linting              |
+| `pytest.yaml`          | push `dev` / PR to `main`, `beta` | pytest + Codecov upload   |
+| `release_and_doc.yaml` | tag push                          | semantic-release + MkDocs |
 
 **Branch strategy:** `dev` is the development branch. `beta` is pre-release. `main` is stable. All PRs must target `dev`.
 
@@ -84,6 +85,7 @@ Full Ruff configuration is in [pyproject.toml](../pyproject.toml). Do not disabl
 Full specification in [copilot-commit-message-instructions.md](./copilot-commit-message-instructions.md).
 
 **Types and gitmoji:**
+
 - `feat`: ✨ — New features
 - `fix`: 🐛 — Bug fixes
 - `docs`: 📝 — Documentation changes

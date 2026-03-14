@@ -24,7 +24,6 @@ Guidelines:
    - Use bullet points (`*`) for clarity.
    - Clearly describe the motivation, context, or technical details behind the change, if applicable.
 
-
 **Examples:**
 
 ```
