@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to run linter on'
+        description: 'Branch to run pyTest on'
         required: true
         default: 'dev'
 
