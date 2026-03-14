@@ -34,7 +34,7 @@ jobs:
 
       - name: Semantic Release
         id: semantic
-        uses: cycjimmy/semantic-release-action@v4
+        uses: cycjimmy/semantic-release-action@v6
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
