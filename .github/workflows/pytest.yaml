@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to run linter on'
+        description: 'Branch to run pyTest on'
         required: true
         default: 'dev'
 
@@ -23,7 +23,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: '3.12'  # Replace with the version of Python you are using
+        python-version: '3.14'  # Since HA 2026.3, we require Python 3.14
 
     - name: Set the PYPROJECT_VERSION environment variable
       run: echo "PYPROJECT_VERSION=0.1.0-dev" >> $GITHUB_ENV
