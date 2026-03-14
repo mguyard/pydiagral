@@ -2,9 +2,15 @@ name: PyTest
 
 on:
   push:
-    branches: [ dev ]
+    branches:
+      - dev
+    paths:
+      - 'src/pydiagral/**'
   pull_request:
-    branches: [ main, beta ]
+    branches:
+      - dev
+    paths:
+      - 'src/pydiagral/**'
   workflow_dispatch:
     inputs:
       branch:
