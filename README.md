@@ -9,6 +9,9 @@
 	<img src="https://img.shields.io/github/last-commit/mguyard/pydiagral?style=default&color=0080ff" alt="last-commit">
 	<img src="https://img.shields.io/github/languages/top/mguyard/pydiagral?style=default&color=0080ff" alt="repo-top-language">
 	<img src="https://img.shields.io/github/languages/count/mguyard/pydiagral?style=default&color=0080ff" alt="repo-language-count">
+  <a href="https://codecov.io/gh/mguyard/pydiagral" >
+    <img src="https://codecov.io/gh/mguyard/pydiagral/graph/badge.svg?token=CMVSXEUIRW"alt="CodeCov"/>
+  </a>
 <p>
 <p align="center">
     <img src="https://img.shields.io/github/v/release/mguyard/pydiagral" alt="Last Release">
@@ -48,17 +51,14 @@ To use this library, which leverages the Diagral APIs, you must have a Diagral b
 The `DiagralAPI` class offers the following functionalities:
 
 - **Authentication**:
-
   - Connect to the Diagral API with username and password
   - Manage access tokens and their expiration
   - Create, validate, and delete API keys
 
 - **System Configuration**:
-
   - Retrieve alarm configuration
 
 - **System Information**:
-
   - Obtain system details
   - Retrieve the current system status
   - Manage webhooks
