@@ -1,6 +1,6 @@
-# Use the Python 3.12 base image for development containers
-ARG VARIANT="3.12"
-FROM mcr.microsoft.com/devcontainers/python:1-${VARIANT}
+# Use the Python 3.14 base image for development containers
+ARG VARIANT="3.14"
+FROM mcr.microsoft.com/devcontainers/python:3-${VARIANT}
 
 # Configure the shell for RUN commands
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -13,6 +13,9 @@ COPY pyproject.toml ./
 COPY LICENSE ./
 COPY README.md ./
 
+# Set version environment variable required by hatchling
+ENV PYPROJECT_VERSION=0.1.0-dev
+
 # Install pip-tools
 RUN pip install --upgrade pip && pip install pip-tools
 
@@ -24,7 +27,7 @@ RUN pip-compile pyproject.toml -o requirements.txt && \
 RUN pip install -e .[dev]
 
 # Set the default shell to bash instead of sh
-ENV SHELL /bin/bash
+ENV SHELL=/bin/bash
 
 # Keep the container running
 CMD ["bash"]
