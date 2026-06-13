@@ -16,7 +16,8 @@ pydiagral is an asynchronous Python interface for the Diagral alarm system. This
 
 ## Requirement
 
-To use this library, which leverages the Diagral APIs, you must have a Diagral box (DIAG56AAX or DIAG59AAX). This box connects your Diagral alarm system to the internet, enabling interaction with the alarm system via the API. DIAG56AAX is End-of-Sales but you can find more information about the DIAG59AAX [DIAG59AAX](https://www.diagral.fr/2026/01/19/nouvelle-centrale-dalarme-ip-4g-diagral-diag99agx/) available inside the DIAG99AGX.
+To use this library, which leverages the Diagral APIs, you must have a Diagral box (DIAG56AAX or DIAG59AAX). This box connects your Diagral alarm system to the internet, enabling interaction with the alarm system via the API.
+__DIAG56AAX is End of Sales but you can find more information about the [DIAG59AAX](https://www.diagral.fr/2026/01/19/nouvelle-centrale-dalarme-ip-4g-diagral-diag99agx/) available inside the DIAG99AGX.__
 
 ## Key Features
 
