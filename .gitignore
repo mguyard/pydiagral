@@ -163,3 +163,7 @@ cython_debug/
 
 # Exclusion of .DS_Store
 .DS_Store
+
+# Exclusion of diagnostic code files
+.devcontainer/devcontainer-lock.json
+diag_code.py
