@@ -2,15 +2,29 @@ name: PyTest
 
 on:
   push:
-    branches: [ dev ]
+    branches:
+      - dev
+    paths:
+      - 'src/pydiagral/**'
   pull_request:
-    branches: [ main, beta ]
+    branches:
+      - dev
+    paths:
+      - 'src/pydiagral/**'
   workflow_dispatch:
     inputs:
       branch:
         description: 'Branch to run pyTest on'
         required: true
         default: 'dev'
+        type: choice
+        options:
+          - main
+          - beta
+          - dev
+  schedule:
+    # Test every week on Monday at 1:00 AM
+    - cron: '0 1 * * 1'
 
 jobs:
   pytest:
@@ -44,13 +58,13 @@ jobs:
 
     - name: Upload test report
       if: always()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: pytest-report
         path: report.html
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml
@@ -60,7 +74,7 @@ jobs:
 
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: junit.xml
