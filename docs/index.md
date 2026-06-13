@@ -64,7 +64,7 @@ Simply create a `.env` file with the following content:
 USERNAME=your_email@example.com
 PASSWORD=your_password
 SERIAL_ID=your_serial_id
-PIN_CODE=your_pin_code
+PIN_CODE=your_pin_code  // Also named Master Code
 LOG_LEVEL=DEBUG
 ```
 
