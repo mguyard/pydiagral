@@ -91,7 +91,7 @@ pytest -v
 pytest --cov=src/pydiagral --cov-report=term-missing   # fails under 80%
 ```
 
-CI pins `ruff==0.17.2`, the same version as the `dev` extra; bump both together, with the fixes the new release requires. A new ruff release must not be able to turn a green PR red on its own. Ruff takes its target version from `requires-python`. Line length is 88, and `E501` is deliberately ignored. `PLR0917` is ignored because making `DiagralAPI.__init__`'s arguments keyword-only would break callers. `.claude/rules/` is excluded from ruff: ruff also formats Python blocks in Markdown, and those files must stay byte-identical.
+Ruff is pinned once, in the `dev` extra (`ruff==0.17.2`); `lint.yaml` reads the version from there. Bump it there, with the fixes the new release requires. A new ruff release must not be able to turn a green PR red on its own. Ruff takes its target version from `requires-python`. Line length is 88, and `E501` is deliberately ignored. `PLR0917` is ignored because making `DiagralAPI.__init__`'s arguments keyword-only would break callers. `.claude/rules/` is excluded from ruff: ruff also formats Python blocks in Markdown, and those files must stay byte-identical.
 
 There is no Makefile and no `requirements*.txt`.
 
@@ -109,6 +109,8 @@ There is no Makefile and no `requirements*.txt`.
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |
 | `lock.yml` | daily | locks issues and PRs inactive for 30 days |
+
+Dependabot (`.github/dependabot.yml`) checks monthly, targets `dev`, and waits 7 days after a release before proposing it (30 for a pip major). GitHub Actions updates arrive as one grouped PR titled `chore(deps): 🔧 …`. For pip, runtime dependencies use `fix(deps): 🐛` — widening the `aiohttp` range changes published metadata and must release — and the `dev` extra uses `chore(deps-dev): 🔧`. Only constrained requirements get PRs: today `ruff` and `aiohttp`.
 
 Gaps to know about:
 
