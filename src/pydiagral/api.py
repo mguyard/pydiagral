@@ -14,7 +14,7 @@ from typing import Any, Self
 
 import aiohttp
 
-from .constants import API_VERSION, BASE_URL
+from .constants import API_VERSION, BASE_URL, REDACTED
 from .exceptions import (
     APIKeyCreationError,
     APIValidationError,
@@ -129,7 +129,13 @@ class DiagralAPI:
             await self.session.close()
 
     async def _request(
-        self, method: str, endpoint: str, timeout: float = 30, **kwargs
+        self,
+        method: str,
+        endpoint: str,
+        timeout: float = 30,
+        *,
+        log_endpoint: str | None = None,
+        **kwargs,
     ) -> tuple[dict[str, Any], int]:
         """Make an asynchronous HTTP request to the specified endpoint.
 
@@ -137,6 +143,8 @@ class DiagralAPI:
             method (str): The HTTP method to use for the request (e.g., 'GET', 'POST').
             endpoint (str): The API endpoint to send the request to.
             timeout (float, optional): The timeout for the request in seconds. Defaults to 30.
+            log_endpoint (str | None, optional): The endpoint to show in the debug log instead of
+                `endpoint`, when the path itself carries a secret. Defaults to None.
             **kwargs (any): Additional keyword arguments to pass to the request.
 
         Returns:
@@ -164,7 +172,7 @@ class DiagralAPI:
         _LOGGER.debug(
             "Sending %s request to %s with headers %s and data %s",
             method,
-            url,
+            f"{BASE_URL}/{API_VERSION}/{log_endpoint or endpoint}",
             Redacted(headers),
             Redacted(kwargs.get("json", {})),
         )
@@ -397,6 +405,7 @@ class DiagralAPI:
             "DELETE",
             f"users/systems/{self.serial_id}/api_keys/{apikey_to_delete}",
             headers=_HEADERS,
+            log_endpoint=f"users/systems/{self.serial_id}/api_keys/{REDACTED}",
         )
         _LOGGER.info("Successfully deleted API key: ...%s", apikey_to_delete[-4:])
 
