@@ -1,3 +1,10 @@
+# [1.7.0-beta.1](https://github.com/mguyard/pydiagral/compare/v1.6.1...v1.7.0-beta.1) (2026-10-24)
+
+
+### Features
+
+* **api:** ✨ Add a client-level `request_timeout` ([5ce8bda](https://github.com/mguyard/pydiagral/commit/5ce8bdade0ff98e730a745bd80cb95a0e931bd04))
+
 ## [1.6.1](https://github.com/mguyard/pydiagral/compare/v1.6.0...v1.6.1) (2026-10-24)
 
 
