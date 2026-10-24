@@ -32,12 +32,27 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install hatchling twine
 
+      # main, beta and dev require signed commits, and the release commit flows
+      # back to dev. The key's public half is on the maintainer's account, so
+      # the committer e-mail must be one of its verified addresses.
+      - name: Import GPG key for signed release commits
+        uses: crazy-max/ghaction-import-gpg@v7
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
       - name: Semantic Release
         id: semantic
         uses: cycjimmy/semantic-release-action@v6
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          GIT_AUTHOR_NAME: semantic-release-bot
+          GIT_AUTHOR_EMAIL: 5262395+mguyard@users.noreply.github.com
+          GIT_COMMITTER_NAME: semantic-release-bot
+          GIT_COMMITTER_EMAIL: 5262395+mguyard@users.noreply.github.com
           DEBUG: semantic-release:*
 
       - name: Show version
