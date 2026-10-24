@@ -1,3 +1,10 @@
+## [1.6.1-beta.2](https://github.com/mguyard/pydiagral/compare/v1.6.1-beta.1...v1.6.1-beta.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **api:** 🐛 Redact the API key in the `delete_apikey` request log ([4cd1684](https://github.com/mguyard/pydiagral/commit/4cd168429cc75030bc218d961a406c2db90966c3))
+
 ## [1.6.1-beta.1](https://github.com/mguyard/pydiagral/compare/v1.6.0...v1.6.1-beta.1) (2026-10-24)
 
 
