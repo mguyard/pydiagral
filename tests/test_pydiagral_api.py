@@ -27,6 +27,7 @@ from pydiagral.models import (
     AnomalyName,
     ApiKeyWithSecret,
     DeviceList,
+    Rude,
     SystemDetails,
     SystemStatus,
     Webhook,
@@ -2279,6 +2280,36 @@ async def test_delete_webhook_without_apikey(mock_request):
 ##################################
 # Regression tests: logs, errors #
 ##################################
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_set_apikey_with_incomplete_response(mock_request):
+    """Test that a response without keys raises APIKeyCreationError, not ValueError."""
+    mock_request.side_effect = [
+        ({"access_token": FAKE_TOKEN}, 200),
+        ({"api_key": API_KEY}, 200),
+    ]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with pytest.raises(APIKeyCreationError):
+            await diagral.set_apikey()
+
+
+@pytest.mark.parametrize(
+    "build",
+    [
+        lambda: ApiKeyWithSecret(api_key="", secret_key=SECRET_KEY),
+        lambda: ApiKeyWithSecret(api_key=API_KEY, secret_key=""),
+        lambda: Rude(name="Device1", canal="Canal1", mode="INVALID"),
+    ],
+    ids=["empty-api-key", "empty-secret-key", "invalid-rude-mode"],
+)
+def test_model_validation_raises_diagral_api_error(build):
+    """Test that model validation errors derive from DiagralAPIError and stay ValueError."""
+    with pytest.raises(DiagralAPIError) as exc_info:
+        build()
+    assert isinstance(exc_info.value, ValueError)
 
 
 def test_generate_hmac_signature_uses_given_timestamp():

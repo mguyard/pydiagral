@@ -15,6 +15,8 @@ import re
 import types
 from typing import Self, Union, get_args, get_origin, get_type_hints
 
+from .exceptions import ModelValidationError
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -298,11 +300,16 @@ class ApiKeyWithSecret(CamelCaseModel):
     secret_key: str
 
     def __post_init__(self):
-        """Post-initialization processing to validate API key and secret key."""
+        """Post-initialization processing to validate API key and secret key.
+
+        Raises:
+            ModelValidationError: If the API key or the secret key is empty or not a string.
+
+        """
         if not self.api_key or not isinstance(self.api_key, str):
-            raise ValueError("api_key must be a non-empty string")
+            raise ModelValidationError("api_key must be a non-empty string")
         if not self.secret_key or not isinstance(self.secret_key, str):
-            raise ValueError("secret_key must be a non-empty string")
+            raise ModelValidationError("secret_key must be a non-empty string")
 
 
 @dataclass
@@ -1423,10 +1430,15 @@ class Rude(CamelCaseModel):
     mode: str
 
     def __post_init__(self):
-        """Post-initialization processing to validate mode."""
+        """Post-initialization processing to validate mode.
+
+        Raises:
+            ModelValidationError: If mode is not one of ON, PULSE, SWITCH or TIMER.
+
+        """
         valid_modes = {"ON", "PULSE", "SWITCH", "TIMER"}
         if self.mode not in valid_modes:
-            raise ValueError(f"mode must be one of {valid_modes}")
+            raise ModelValidationError(f"mode must be one of {valid_modes}")
 
 
 @dataclass
