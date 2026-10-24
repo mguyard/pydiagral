@@ -424,9 +424,7 @@ class DiagralAPI:
             headers=_HEADERS,
             log_endpoint=f"users/systems/{self.serial_id}/api_keys/{REDACTED}",
         )
-        _LOGGER.info(
-            "Successfully deleted API key: %s", Redacted({"api_key": apikey_to_delete})
-        )
+        _LOGGER.info("Successfully deleted API key: ...%s", apikey_to_delete[-4:])
 
         if apikey is None:
             self.__apikey = None
