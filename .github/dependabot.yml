@@ -30,3 +30,18 @@ updates:
     commit-message:
       prefix: "fix(deps): 🐛 "
       prefix-development: "chore(deps-dev): 🔧 "
+
+  # The release toolchain; release.config.cjs relies on the changelog writer's
+  # API, so every upgrade goes through a PR.
+  - package-ecosystem: npm
+    directory: /.github/release
+    target-branch: dev
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps): 🔧 "
+    groups:
+      semantic-release:
+        patterns: ["*"]
