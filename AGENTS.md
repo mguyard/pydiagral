@@ -104,7 +104,7 @@ There is no Makefile and no `requirements*.txt`.
 | Workflow | Trigger | Purpose |
 |---|---|---|
 | `lint.yaml` | push on `dev`; PR to `dev`, `beta`, `main`; manual | `ruff check` + `ruff format --check`, pinned ruff |
-| `pytest.yaml` | PR to `dev`, any path; push on `dev`, paths `src/pydiagral/**`, `tests/**`, `pyproject.toml`; weekly (Monday 01:00); manual, on a chosen branch | pytest on Python 3.14 with the `dev` extra, coverage gate (80%), coverage and test results to Codecov |
+| `pytest.yaml` | PR to `dev`, `beta`, `main`, any path; push on `dev`, paths `src/pydiagral/**`, `tests/**`, `pyproject.toml`; weekly (Monday 01:00); manual, on a chosen branch | pytest on Python 3.14 with the `dev` extra, coverage gate (80%), coverage and test results to Codecov |
 | `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release, PyPI upload, then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |
@@ -112,7 +112,7 @@ There is no Makefile and no `requirements*.txt`.
 
 Gaps to know about:
 
-- `ruff` and `pytest` are **required checks** on `dev`, so both run on every PR. Do not add a path filter to their `pull_request` trigger: a PR that never reports a required check can never be merged.
+- `ruff` and `pytest` are **required checks** on `dev`, `beta` and `main`, so both run on every PR to those branches. Do not add a path filter to their `pull_request` trigger or drop a branch from it: a PR that never reports a required check can never be merged.
 - The MkDocs build only runs on `main` / `beta`. A broken docstring reference is caught there, not on `dev`.
 - Codecov is informational (`fail_ci_if_error: false`); the coverage gate is `fail_under` in `pyproject.toml`.
 
