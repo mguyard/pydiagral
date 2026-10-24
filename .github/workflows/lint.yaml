@@ -1,26 +1,42 @@
 name: Ruff Linter
 
+# Configuration lives in pyproject.toml, so the same commands reproduce this
+# job locally:
+#   ruff check .
+#   ruff format --check .
+
 on:
   push:
     branches: [ dev ]
   pull_request:
-    branches: [ main, beta ]
+    branches: [ dev, beta, main ]
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to run linter on'
-        required: true
-        default: 'dev'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ruff:
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.branch == 'dev'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
       with:
-        ref: ${{ github.event.inputs.branch || github.ref }}
-    - uses: chartboost/ruff-action@v1
-      with:
-        args: check --output-format=github --verbose
-        src: "."
+        python-version: '3.14'
+
+    # The version pinned in the dev extra is the only source of truth, so that
+    # a Dependabot bump of pyproject.toml also moves CI.
+    - name: Install ruff
+      run: |
+        RUFF=$(python -c 'import tomllib; print(next(d for d in tomllib.load(open("pyproject.toml", "rb"))["project"]["optional-dependencies"]["dev"] if d.startswith("ruff")))')
+        echo "Installing $RUFF"
+        pip install "$RUFF"
+
+    - name: Ruff check
+      run: ruff check --output-format=github .
+
+    - name: Ruff format
+      run: ruff format --check --diff .

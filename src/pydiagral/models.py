@@ -4,16 +4,19 @@ The models include representations for login responses, API key creation and val
 and other related data structures.
 """
 
-# Minimum Python version: 3.10
+# Minimum Python version: 3.11
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field, fields
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import logging
 import re
 import types
 from typing import Self, Union, get_args, get_origin, get_type_hints
+
+from .exceptions import ModelValidationError
+from .utils import Redacted
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -114,7 +117,7 @@ class CamelCaseModel:
 
         """
 
-        logger.debug("Converting data: %s to %s", data, target_cls)
+        logger.debug("Converting data: %s to %s", Redacted(data), target_cls)
 
         logger.debug("Extracted target_cls: %s", target_cls)
         if get_origin(target_cls) is Union:
@@ -144,11 +147,11 @@ class CamelCaseModel:
                 )
                 logger.debug("Extracted field_type: %s", field_type)
 
-            logger.debug("Checking if alias %s is in data: %s", alias, data)
+            logger.debug("Checking if alias %s is in data: %s", alias, Redacted(data))
             if any(alias.lower() == key.lower() for key in data):
                 alias = next(key for key in data if alias.lower() == key.lower())
                 value = data[alias]
-                logger.debug("Found value for %s: %s", alias, value)
+                logger.debug("Found value: %s", Redacted({alias: value}))
 
                 if (
                     isinstance(value, dict)
@@ -180,7 +183,7 @@ class CamelCaseModel:
                 init_values[field_name] = None
                 logger.debug("No value found for %s, setting to None", alias)
 
-        logger.debug("Initialized values for %s: %s", target_cls, init_values)
+        logger.debug("Initialized values for %s: %s", target_cls, Redacted(init_values))
         return target_cls(**init_values)
 
     @classmethod
@@ -298,11 +301,16 @@ class ApiKeyWithSecret(CamelCaseModel):
     secret_key: str
 
     def __post_init__(self):
-        """Post-initialization processing to validate API key and secret key."""
+        """Post-initialization processing to validate API key and secret key.
+
+        Raises:
+            ModelValidationError: If the API key or the secret key is empty or not a string.
+
+        """
         if not self.api_key or not isinstance(self.api_key, str):
-            raise ValueError("api_key must be a non-empty string")
+            raise ModelValidationError("api_key must be a non-empty string")
         if not self.secret_key or not isinstance(self.secret_key, str):
-            raise ValueError("secret_key must be a non-empty string")
+            raise ModelValidationError("secret_key must be a non-empty string")
 
 
 @dataclass
@@ -1152,9 +1160,7 @@ class Anomalies(CamelCaseModel):
             ]
 
         # Convert the created_at field to a datetime object with UTC timezone
-        created_at = datetime.fromisoformat(data["created_at"]).replace(
-            tzinfo=timezone.utc
-        )
+        created_at = datetime.fromisoformat(data["created_at"]).replace(tzinfo=UTC)
 
         return cls(
             created_at=created_at,
@@ -1392,7 +1398,7 @@ class WebHookNotification(CamelCaseModel):
                 device_label=data.get("detail", {}).get("device_label", None),
             ),
             user=user,
-            date_time=datetime.fromisoformat(data["date_time"].replace("Z", "+00:00")),
+            date_time=datetime.fromisoformat(data["date_time"]),
         )
 
 
@@ -1425,10 +1431,15 @@ class Rude(CamelCaseModel):
     mode: str
 
     def __post_init__(self):
-        """Post-initialization processing to validate mode."""
+        """Post-initialization processing to validate mode.
+
+        Raises:
+            ModelValidationError: If mode is not one of ON, PULSE, SWITCH or TIMER.
+
+        """
         valid_modes = {"ON", "PULSE", "SWITCH", "TIMER"}
         if self.mode not in valid_modes:
-            raise ValueError(f"mode must be one of {valid_modes}")
+            raise ModelValidationError(f"mode must be one of {valid_modes}")
 
 
 @dataclass

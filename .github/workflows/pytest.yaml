@@ -6,11 +6,15 @@ on:
       - dev
     paths:
       - 'src/pydiagral/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+  # No path filter, and every protected branch: pytest is a required check on
+  # dev, beta and main, so it must report on every PR targeting them.
   pull_request:
     branches:
       - dev
-    paths:
-      - 'src/pydiagral/**'
+      - beta
+      - main
   workflow_dispatch:
     inputs:
       branch:
@@ -32,25 +36,22 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ github.event.inputs.branch || github.ref }}
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: '3.14'  # Since HA 2026.3, we require Python 3.14
 
     - name: Set the PYPROJECT_VERSION environment variable
       run: echo "PYPROJECT_VERSION=0.1.0-dev" >> $GITHUB_ENV
 
-    - name: Install dependencies
+    - name: Install pydiagral with the dev extra
       run: |
-        python -m pip install --upgrade pip setuptools wheel hatchling
-        pip install pytest pytest-asyncio pytest-html pytest-cov
-
-    - name: Install pydiagral
-      run: |
-        pip install --upgrade hatchling
-        pip install -e .
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
 
     - name: Run tests
       run: |
