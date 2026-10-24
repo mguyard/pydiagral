@@ -2489,3 +2489,29 @@ def test_redact_walks_nested_data():
         "nested": {"Password": "**REDACTED**", "serial_id": SERIAL_ID},
     }
     assert data["X-APIKEY"] == API_KEY
+
+
+async def test_delete_apikey_debug_log_redacts_key_in_url(caplog):
+    """Test that the API key in the DELETE URL does not reach the debug log."""
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        with (
+            patch.object(
+                diagral.session,
+                "request",
+                side_effect=[
+                    _FakeResponse(200, {"access_token": FAKE_TOKEN}),
+                    _FakeResponse(200, {}),
+                ],
+            ) as mock_session_request,
+            caplog.at_level(logging.DEBUG, logger="pydiagral.api"),
+        ):
+            await diagral.delete_apikey()
+
+    assert API_KEY not in caplog.text
+    assert f"api_keys/{API_KEY}" in mock_session_request.call_args.args[1]
