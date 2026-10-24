@@ -4,12 +4,12 @@ The models include representations for login responses, API key creation and val
 and other related data structures.
 """
 
-# Minimum Python version: 3.10
+# Minimum Python version: 3.11
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field, fields
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import logging
 import re
 import types
@@ -1152,9 +1152,7 @@ class Anomalies(CamelCaseModel):
             ]
 
         # Convert the created_at field to a datetime object with UTC timezone
-        created_at = datetime.fromisoformat(data["created_at"]).replace(
-            tzinfo=timezone.utc
-        )
+        created_at = datetime.fromisoformat(data["created_at"]).replace(tzinfo=UTC)
 
         return cls(
             created_at=created_at,
@@ -1392,7 +1390,7 @@ class WebHookNotification(CamelCaseModel):
                 device_label=data.get("detail", {}).get("device_label", None),
             ),
             user=user,
-            date_time=datetime.fromisoformat(data["date_time"].replace("Z", "+00:00")),
+            date_time=datetime.fromisoformat(data["date_time"]),
         )
 
 
