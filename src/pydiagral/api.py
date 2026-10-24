@@ -41,11 +41,11 @@ from .models import (
     TryConnectResult,
     Webhook,
 )
-from .utils import generate_hmac_signature
+from .utils import Redacted, generate_hmac_signature
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
-# Minimum Python version: 3.10
+# Minimum Python version: 3.11
 
 
 class DiagralAPI:
@@ -165,8 +165,8 @@ class DiagralAPI:
             "Sending %s request to %s with headers %s and data %s",
             method,
             url,
-            headers,
-            kwargs.get("json", {}),
+            Redacted(headers),
+            Redacted(kwargs.get("json", {})),
         )
 
         try:
@@ -190,7 +190,6 @@ class DiagralAPI:
                         f"Forbidden - The user does not have the right permissions - Detail : {response.detail}"
                     )
                 if response.status == 422:
-                    _LOGGER.debug("test: %s", response_data)
                     response = HTTPValidationError(**response_data)
                     raise ValidationError(
                         f"Validation Error - Detail : {response.detail}"
@@ -209,7 +208,7 @@ class DiagralAPI:
                     _LOGGER.debug(
                         "Received response with status code: %d and content %s",
                         response.status,
-                        await response.json(),
+                        Redacted(response_data),
                     )
                     raise DiagralAPIError(
                         f"API error: {response.status} - Error Message : {await response.text()}",
@@ -244,9 +243,8 @@ class DiagralAPI:
             response_data, *_ = await self._request(
                 "POST", "users/authenticate/login?vendor=DIAGRAL", json=_DATA
             )
-            _LOGGER.debug("Login Response data: %s", response_data)
+            _LOGGER.debug("Login response data: %s", Redacted(response_data))
             login_response: LoginResponse = LoginResponse.from_dict(response_data)
-            _LOGGER.debug("Login response: %s", login_response)
 
             self.__access_token = login_response.access_token
             if not self.__access_token:
@@ -1033,6 +1031,7 @@ class DiagralAPI:
             if e.status_code == 404 and "No anomalies found" in e.message:
                 _LOGGER.info("No anomalies found for the system")
                 return {}
+            raise
         return Anomalies.from_dict(response_data)
 
     async def delete_anomalies(self, anomaly_id: int) -> None:  # NOT-IMPLEMENTED
@@ -1219,6 +1218,7 @@ class DiagralAPI:
                 raise DiagralAPIError(
                     "No subscription found for the specified serial ID"
                 ) from e
+            raise
         return Webhook.from_dict(response_data)
 
     async def register_webhook(

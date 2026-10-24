@@ -1,6 +1,8 @@
 """Module containing test cases for the DiagralAPI."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+import hashlib
+import hmac
 import logging
 import os
 import sys
@@ -25,10 +27,12 @@ from pydiagral.models import (
     AnomalyName,
     ApiKeyWithSecret,
     DeviceList,
+    Rude,
     SystemDetails,
     SystemStatus,
     Webhook,
 )
+from pydiagral.utils import generate_hmac_signature, redact
 
 # Logger configuration
 api_logger = logging.getLogger("pydiagral.api")
@@ -1801,7 +1805,7 @@ async def test_get_anomalies(mock_request):
         assert isinstance(anomalies.sensors[0], AnomalyDetail)
         assert isinstance(anomalies.sensors[0].anomaly_names[0], AnomalyName)
         assert anomalies.created_at == datetime(
-            2025, 2, 16, 10, 15, 12, 625165, tzinfo=timezone.utc
+            2025, 2, 16, 10, 15, 12, 625165, tzinfo=UTC
         )
         assert anomalies.sensors[0].serial == "12345678"
         assert anomalies.sensors[0].index == 1
@@ -2271,3 +2275,217 @@ async def test_delete_webhook_without_apikey(mock_request):
         await diagral.login()
         with pytest.raises(AuthenticationError):
             await diagral.delete_webhook()
+
+
+##################################
+# Regression tests: logs, errors #
+##################################
+
+
+class _FakeResponse:
+    """Minimal stand-in for an aiohttp response used as an async context manager."""
+
+    def __init__(self, status, body):
+        """Store the status code and JSON body to return."""
+        self.status = status
+        self._body = body
+
+    async def json(self):
+        """Return the JSON body."""
+        return self._body
+
+    async def text(self):
+        """Return the body as text."""
+        return str(self._body)
+
+    async def __aenter__(self):
+        """Enter the context manager."""
+        return self
+
+    async def __aexit__(self, *exc):
+        """Exit the context manager."""
+        return False
+
+
+async def test_request_debug_log_redacts_secrets(caplog):
+    """Test that `_request` logs the request without its credentials."""
+    headers = {
+        "Authorization": f"Bearer {FAKE_TOKEN}",
+        "X-APIKEY": API_KEY,
+        "X-PIN-CODE": PIN_CODE,
+        "X-HMAC": "test_hmac_signature",
+        "X-TIMESTAMP": "1700000000",
+    }
+    body = {"username": USERNAME, "password": PASSWORD, "serial_id": SERIAL_ID}
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with (
+            patch.object(
+                diagral.session, "request", return_value=_FakeResponse(200, {})
+            ),
+            caplog.at_level(logging.DEBUG, logger="pydiagral.api"),
+        ):
+            await diagral._request("POST", "users/me", headers=headers, json=body)  # noqa: SLF001
+
+    for secret in (FAKE_TOKEN, API_KEY, PIN_CODE, PASSWORD, "test_hmac_signature"):
+        assert secret not in caplog.text
+    assert "users/me" in caplog.text
+    assert "1700000000" in caplog.text
+    assert "**REDACTED**" in caplog.text
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_login_debug_log_redacts_access_token(mock_request, caplog):
+    """Test that `login` does not log the access token it receives."""
+    mock_request.side_effect = [({"access_token": FAKE_TOKEN}, 200)]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with caplog.at_level(logging.DEBUG, logger="pydiagral"):
+            await diagral.login()
+
+    assert FAKE_TOKEN not in caplog.text
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_set_apikey_debug_log_redacts_keys(mock_request, caplog):
+    """Test that creating an API key does not log the key or its secret."""
+    mock_request.side_effect = [
+        ({"access_token": FAKE_TOKEN}, 200),
+        ({"api_key": API_KEY, "secret_key": SECRET_KEY}, 200),
+        ({"api_keys": [{"api_key": API_KEY}]}, 200),
+    ]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with caplog.at_level(logging.DEBUG, logger="pydiagral"):
+            await diagral.set_apikey()
+
+    assert SECRET_KEY not in caplog.text
+    assert API_KEY not in caplog.text
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_set_apikey_with_incomplete_response(mock_request):
+    """Test that a response without keys raises APIKeyCreationError, not ValueError."""
+    mock_request.side_effect = [
+        ({"access_token": FAKE_TOKEN}, 200),
+        ({"api_key": API_KEY}, 200),
+    ]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with pytest.raises(APIKeyCreationError):
+            await diagral.set_apikey()
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_anomalies_when_none(mock_request):
+    """Test that a 404 "No anomalies found" returns an empty dict (hass-diagral relies on it)."""
+    mock_request.side_effect = [
+        DiagralAPIError("API error: 404 - No anomalies found", status_code=404)
+    ]
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        assert await diagral.get_anomalies() == {}
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        DiagralAPIError("API error: 404 - Not Found", status_code=404),
+        DiagralAPIError("API error: 502 - Bad Gateway", status_code=502),
+    ],
+    ids=["404-other-message", "502"],
+)
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_anomalies_reraises_other_errors(mock_request, error):
+    """Test that `get_anomalies` re-raises errors it does not handle."""
+    mock_request.side_effect = [error]
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        with pytest.raises(DiagralAPIError) as exc_info:
+            await diagral.get_anomalies()
+    assert exc_info.value is error
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_register_webhook_reraises_other_errors(mock_request):
+    """Test that webhook registration re-raises errors it does not translate."""
+    error = DiagralAPIError("API error: 502 - Bad Gateway", status_code=502)
+    mock_request.side_effect = [error]
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        with pytest.raises(DiagralAPIError) as exc_info:
+            await diagral.register_webhook(
+                webhook_url=WEBHOOK_URL, subscribe_to_state=True
+            )
+    assert exc_info.value is error
+
+
+@pytest.mark.parametrize(
+    "build",
+    [
+        lambda: ApiKeyWithSecret(api_key="", secret_key=SECRET_KEY),
+        lambda: ApiKeyWithSecret(api_key=API_KEY, secret_key=""),
+        lambda: Rude(name="Device1", canal="Canal1", mode="INVALID"),
+    ],
+    ids=["empty-api-key", "empty-secret-key", "invalid-rude-mode"],
+)
+def test_model_validation_raises_diagral_api_error(build):
+    """Test that model validation errors derive from DiagralAPIError and stay ValueError."""
+    with pytest.raises(DiagralAPIError) as exc_info:
+        build()
+    assert isinstance(exc_info.value, ValueError)
+
+
+def test_generate_hmac_signature_uses_given_timestamp():
+    """Test that the signature is computed from the timestamp sent in X-TIMESTAMP."""
+    timestamp = "1700000000"
+    expected = hmac.new(
+        SECRET_KEY.encode(),
+        f"{timestamp}.{SERIAL_ID}.{API_KEY}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    assert (
+        generate_hmac_signature(
+            timestamp=timestamp,
+            serial_id=SERIAL_ID,
+            api_key=API_KEY,
+            secret_key=SECRET_KEY,
+        )
+        == expected
+    )
+
+
+def test_redact_walks_nested_data():
+    """Test that redaction matches keys case-insensitively, recursively, without mutating the input."""
+    data = {
+        "X-APIKEY": API_KEY,
+        "api_keys": [{"api_key": API_KEY, "label": "kept"}],
+        "nested": {"Password": PASSWORD, "serial_id": SERIAL_ID},
+    }
+
+    assert redact(data) == {
+        "X-APIKEY": "**REDACTED**",
+        "api_keys": [{"api_key": "**REDACTED**", "label": "kept"}],
+        "nested": {"Password": "**REDACTED**", "serial_id": SERIAL_ID},
+    }
+    assert data["X-APIKEY"] == API_KEY
