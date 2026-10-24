@@ -643,6 +643,19 @@ LOG_LEVEL=DEBUG
 <p>TIP</p>
 <p>You can customize the actions performed by <a href="https://github.com/mguyard/pydiagral/blob/main/example_code.py">example_code.py</a> by modifying the parameters in the code, as indicated by the <code>CUSTOMIZE THE TESTS</code> section title.</p>
 </blockquote>
+<ol>
+<li>Request timeout</li>
+</ol>
+<p>Each request to the Diagral cloud may take up to 30 seconds. To allow more, set <code>request_timeout</code> (in seconds) when creating the client:</p>
+<pre><code class="language-python">async with DiagralAPI(
+    username=username,
+    password=password,
+    serial_id=serial_id,
+    request_timeout=60,
+) as diagral:
+    ...
+</code></pre>
+<p>To give a single call a shorter deadline, wrap it in <code>asyncio.timeout()</code>. That deadline cannot exceed <code>request_timeout</code>.</p>
 <h2 id="api-structure">API Structure</h2>
 <p>For detailed API documentation, please refer to the following sections:</p>
 <ul>
