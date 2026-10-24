@@ -3,6 +3,30 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    target-branch: dev
     schedule:
-      interval: daily
-    target-branch: 'dev'
+      interval: monthly
+    # A compromised release is usually pulled within days; never adopt one
+    # on its first day.
+    cooldown:
+      default-days: 7
+    # A trailing space stops Dependabot from appending a colon.
+    commit-message:
+      prefix: "chore(deps): 🔧 "
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    # Runtime dependencies are published metadata: widening the aiohttp range
+    # must trigger a release. The dev extra (ruff) must not.
+    commit-message:
+      prefix: "fix(deps): 🐛 "
+      prefix-development: "chore(deps-dev): 🔧 "
