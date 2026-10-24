@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
       
       
 
@@ -447,6 +447,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pydiagral.exceptions.ModelValidationError" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ModelValidationError
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pydiagral.exceptions.ServerError" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -614,6 +625,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pydiagral.exceptions.ModelValidationError" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ModelValidationError
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pydiagral.exceptions.ServerError" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -760,14 +782,14 @@
 <span class="normal">13</span>
 <span class="normal">14</span>
 <span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DiagralAPIError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base exception for Diagral API errors.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Base exception for Diagral API errors."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the DiagralAPIError.</span>
+<span class="w">        </span><span class="sd">"""Initialize the DiagralAPIError.</span>
 
 <span class="sd">        :param message: The error message.</span>
 <span class="sd">        :param status_code: The status code of the error, if any.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">message</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">status_code</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
@@ -814,11 +836,11 @@
 <span class="normal">13</span>
 <span class="normal">14</span>
 <span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the DiagralAPIError.</span>
+<span class="w">    </span><span class="sd">"""Initialize the DiagralAPIError.</span>
 
 <span class="sd">    :param message: The error message.</span>
 <span class="sd">    :param status_code: The status code of the error, if any.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">message</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">status_code</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
@@ -866,7 +888,7 @@
                 <summary>Source code in <code>src/pydiagral/exceptions.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">18</span>
 <span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ConfigurationError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when configuration is invalid.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raised when configuration is invalid."""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -921,7 +943,7 @@
                 <summary>Source code in <code>src/pydiagral/exceptions.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">22</span>
 <span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SessionError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when session is invalid.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raised when session is invalid."""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -976,7 +998,7 @@
                 <summary>Source code in <code>src/pydiagral/exceptions.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">26</span>
 <span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AuthenticationError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when authentication fails.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raised when authentication fails."""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1031,7 +1053,69 @@
                 <summary>Source code in <code>src/pydiagral/exceptions.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">30</span>
 <span class="normal">31</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ValidationError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when validation fails.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raised when validation fails."""</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="pydiagral.exceptions.ModelValidationError" class="doc doc-heading">
+            <code>ModelValidationError</code>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ValidationError (pydiagral.exceptions.ValidationError)" href="#pydiagral.exceptions.ValidationError">ValidationError</a></code>, <code><span title="ValueError">ValueError</span></code></p>
+
+
+
+        <p>Raised when data does not satisfy a model's constraints.</p>
+<p>Also a ValueError, which is what model validation raised before.</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/pydiagral/exceptions.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ModelValidationError</span><span class="p">(</span><span class="n">ValidationError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Raised when data does not satisfy a model's constraints.</span>
+
+<span class="sd">    Also a ValueError, which is what model validation raised before.</span>
+<span class="sd">    """</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1084,9 +1168,9 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pydiagral/exceptions.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
-<span class="normal">35</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ServerError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when server returns 5xx error.&quot;&quot;&quot;</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">41</span>
+<span class="normal">42</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ServerError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Raised when server returns 5xx error."""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1139,9 +1223,9 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pydiagral/exceptions.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">38</span>
-<span class="normal">39</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClientError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when client returns error.&quot;&quot;&quot;</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">45</span>
+<span class="normal">46</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ClientError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Raised when client returns error."""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1194,9 +1278,9 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pydiagral/exceptions.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">42</span>
-<span class="normal">43</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">APIKeyCreationError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when API key creation fails.&quot;&quot;&quot;</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
+<span class="normal">50</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">APIKeyCreationError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Raised when API key creation fails."""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1249,9 +1333,9 @@
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>src/pydiagral/exceptions.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">46</span>
-<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">APIValidationError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when API validation fails.&quot;&quot;&quot;</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">53</span>
+<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">APIValidationError</span><span class="p">(</span><span class="n">DiagralAPIError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Raised when API validation fails."""</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1333,10 +1417,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>
