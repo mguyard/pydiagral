@@ -166,6 +166,7 @@ The pre-commit gate and the PR description template live in the `git-conventions
 - Target `dev`, always.
 - Run the full suite and both ruff commands before opening. Fix everything first.
 - Describe what changed and why, and how it was verified.
+- Before merging a contributor's PR, read every commit message, not only the diff: a `BREAKING CHANGE:` footer anywhere in the branch makes the next release a major, and it cannot be taken back once merged. Ask for it to be removed if the change is not breaking for callers.
 
 ## Testing
 
