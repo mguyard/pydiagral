@@ -1228,8 +1228,8 @@ class WebHookNotificationDetail(CamelCaseModel):
     """WebHookNotificationDetail model represents the details of a webhook notification.
 
     Attributes:
-        device_type (str): The type of the device.
-        device_index (str): The index of the device.
+        device_type (str | None): The type of the device, when provided.
+        device_index (str | None): The index of the device, when provided.
         device_label (str | None): The label of the device, which is optional.
 
     Example:
@@ -1243,8 +1243,8 @@ class WebHookNotificationDetail(CamelCaseModel):
 
     """
 
-    device_type: str
-    device_index: str
+    device_type: str | None = None
+    device_index: str | None = None
     device_label: str | None = None
 
 
@@ -1277,11 +1277,11 @@ class WebHookNotification(CamelCaseModel):
         transmitter_id (str): The ID of the transmitter sending the notification.
         alarm_type (str): The type of alarm, determined based on the alarm code.
         alarm_code (str): The code representing the specific alarm.
-        alarm_description (str): A description of the alarm.
-        group_index (str): The index of the group associated with the alarm.
+        alarm_description (str | None): A description of the alarm, when provided.
+        group_index (str | None): The index of the group associated with the alarm.
         detail (WebHookNotificationDetail): Detailed information about the webhook notification.
             Only during anomaly/alert notification.
-        user (WebHookNotificationUser): The user who trigger the notification.
+        user (WebHookNotificationUser | None): The user who triggered the notification.
             Only during change state notification.
         date_time (datetime): The date and time when the notification was generated.
 
@@ -1311,17 +1311,73 @@ class WebHookNotification(CamelCaseModel):
     transmitter_id: str
     alarm_type: str  # Not included in Diagral answer. Added with below function
     alarm_code: str
-    alarm_description: str
-    group_index: str
+    alarm_description: str | None
+    group_index: str | None
     detail: WebHookNotificationDetail
     user: WebHookNotificationUser | None
     date_time: datetime
 
     @classmethod
     def from_dict(cls, data: dict) -> WebHookNotification:
-        """Create an instance of WebHookNotification from a dictionary."""
+        """Create an instance of WebHookNotification from a dictionary.
 
-        def alarm_type(alarm_code):
+        Missing or null optional fields are accepted. Numeric event codes and
+        device/group indexes are normalized to strings.
+
+        Raises:
+            ModelValidationError: If a required field is missing or the payload is malformed.
+
+        """
+
+        if not isinstance(data, dict):
+            raise ModelValidationError("Webhook notification must be an object")
+        transmitter_id = data.get("transmitter_id")
+        if not isinstance(transmitter_id, str) or not transmitter_id.strip():
+            raise ModelValidationError(
+                "Webhook transmitter_id must be a non-empty string"
+            )
+        code = data.get("alarm_code")
+        if isinstance(code, bool) or not isinstance(code, (str, int)):
+            raise ModelValidationError("Webhook alarm_code must contain digits")
+        try:
+            code_text = str(code)
+            numeric_code = int(code_text)
+        except ValueError:
+            raise ModelValidationError(
+                "Webhook alarm_code must contain digits"
+            ) from None
+        if not code_text.isdigit():
+            raise ModelValidationError("Webhook alarm_code must contain digits")
+        date_time = data.get("date_time")
+        if not isinstance(date_time, str) or not date_time:
+            raise ModelValidationError("Webhook date_time must be an ISO date string")
+        try:
+            parsed_date = datetime.fromisoformat(date_time)
+        except ValueError:
+            raise ModelValidationError(
+                "Webhook date_time must be an ISO date string"
+            ) from None
+
+        def optional_text(
+            value: object, name: str, *, allow_index: bool = False
+        ) -> str | None:
+            """Normalize an optional field or reject an invalid payload value."""
+            if value is None or isinstance(value, str):
+                return value
+            if allow_index and isinstance(value, int) and not isinstance(value, bool):
+                return str(value)
+            raise ModelValidationError(f"Webhook {name} has an invalid type")
+
+        detail_data = data.get("detail")
+        if detail_data is None:
+            detail_data = {}
+        if not isinstance(detail_data, dict):
+            raise ModelValidationError("Webhook detail must be an object or null")
+        user_data = data.get("user")
+        if user_data is not None and not isinstance(user_data, dict):
+            raise ModelValidationError("Webhook user must be an object or null")
+
+        def alarm_type(alarm_code: int) -> str:
             """Determine the type of alarm based on the alarm code."""
             ANOMALY_CODES = [
                 1301,
@@ -1367,38 +1423,49 @@ class WebHookNotification(CamelCaseModel):
             ]
             STATUS_CODES = [1306, 3401, 3407, 1401, 1407]
 
-            if int(alarm_code) in ANOMALY_CODES:
+            if alarm_code in ANOMALY_CODES:
                 return "ANOMALY"
-            if int(alarm_code) in ALERT_CODES:
+            if alarm_code in ALERT_CODES:
                 return "ALERT"
-            if int(alarm_code) in STATUS_CODES:
+            if alarm_code in STATUS_CODES:
                 return "STATUS"
             return "UNKNOWN"
 
         # Create user object only if user data exists
-        user_data = data.get("user")
         user: WebHookNotificationUser | None = (
             WebHookNotificationUser(
-                username=user_data.get("username"),
-                user_type=user_data.get("user_type"),
+                username=optional_text(user_data.get("username"), "user.username"),
+                user_type=optional_text(user_data.get("user_type"), "user.user_type"),
             )
             if user_data
             else None
         )
 
         return cls(
-            transmitter_id=data.get("transmitter_id"),
-            alarm_type=alarm_type(data.get("alarm_code")),
-            alarm_code=data.get("alarm_code"),
-            alarm_description=data.get("alarm_description"),
-            group_index=data.get("group_index"),
+            transmitter_id=transmitter_id,
+            alarm_type=alarm_type(numeric_code),
+            alarm_code=code_text,
+            alarm_description=optional_text(
+                data.get("alarm_description"), "alarm_description"
+            ),
+            group_index=optional_text(
+                data.get("group_index"), "group_index", allow_index=True
+            ),
             detail=WebHookNotificationDetail(
-                device_type=data.get("detail", {}).get("device_type", None),
-                device_index=data.get("detail", {}).get("device_index", None),
-                device_label=data.get("detail", {}).get("device_label", None),
+                device_type=optional_text(
+                    detail_data.get("device_type"), "detail.device_type"
+                ),
+                device_index=optional_text(
+                    detail_data.get("device_index"),
+                    "detail.device_index",
+                    allow_index=True,
+                ),
+                device_label=optional_text(
+                    detail_data.get("device_label"), "detail.device_label"
+                ),
             ),
             user=user,
-            date_time=datetime.fromisoformat(data["date_time"]),
+            date_time=parsed_date,
         )
 
 
