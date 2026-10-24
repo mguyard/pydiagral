@@ -8,11 +8,13 @@ on:
       - 'src/pydiagral/**'
       - 'tests/**'
       - 'pyproject.toml'
-  # No path filter: pytest is a required check on dev, so it must report on
-  # every PR, including those that only touch workflows or docs.
+  # No path filter, and every protected branch: pytest is a required check on
+  # dev, beta and main, so it must report on every PR targeting them.
   pull_request:
     branches:
       - dev
+      - beta
+      - main
   workflow_dispatch:
     inputs:
       branch:
