@@ -1,3 +1,10 @@
+## [1.6.1-beta.3](https://github.com/mguyard/pydiagral/compare/v1.6.1-beta.2...v1.6.1-beta.3) (2026-10-24)
+
+
+### Bug Fixes
+
+* **api:** 🐛 Redact the webhook URL path in debug logs ([a94d590](https://github.com/mguyard/pydiagral/commit/a94d590f3ce811f9d074b3c2742033b22b4d53a9))
+
 ## [1.6.1-beta.2](https://github.com/mguyard/pydiagral/compare/v1.6.1-beta.1...v1.6.1-beta.2) (2026-10-24)
 
 
