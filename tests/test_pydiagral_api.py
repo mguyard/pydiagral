@@ -2515,3 +2515,72 @@ async def test_delete_apikey_debug_log_redacts_key_in_url(caplog):
 
     assert API_KEY not in caplog.text
     assert f"api_keys/{API_KEY}" in mock_session_request.call_args.args[1]
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_webhook_url_path_redacted_in_debug_log(mock_request, caplog):
+    """Test that the webhook id in the webhook URL path does not reach the debug log."""
+    secret_url = "https://hook.example.com/api/webhook/test_secret_webhook_id"
+    mock_request.side_effect = [
+        (
+            {
+                "transmitter_id": "12345",
+                "webhook_url": secret_url,
+                "subscriptions": {
+                    "anomaly": True,
+                    "alert": True,
+                    "state": True,
+                },
+            },
+            200,
+        ),
+    ]
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        with caplog.at_level(logging.DEBUG, logger="pydiagral"):
+            await diagral.register_webhook(
+                webhook_url=secret_url, subscribe_to_state=True
+            )
+
+    assert "test_secret_webhook_id" not in caplog.text
+
+
+async def test_request_debug_log_redacts_webhook_url_path(caplog):
+    """Test that `_request` logs the webhook URL host but not its path."""
+    body = {
+        "webhook_url": "https://hook.example.com/api/webhook/test_secret_webhook_id"
+    }
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with (
+            patch.object(
+                diagral.session, "request", return_value=_FakeResponse(200, {})
+            ),
+            caplog.at_level(logging.DEBUG, logger="pydiagral.api"),
+        ):
+            await diagral._request("POST", "webhooks/x/subscription", json=body)  # noqa: SLF001
+
+    assert "test_secret_webhook_id" not in caplog.text
+    assert "https://hook.example.com/**REDACTED**" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("not-a-url", "**REDACTED**"),
+        (
+            "https://user:secret@hook.example.com:8123/api/webhook/id",
+            "https://hook.example.com:8123/**REDACTED**",
+        ),
+    ],
+    ids=["not-a-url", "credentials-and-port"],
+)
+def test_redact_webhook_url_edge_cases(url, expected):
+    """Test that webhook_url redaction never keeps credentials or a non-URL value."""
+    assert redact({"webhook_url": url}) == {"webhook_url": expected}
