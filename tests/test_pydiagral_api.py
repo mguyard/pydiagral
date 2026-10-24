@@ -32,7 +32,7 @@ from pydiagral.models import (
     SystemStatus,
     Webhook,
 )
-from pydiagral.utils import generate_hmac_signature
+from pydiagral.utils import generate_hmac_signature, redact
 
 # Logger configuration
 api_logger = logging.getLogger("pydiagral.api")
@@ -2282,6 +2282,90 @@ async def test_delete_webhook_without_apikey(mock_request):
 ##################################
 
 
+class _FakeResponse:
+    """Minimal stand-in for an aiohttp response used as an async context manager."""
+
+    def __init__(self, status, body):
+        """Store the status code and JSON body to return."""
+        self.status = status
+        self._body = body
+
+    async def json(self):
+        """Return the JSON body."""
+        return self._body
+
+    async def text(self):
+        """Return the body as text."""
+        return str(self._body)
+
+    async def __aenter__(self):
+        """Enter the context manager."""
+        return self
+
+    async def __aexit__(self, *exc):
+        """Exit the context manager."""
+        return False
+
+
+async def test_request_debug_log_redacts_secrets(caplog):
+    """Test that `_request` logs the request without its credentials."""
+    headers = {
+        "Authorization": f"Bearer {FAKE_TOKEN}",
+        "X-APIKEY": API_KEY,
+        "X-PIN-CODE": PIN_CODE,
+        "X-HMAC": "test_hmac_signature",
+        "X-TIMESTAMP": "1700000000",
+    }
+    body = {"username": USERNAME, "password": PASSWORD, "serial_id": SERIAL_ID}
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with (
+            patch.object(
+                diagral.session, "request", return_value=_FakeResponse(200, {})
+            ),
+            caplog.at_level(logging.DEBUG, logger="pydiagral.api"),
+        ):
+            await diagral._request("POST", "users/me", headers=headers, json=body)  # noqa: SLF001
+
+    for secret in (FAKE_TOKEN, API_KEY, PIN_CODE, PASSWORD, "test_hmac_signature"):
+        assert secret not in caplog.text
+    assert "users/me" in caplog.text
+    assert "1700000000" in caplog.text
+    assert "**REDACTED**" in caplog.text
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_login_debug_log_redacts_access_token(mock_request, caplog):
+    """Test that `login` does not log the access token it receives."""
+    mock_request.side_effect = [({"access_token": FAKE_TOKEN}, 200)]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with caplog.at_level(logging.DEBUG, logger="pydiagral"):
+            await diagral.login()
+
+    assert FAKE_TOKEN not in caplog.text
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_set_apikey_debug_log_redacts_keys(mock_request, caplog):
+    """Test that creating an API key does not log the key or its secret."""
+    mock_request.side_effect = [
+        ({"access_token": FAKE_TOKEN}, 200),
+        ({"api_key": API_KEY, "secret_key": SECRET_KEY}, 200),
+        ({"api_keys": [{"api_key": API_KEY}]}, 200),
+    ]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with caplog.at_level(logging.DEBUG, logger="pydiagral"):
+            await diagral.set_apikey()
+
+    assert SECRET_KEY not in caplog.text
+    assert API_KEY not in caplog.text
+
+
 @patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
 async def test_set_apikey_with_incomplete_response(mock_request):
     """Test that a response without keys raises APIKeyCreationError, not ValueError."""
@@ -2389,3 +2473,19 @@ def test_generate_hmac_signature_uses_given_timestamp():
         )
         == expected
     )
+
+
+def test_redact_walks_nested_data():
+    """Test that redaction matches keys case-insensitively, recursively, without mutating the input."""
+    data = {
+        "X-APIKEY": API_KEY,
+        "api_keys": [{"api_key": API_KEY, "label": "kept"}],
+        "nested": {"Password": PASSWORD, "serial_id": SERIAL_ID},
+    }
+
+    assert redact(data) == {
+        "X-APIKEY": "**REDACTED**",
+        "api_keys": [{"api_key": "**REDACTED**", "label": "kept"}],
+        "nested": {"Password": "**REDACTED**", "serial_id": SERIAL_ID},
+    }
+    assert data["X-APIKEY"] == API_KEY

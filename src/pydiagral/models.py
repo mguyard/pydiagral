@@ -16,6 +16,7 @@ import types
 from typing import Self, Union, get_args, get_origin, get_type_hints
 
 from .exceptions import ModelValidationError
+from .utils import Redacted
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -116,7 +117,7 @@ class CamelCaseModel:
 
         """
 
-        logger.debug("Converting data: %s to %s", data, target_cls)
+        logger.debug("Converting data: %s to %s", Redacted(data), target_cls)
 
         logger.debug("Extracted target_cls: %s", target_cls)
         if get_origin(target_cls) is Union:
@@ -146,11 +147,11 @@ class CamelCaseModel:
                 )
                 logger.debug("Extracted field_type: %s", field_type)
 
-            logger.debug("Checking if alias %s is in data: %s", alias, data)
+            logger.debug("Checking if alias %s is in data: %s", alias, Redacted(data))
             if any(alias.lower() == key.lower() for key in data):
                 alias = next(key for key in data if alias.lower() == key.lower())
                 value = data[alias]
-                logger.debug("Found value for %s: %s", alias, value)
+                logger.debug("Found value: %s", Redacted({alias: value}))
 
                 if (
                     isinstance(value, dict)
@@ -182,7 +183,7 @@ class CamelCaseModel:
                 init_values[field_name] = None
                 logger.debug("No value found for %s, setting to None", alias)
 
-        logger.debug("Initialized values for %s: %s", target_cls, init_values)
+        logger.debug("Initialized values for %s: %s", target_cls, Redacted(init_values))
         return target_cls(**init_values)
 
     @classmethod
