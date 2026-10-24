@@ -58,7 +58,7 @@ example_code.py     # Manual end-to-end script, reads .env
 - When catching `DiagralAPIError` to translate a specific error, **re-raise everything else** — falling through leaves the response variable unbound.
 - Logging: `_LOGGER = logging.getLogger(__name__)` in `api.py`; `models.py` uses `logger`. Never `print()` in `src/`.
 - All I/O is `async`/`await`. No blocking calls.
-- **Never log a secret**: password, access token, API key, secret key, PIN code, HMAC signature. Wrap anything that may carry one — headers, request bodies, API responses — in `utils.Redacted(...)` when logging it: values of the keys in `constants.SENSITIVE_KEYS` become `**REDACTED**`, and the copy is only made when the record is formatted. Redact rather than drop the line: users attach debug logs to bug reports. A new secret field name goes into `SENSITIVE_KEYS`.
+- **Never log a secret**: password, access token, API key, secret key, PIN code, HMAC signature. Wrap anything that may carry one — headers, request bodies, API responses — in `utils.Redacted(...)` when logging it: values of the keys in `constants.SENSITIVE_KEYS` become `**REDACTED**`, and the copy is only made when the record is formatted. Redact rather than drop the line: users attach debug logs to bug reports. A new secret field name goes into `SENSITIVE_KEYS`; a URL field whose path is a secret (`webhook_url`) goes into `SENSITIVE_URL_PATH_KEYS`, which keeps the scheme and host. When the URL path itself carries a secret (`delete_apikey`), pass `log_endpoint=` to `_request()` with that segment replaced by `REDACTED`.
 - Constants live in `constants.py`. No magic strings or numbers inline.
 
 ## Contracts with hass-diagral
@@ -105,7 +105,7 @@ There is no Makefile and no `requirements*.txt`.
 |---|---|---|
 | `lint.yaml` | push on `dev`; PR to `dev`, `beta`, `main`; manual | `ruff check` + `ruff format --check`, pinned ruff |
 | `pytest.yaml` | PR to `dev`, `beta`, `main`, any path; push on `dev`, paths `src/pydiagral/**`, `tests/**`, `pyproject.toml`; weekly (Monday 01:00); manual, on a chosen branch | pytest on Python 3.14 with the `dev` extra, coverage gate (80%), coverage and test results to Codecov |
-| `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release, PyPI upload, then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
+| `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release with GPG-signed release commits, PyPI upload through the Trusted Publisher (OIDC, no token), then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |
 | `lock.yml` | daily | locks issues and PRs inactive for 30 days |

@@ -1,3 +1,21 @@
+## [1.6.1-beta.2](https://github.com/mguyard/pydiagral/compare/v1.6.1-beta.1...v1.6.1-beta.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **api:** 🐛 Redact the API key in the `delete_apikey` request log ([4cd1684](https://github.com/mguyard/pydiagral/commit/4cd168429cc75030bc218d961a406c2db90966c3))
+
+## [1.6.1-beta.1](https://github.com/mguyard/pydiagral/compare/v1.6.0...v1.6.1-beta.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **api:** 🐛 Re-raise errors not handled by anomaly and webhook calls ([e433ed6](https://github.com/mguyard/pydiagral/commit/e433ed6e552c35bc598ac136cf9efa7fbe9e0200))
+* **api:** 🐛 Redact credentials in debug logs ([c1f4e88](https://github.com/mguyard/pydiagral/commit/c1f4e880369e451f81e96a9b4fc2c366c53d8e12))
+* **deps:** 🐛 Require Python 3.11, already needed by `typing.Self` ([d704fa9](https://github.com/mguyard/pydiagral/commit/d704fa9db6cab9d562c982e6ee7fb593b87ca682))
+* **models:** 🐛 Raise `ModelValidationError` instead of `ValueError` ([55f4421](https://github.com/mguyard/pydiagral/commit/55f44216d9059db1e2bf3ee08a875a63539027fe))
+* **utils:** 🐛 Sign HMAC requests with the timestamp sent in the header ([5728f35](https://github.com/mguyard/pydiagral/commit/5728f35defc110ac415e95419504c997b572fbfd))
+
 # [1.6.0](https://github.com/mguyard/pydiagral/compare/v1.5.2...v1.6.0) (2025-05-02)
 
 
