@@ -67,8 +67,9 @@ These are relied on by the integration. Changing any of them is a breaking chang
 
 - **Import paths**, not only `__all__`: hass-diagral imports from `pydiagral`, `pydiagral.api`, `pydiagral.exceptions` and `pydiagral.models` (`AlarmConfiguration`, `Anomalies`, `AnomalyDetail`, `ApiKeyWithSecret`, `DeviceInfos`, `DeviceList`, `Group`, `SystemStatus`, `TryConnectResult`, `Webhook`, `WebHookNotification`, `WebHookNotificationUser`).
 - **`pydiagral.api.BASE_URL` is read at call time.** `_request()` looks the name up in the `api` module on every request, and hass-diagral's fake Diagral cloud reassigns `pydiagral.api.BASE_URL` to redirect traffic. Do not move the lookup to `constants.BASE_URL`, cache it in `__init__`, or bind it as a default argument.
-- **Error strings.** hass-diagral matches `"No subscription found for"` in the `DiagralAPIError` raised by the webhook actions. `get_anomalies()` returns `{}` when the API answers 404 with `"No anomalies found"`, and hass-diagral relies on that empty result.
+- **Error strings.** hass-diagral matches `"No subscription found for"` in the `DiagralAPIError` raised by `get_webhook()` when no subscription exists — so that 404's message must keep Diagral's detail — and by the webhook register/update actions. `get_anomalies()` returns `{}` when the API answers 404 with `"No anomalies found"`, and hass-diagral relies on that empty result.
 - **Every exception the library raises derives from `DiagralAPIError`**, so a single `except DiagralAPIError` covers it. aiohttp errors are wrapped by `_request()`.
+- **`request_timeout`** is set by hass-diagral as a ceiling (≥ 60 s); it drives each attempt's deadline below it with `asyncio.timeout()`. Keep it keyword-only and applied to every request.
 - **Return values used despite their annotation.** `get_configuration()` is annotated `-> None` but returns the `AlarmConfiguration`, and hass-diagral uses it. Fix the annotation, never the return.
 
 ## Secrets
@@ -105,12 +106,12 @@ There is no Makefile and no `requirements*.txt`.
 |---|---|---|
 | `lint.yaml` | push on `dev`; PR to `dev`, `beta`, `main`; manual | `ruff check` + `ruff format --check`, pinned ruff |
 | `pytest.yaml` | PR to `dev`, `beta`, `main`, any path; push on `dev`, paths `src/pydiagral/**`, `tests/**`, `pyproject.toml`; weekly (Monday 01:00); manual, on a chosen branch | pytest on Python 3.14 with the `dev` extra, coverage gate (80%), coverage and test results to Codecov |
-| `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release with GPG-signed release commits, PyPI upload through the Trusted Publisher (OIDC, no token), then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
+| `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release (toolchain pinned in `.github/release/`) with GPG-signed release commits, PyPI upload through the Trusted Publisher (OIDC, no token), then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |
 | `lock.yml` | daily | locks issues and PRs inactive for 30 days |
 
-Dependabot (`.github/dependabot.yml`) checks monthly, targets `dev`, and waits 7 days after a release before proposing it (30 for a pip major). GitHub Actions updates arrive as one grouped PR titled `chore(deps): 🔧 …`. For pip, runtime dependencies use `fix(deps): 🐛` — widening the `aiohttp` range changes published metadata and must release — and the `dev` extra uses `chore(deps-dev): 🔧`. Only constrained requirements get PRs: today `ruff` and `aiohttp`.
+Dependabot (`.github/dependabot.yml`) checks monthly, targets `dev`, and waits 7 days after a release before proposing it (30 for a pip major). GitHub Actions updates arrive as one grouped PR titled `chore(deps): 🔧 …`. For pip, runtime dependencies use `fix(deps): 🐛` — widening the `aiohttp` range changes published metadata and must release — and the `dev` extra uses `chore(deps-dev): 🔧`. Only constrained requirements get PRs: today `ruff` and `aiohttp`. The semantic-release toolchain (`.github/release/package-lock.json`) arrives as one grouped `chore(deps): 🔧 …` PR; dry-run it before merging, since a release only runs on `beta` and `main`.
 
 Gaps to know about:
 
@@ -123,7 +124,7 @@ Gaps to know about:
 | Branch | Role |
 |---|---|
 | `dev` | Development. **All PRs target this branch.** Dependabot targets it too. |
-| `beta` | Prereleases, published by semantic-release (`.releaserc`) |
+| `beta` | Prereleases, published by semantic-release (`release.config.cjs`) |
 | `main` | Stable releases, published by semantic-release. Repository default. |
 
 Changes flow `dev` → `beta` → `main` through PRs. Never commit or push directly to any of them. Always confirm the current branch with `git branch --show-current` before committing.
@@ -153,7 +154,9 @@ Tests: ✅ N passed, ❌ 0 failed, ⚠️ 0 errors
 - The body explains **why**. Never restate what the diff already shows.
 - A breaking change to a contract listed above takes a `BREAKING CHANGE:` footer.
 
-`.releaserc` uses semantic-release's default (Angular) presets: only `feat`, `fix` and `perf` — plus reverts and breaking changes — trigger a release and appear in `CHANGELOG.md`. A `docs`, `refactor` or `chore` commit is invisible to users and to PyPI.
+`release.config.cjs` uses semantic-release's default (Angular) presets: only `feat`, `fix` and `perf` — plus reverts and breaking changes — trigger a release and appear in `CHANGELOG.md`. A `docs`, `refactor` or `chore` commit is invisible to users and to PyPI.
+
+The changelog credits contributors: an author other than the maintainer appears as `(by …)`, and each `Co-authored-by:` trailer as `(co-authored by …)` — a GitHub login when the address is a noreply one, the name otherwise, never an e-mail address, and never an assistant or a bot. When carrying over someone else's work, add `Co-authored-by: Name <id+login@users.noreply.github.com>` so they are credited.
 
 The pre-commit gate and the PR description template live in the `git-conventions` skill.
 

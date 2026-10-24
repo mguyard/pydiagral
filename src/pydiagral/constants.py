@@ -3,6 +3,9 @@
 BASE_URL = "https://appv3.tt-monitor.com/emerald"
 API_VERSION = "v1"
 
+# Seconds allowed for a whole request (connection, sending, response).
+DEFAULT_REQUEST_TIMEOUT = 30
+
 # Header and field names whose values are replaced by REDACTED in debug logs.
 # Compared lowercase.
 SENSITIVE_KEYS = frozenset(
