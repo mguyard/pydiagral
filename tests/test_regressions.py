@@ -102,6 +102,8 @@ async def test_http_status_determines_error_even_with_non_json_body(
     with pytest.raises(exception) as caught:
         await api._request("GET", "fake")  # noqa: SLF001 - exercise the transport boundary.
     assert caught.value.status_code == status
+    assert "Diagral" in str(caught.value)
+    assert f"(HTTP {status})" in str(caught.value)
     if status in (401, 403, 422) or status >= 500:
         response.json.assert_not_awaited()
 
@@ -120,16 +122,22 @@ async def test_empty_success_does_not_parse_json(api: DiagralAPI, status: int) -
 async def test_success_requires_valid_object(api: DiagralAPI, payload: Any) -> None:
     """Reject JSON responses which cannot be mapped to API models."""
     install_response(api, 200, payload)
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as caught:
         await api._request("GET", "fake")  # noqa: SLF001
+    assert caught.value.status_code == 200
+    assert "Diagral" in str(caught.value)
+    assert "(HTTP 200)" in str(caught.value)
 
 
 @pytest.mark.asyncio
 async def test_success_rejects_malformed_json(api: DiagralAPI) -> None:
     """Report invalid JSON separately from HTTP and network failures."""
     install_response(api, 200, error=ValueError("invalid JSON"))
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as caught:
         await api._request("GET", "fake")  # noqa: SLF001
+    assert caught.value.status_code == 200
+    assert "Diagral" in str(caught.value)
+    assert "(HTTP 200)" in str(caught.value)
 
 
 @pytest.mark.asyncio
@@ -174,6 +182,34 @@ async def test_no_anomalies_and_subscription_conflict_are_preserved(
     )
     with pytest.raises(DiagralAPIError, match="subscription already exists"):
         await api.register_webhook("https://example.com/hook", subscribe_to_state=True)
+
+
+@pytest.mark.parametrize(
+    ("detail", "missing_subscription"),
+    [
+        ("No subscription found for private-serial", True),
+        ("Unknown endpoint for private-serial", False),
+    ],
+    ids=["missing-subscription", "unrelated-404"],
+)
+async def test_get_webhook_preserves_missing_subscription_without_private_detail(
+    api: DiagralAPI, detail: str, missing_subscription: bool
+) -> None:
+    """Keep HA's no-subscription signal through the real HTTP error handler."""
+    install_response(api, 404, {"detail": detail})
+    with pytest.raises(DiagralAPIError) as caught:
+        await api.get_webhook()
+    message = str(caught.value)
+    assert ("No subscription found for" in message) is missing_subscription
+    assert caught.value.status_code == 404
+    assert "Diagral" in message
+    assert "(HTTP 404)" in message
+    assert "private-serial" not in message
+    assert "private-api-key" not in message
+    api.session.request.assert_called_once()
+    method, url = api.session.request.call_args.args
+    assert method == "GET"
+    assert url.endswith("/webhooks/fake-serial/subscription")
 
 
 @pytest.mark.asyncio

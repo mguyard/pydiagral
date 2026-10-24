@@ -185,15 +185,17 @@ class DiagralAPI:
                 if status >= 400:
                     if status in (401, 403):
                         raise AuthenticationError(
-                            "Authentication rejected by Diagral", status_code=status
+                            f"Diagral authentication error (HTTP {status})",
+                            status_code=status,
                         )
                     if status >= 500:
                         raise ServerError(
-                            "Diagral service unavailable", status_code=status
+                            f"Diagral service error (HTTP {status})", status_code=status
                         )
                     if status == 422:
                         raise ValidationError(
-                            "Diagral rejected the request data", status_code=status
+                            f"Diagral request validation error (HTTP {status})",
+                            status_code=status,
                         )
                     # Error pages may be HTML, empty or malformed JSON. The HTTP
                     # status still determines whether retry/authentication applies.
@@ -214,27 +216,30 @@ class DiagralAPI:
                             for message in (
                                 "No anomalies found",
                                 "Subscription already exists",
+                                "No subscription found for",
                                 "There is no subscription for",
                             )
                             if isinstance(detail, str) and message in detail
                         ),
                         None,
                     )
-                    raise DiagralAPIError(
-                        known_detail or f"Diagral HTTP error {status}",
-                        status_code=status,
-                    )
+                    error_message = f"Diagral service error (HTTP {status})"
+                    if known_detail:
+                        error_message = f"{error_message}: {known_detail}"
+                    raise DiagralAPIError(error_message, status_code=status)
                 if status in (204, 205):
                     return {}, status
                 try:
                     response_data = await response.json()
                 except (aiohttp.ContentTypeError, ValueError):
                     raise ValidationError(
-                        "Invalid JSON response from Diagral", status_code=status
+                        f"Invalid JSON response from Diagral (HTTP {status})",
+                        status_code=status,
                     ) from None
                 if not isinstance(response_data, dict):
                     raise ValidationError(
-                        "Expected a JSON object from Diagral", status_code=status
+                        f"Expected a JSON object from Diagral (HTTP {status})",
+                        status_code=status,
                     )
                 return response_data, status
         except TimeoutError:
