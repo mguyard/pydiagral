@@ -13,6 +13,7 @@ SENSITIVE_KEYS = frozenset(
         "password",
         "pincode",
         "secret_key",
+        "webhook_url",
         "x-apikey",
         "x-hmac",
         "x-pin-code",

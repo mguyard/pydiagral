@@ -14,7 +14,7 @@ from typing import Any, Self
 
 import aiohttp
 
-from .constants import API_VERSION, BASE_URL
+from .constants import API_VERSION, BASE_URL, REDACTED
 from .exceptions import (
     APIKeyCreationError,
     APIValidationError,
@@ -22,6 +22,7 @@ from .exceptions import (
     ClientError,
     ConfigurationError,
     DiagralAPIError,
+    ModelValidationError,
     ServerError,
     SessionError,
     ValidationError,
@@ -32,8 +33,6 @@ from .models import (
     ApiKeys,
     ApiKeyWithSecret,
     DeviceList,
-    HTTPErrorResponse,
-    HTTPValidationError,
     LoginResponse,
     Rudes,
     SystemDetails,
@@ -148,10 +147,10 @@ class DiagralAPI:
             SessionError: If the session is not initialized.
             DiagralAPIError: If the request results in a 400 status code or other API errors.
             AuthenticationError: If the request results in a 401 or 403 status code.
-            ValidationError: If the request results in a 422 status code.
-            ServerError: If the request results in a 500 or 503 status code.
-            ClientError: If there is a network error.
-            aiohttp.ContentTypeError: If the response is not valid JSON.
+            ValidationError: If the request results in a 422 status code or a successful
+                response is not a JSON object.
+            ServerError: If the request results in a 5xx status code.
+            ClientError: If there is a network error or timeout.
 
         """
         if not self.session:
@@ -161,10 +160,14 @@ class DiagralAPI:
 
         url: str = f"{BASE_URL}/{API_VERSION}/{endpoint}"
         headers: Any = kwargs.pop("headers", {})
+        # The API-key deletion endpoint embeds its credential in the URL path.
+        logged_url = (
+            url.rsplit("/", 1)[0] + f"/{REDACTED}" if "/api_keys/" in endpoint else url
+        )
         _LOGGER.debug(
             "Sending %s request to %s with headers %s and data %s",
             method,
-            url,
+            logged_url,
             Redacted(headers),
             Redacted(kwargs.get("json", {})),
         )
@@ -173,52 +176,69 @@ class DiagralAPI:
             async with self.session.request(
                 method, url, headers=headers, timeout=timeout, **kwargs
             ) as response:
-                response_data: Any = await response.json()
-                if response.status == 400:
-                    response = HTTPErrorResponse(**response_data)
+                status = response.status
+                _LOGGER.debug("Received Diagral HTTP status %s", status)
+                if status >= 400:
+                    if status in (401, 403):
+                        raise AuthenticationError(
+                            "Authentication rejected by Diagral", status_code=status
+                        )
+                    if status >= 500:
+                        raise ServerError(
+                            "Diagral service unavailable", status_code=status
+                        )
+                    if status == 422:
+                        raise ValidationError(
+                            "Diagral rejected the request data", status_code=status
+                        )
+                    # Error pages may be HTML, empty or malformed JSON. The HTTP
+                    # status still determines whether retry/authentication applies.
+                    try:
+                        error_data = await response.json()
+                    except (aiohttp.ContentTypeError, ValueError):
+                        error_data = {}
+                    detail = (
+                        error_data.get("detail")
+                        if isinstance(error_data, dict)
+                        else None
+                    )
+                    # Retain only protocol messages needed by callers. Arbitrary
+                    # server errors can echo credentials or validation inputs.
+                    known_detail = next(
+                        (
+                            message
+                            for message in (
+                                "No anomalies found",
+                                "Subscription already exists",
+                                "There is no subscription for",
+                            )
+                            if isinstance(detail, str) and message in detail
+                        ),
+                        None,
+                    )
                     raise DiagralAPIError(
-                        f"Bad request - Detail : {response.detail}",
+                        known_detail or f"Diagral HTTP error {status}",
+                        status_code=status,
                     )
-                if response.status == 401:
-                    response = HTTPErrorResponse(**response_data)
-                    raise AuthenticationError(
-                        f"Unauthorized - Invalid or expired token - Detail : {response.detail}"
-                    )
-                if response.status == 403:
-                    response = HTTPErrorResponse(**response_data)
-                    raise AuthenticationError(
-                        f"Forbidden - The user does not have the right permissions - Detail : {response.detail}"
-                    )
-                if response.status == 422:
-                    response = HTTPValidationError(**response_data)
+                if status in (204, 205):
+                    return {}, status
+                try:
+                    response_data = await response.json()
+                except (aiohttp.ContentTypeError, ValueError):
                     raise ValidationError(
-                        f"Validation Error - Detail : {response.detail}"
+                        "Invalid JSON response from Diagral", status_code=status
+                    ) from None
+                if not isinstance(response_data, dict):
+                    raise ValidationError(
+                        "Expected a JSON object from Diagral", status_code=status
                     )
-                if response.status == 500:
-                    response = HTTPErrorResponse(**response_data)
-                    raise ServerError(
-                        f"Internal Server Error - Detail : {response.detail}"
-                    )
-                if response.status == 503:
-                    response = HTTPErrorResponse(**response_data)
-                    raise ServerError(
-                        f"Service temporarily unavailable - Detail : {response.detail}"
-                    )
-                if response.status >= 400:
-                    _LOGGER.debug(
-                        "Received response with status code: %d and content %s",
-                        response.status,
-                        Redacted(response_data),
-                    )
-                    raise DiagralAPIError(
-                        f"API error: {response.status} - Error Message : {await response.text()}",
-                        status_code=response.status,
-                    )
-                return await response.json(), response.status
-        except aiohttp.ContentTypeError as e:
-            raise ValidationError(f"Invalid JSON response: {e}") from e
-        except aiohttp.ClientError as e:
-            raise ClientError(f"Network error: {e}") from e
+                return response_data, status
+        except TimeoutError:
+            # aiohttp exceptions may contain a URL with an API key. Suppress
+            # their context so callers can safely log the resulting exception.
+            raise ClientError("Diagral request timed out") from None
+        except aiohttp.ClientError:
+            raise ClientError("Network error communicating with Diagral") from None
 
     async def login(self) -> None:
         """Asynchronously logs in to the Diagral API using the provided username and password.
@@ -229,6 +249,8 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the login fails or the access token cannot be obtained.
+            ServerError: If the Diagral service is unavailable.
+            ClientError: If there is a network error or timeout.
 
         """
 
@@ -243,20 +265,19 @@ class DiagralAPI:
             response_data, *_ = await self._request(
                 "POST", "users/authenticate/login?vendor=DIAGRAL", json=_DATA
             )
-            _LOGGER.debug("Login response data: %s", Redacted(response_data))
-            login_response: LoginResponse = LoginResponse.from_dict(response_data)
+        except AuthenticationError:
+            _LOGGER.warning("Diagral authentication rejected")
+            raise
 
-            self.__access_token = login_response.access_token
-            if not self.__access_token:
-                error_msg = "Failed to obtain authentication access_token"
-                _LOGGER.error(error_msg)
-                raise AuthenticationError(error_msg)
-
-            _LOGGER.info("Successfully logged in to Diagral API")
-        except DiagralAPIError as e:
-            error_msg: str = f"Failed to login : {e!s}"
+        _LOGGER.debug("Login response data: %s", Redacted(response_data))
+        login_response: LoginResponse = LoginResponse.from_dict(response_data)
+        self.__access_token = login_response.access_token
+        if not self.__access_token:
+            error_msg = "Failed to obtain authentication access_token"
             _LOGGER.error(error_msg)
-            raise AuthenticationError(error_msg) from e
+            raise AuthenticationError(error_msg)
+
+        _LOGGER.info("Successfully logged in to Diagral API")
 
     async def set_apikey(self) -> ApiKeyWithSecret:
         """Asynchronously set the API key for the Diagral API.
@@ -270,6 +291,7 @@ class DiagralAPI:
         Raises:
             APIKeyCreationError: If the API key creation fails.
             APIValidationError: If the API key validation fails.
+            DiagralAPIError: If authentication, transport or the Diagral service fails.
 
         """
 
@@ -299,21 +321,20 @@ class DiagralAPI:
                 _LOGGER.error(error_msg)
                 raise APIKeyCreationError(error_msg)
 
-            _LOGGER.info("Successfully created new API key: ...%s", self.__apikey[-4:])
+            _LOGGER.info("Successfully created new API key")
             # Verify if the API key is valid
             try:
                 await self.validate_apikey()
-                _LOGGER.info(
-                    "Successfully verified new API key: ...%s", self.__apikey[-4:]
-                )
-            except APIValidationError as e:
-                _LOGGER.error("Created API key failed validation: %s", e)
+                _LOGGER.info("Successfully verified new API key")
+            except APIValidationError:
+                _LOGGER.error("Created API key failed validation")
                 self.__apikey = None
                 raise
-        except DiagralAPIError as e:
-            error_msg: str = f"Failed to create API key: {e!s}"
-            _LOGGER.error(error_msg)
-            raise APIKeyCreationError(error_msg) from e
+        except ModelValidationError as err:
+            raise APIKeyCreationError("Invalid API key response") from err
+        except DiagralAPIError:
+            _LOGGER.error("Failed to create or validate API key")
+            raise
 
         return ApiKeyWithSecret(api_key=self.__apikey, secret_key=self.__secret_key)
 
@@ -398,7 +419,9 @@ class DiagralAPI:
             f"users/systems/{self.serial_id}/api_keys/{apikey_to_delete}",
             headers=_HEADERS,
         )
-        _LOGGER.info("Successfully deleted API key: ...%s", apikey_to_delete[-4:])
+        _LOGGER.info(
+            "Successfully deleted API key: %s", Redacted({"api_key": apikey_to_delete})
+        )
 
         if apikey is None:
             self.__apikey = None
@@ -449,12 +472,17 @@ class DiagralAPI:
         except DiagralAPIError:
             # If connection fails, clean up keys
             if not api_keys_provided:
-                await self.delete_apikey(apikey=self.__apikey)
+                try:
+                    await self.delete_apikey()
+                except DiagralAPIError:
+                    _LOGGER.warning(
+                        "Unable to clean up temporary API key after connection failure"
+                    )
             raise
 
         # If connection is successful, clean up temporary keys if requested (ephemeral)
         if ephemeral and not api_keys_provided:
-            await self.delete_apikey(apikey=self.__apikey)
+            await self.delete_apikey()
         elif not ephemeral and not api_keys_provided:
             result.keys = api_key_response
 
