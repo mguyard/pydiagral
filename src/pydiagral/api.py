@@ -249,7 +249,7 @@ class DiagralAPI:
                         ),
                         None,
                     )
-                    error_message = f"Diagral service error (HTTP {status})"
+                    error_message = f"Diagral API error (HTTP {status})"
                     if known_detail:
                         error_message = f"{error_message}: {known_detail}"
                     raise DiagralAPIError(error_message, status_code=status)

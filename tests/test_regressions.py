@@ -104,6 +104,8 @@ async def test_http_status_determines_error_even_with_non_json_body(
     assert caught.value.status_code == status
     assert "Diagral" in str(caught.value)
     assert f"(HTTP {status})" in str(caught.value)
+    # "service error" would read as an outage for a request Diagral refused.
+    assert ("service error" in str(caught.value)) is (status >= 500)
     if status in (401, 403, 422) or status >= 500:
         response.json.assert_not_awaited()
 
@@ -202,8 +204,7 @@ async def test_get_webhook_preserves_missing_subscription_without_private_detail
     message = str(caught.value)
     assert ("No subscription found for" in message) is missing_subscription
     assert caught.value.status_code == 404
-    assert "Diagral" in message
-    assert "(HTTP 404)" in message
+    assert message.startswith("Diagral API error (HTTP 404)")
     assert "private-serial" not in message
     assert "private-api-key" not in message
     api.session.request.assert_called_once()
