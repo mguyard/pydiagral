@@ -28,17 +28,17 @@ There is no `conftest.py`. Shared constants (`USERNAME`, `PASSWORD`, `SERIAL_ID`
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
-PYPROJECT_VERSION=0.1.0-dev pip install -e ".[dev]" pytest-cov pytest-html ruff
+PYPROJECT_VERSION=0.1.0-dev pip install -e ".[dev]"
 
 pytest -v
 pytest --cov=src/pydiagral --cov-report=term-missing
 ```
 
 - `PYPROJECT_VERSION` is required: hatchling takes the version from it.
-- `pytest-cov`, `pytest-html` and `ruff` are not in the `dev` extra.
-- `pyproject.toml` sets `asyncio_mode = "auto"`.
+- The `dev` extra holds everything CI uses, ruff included, at the pinned version.
+- `pyproject.toml` sets `asyncio_mode = "auto"`, and `fail_under = 77` for coverage: a `--cov` run below it fails.
 
-CI (`pytest.yaml`) runs on Python 3.14 with `--cov=src/pydiagral --cov-report=xml --junitxml=junit.xml --html=report.html`, only when `src/pydiagral/**` changes. Run the suite locally when only `tests/` changed.
+CI (`pytest.yaml`) installs the `dev` extra on Python 3.14 and runs `--cov=src/pydiagral --cov-report=xml --junitxml=junit.xml --html=report.html`, when `src/pydiagral/**`, `tests/**` or `pyproject.toml` changes.
 
 > **This section is the canonical source for running tests.** `git-conventions` refers to it.
 
@@ -52,8 +52,8 @@ CI (`pytest.yaml`) runs on Python 3.14 with `--cov=src/pydiagral --cov-report=xm
 async def test_get_system_status(mock_request):
     """Test that get_system_status returns the parsed SystemStatus."""
     mock_request.side_effect = [
-        ({"access_token": FAKE_TOKEN}, 200),                  # login
-        ({"status": "OFF", "activated_groups": []}, 200),     # get_system_status
+        ({"access_token": FAKE_TOKEN}, 200),  # login
+        ({"status": "OFF", "activated_groups": []}, 200),  # get_system_status
     ]
     async with DiagralAPI(
         username=USERNAME,
@@ -107,8 +107,14 @@ class _FakeResponse:
 
 async def test_request_401_raises_authentication_error():
     """Test that a 401 response raises AuthenticationError with the server detail."""
-    async with DiagralAPI(username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID) as diagral:
-        with patch.object(diagral.session, "request", return_value=_FakeResponse(401, {"detail": "expired"})):
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with patch.object(
+            diagral.session,
+            "request",
+            return_value=_FakeResponse(401, {"detail": "expired"}),
+        ):
             with pytest.raises(AuthenticationError, match="expired"):
                 await diagral._request("GET", "users/me")  # noqa: SLF001
 ```
@@ -146,7 +152,7 @@ ruff check .
 ruff format --check .
 ```
 
-CI runs only `ruff check`, through `chartboost/ruff-action@v1` without a pinned version. A finding that appears with no code change comes from a ruff release, not from your diff — report it rather than silencing it.
+`lint.yaml` runs both, with the ruff version pinned in the `dev` extra. Use that version locally: another one may report different findings.
 
 ---
 

@@ -12,10 +12,10 @@ The known divergences, so they do not have to be rediscovered:
 
 | An ECC rule says | This repository does |
 |---|---|
-| Format with `black`, sort imports with `isort` | `ruff format` and ruff's isort (`I`) only. Imports use `force-sort-within-sections`, which isort does not reproduce by default, and `black` disagrees with `ruff format` on conditional expressions — running either would fight the configured tools. `ruff format --check` is clean but not yet enforced in CI. |
+| Format with `black`, sort imports with `isort` | `ruff format` and ruff's isort (`I`) only. Imports use `force-sort-within-sections`, which isort does not reproduce by default, and `black` disagrees with `ruff format` on conditional expressions — running either would fight the configured tools. `lint.yaml` runs `ruff format --check`. |
 | Run `mypy` / `pyright` after editing | No type checker is configured yet. `mypy src/pydiagral` reports 33 errors today, and the package ships no `py.typed` marker. Adding both is planned as separate work; until then, keep annotations complete and accurate rather than silencing anything. |
-| Scan with `bandit` | Ruff's `S` rules, selected individually in `pyproject.toml`. `bandit -r src/` finds nothing either. Neither catches secrets written to logs — see Invariants. |
-| Minimum coverage 80% | Measured at 77% (`api.py` 66%). The main gap is `_request` itself, which no test executes because every method test mocks it. Raise coverage by testing `_request` at the transport level, not by padding. |
+| Scan with `bandit` | Ruff's full `S` rule set (flake8-bandit); `tests/` ignores `S101`, `S105`, `S106`. `bandit -r src/` finds nothing either. Neither catches secrets written to logs — see Invariants. |
+| Minimum coverage 80% | `[tool.coverage.report] fail_under = 77`, the current level (`api.py` 66%). The main gap is `_request` itself, which no test executes because every method test mocks it. Raise coverage by testing `_request` at the transport level, not by padding, and raise `fail_under` with it. |
 | `@pytest.mark.unit` / `.integration`, E2E tests | No marker is registered in `pyproject.toml`. Every test is a unit test; a real integration test would need live Diagral credentials in CI, which is not acceptable. End-to-end coverage lives in hass-diagral, against its fake Diagral cloud. |
 | Prefer `@dataclass(frozen=True)` | Models are plain `@dataclass`. Freezing them changes the public API for every consumer, for no gain on response objects. |
 | Load secrets from `.env` with `python-dotenv` | `.env` exists for the maintainer's manual scripts only (`example_code.py`, `diag_code.py`). The library itself takes credentials as constructor arguments. Agents never read `.env` — see Secrets. |
@@ -78,8 +78,8 @@ These are relied on by the integration. Changing any of them is a breaking chang
 
 ```bash
 # Install — hatchling reads the version from PYPROJECT_VERSION; without it the build fails.
-# pytest-cov, pytest-html and ruff are not in the dev extra, so they are listed here.
-PYPROJECT_VERSION=0.1.0-dev pip install -e ".[dev]" pytest-cov pytest-html ruff
+# The dev extra holds pytest, pytest-asyncio, pytest-cov, pytest-html and the pinned ruff.
+PYPROJECT_VERSION=0.1.0-dev pip install -e ".[dev]"
 
 # Lint and format
 ruff check .
@@ -87,23 +87,23 @@ ruff format --check .
 
 # Tests — asyncio_mode = "auto" is set in pyproject.toml
 pytest -v
-pytest --cov=src/pydiagral --cov-report=term-missing
+pytest --cov=src/pydiagral --cov-report=term-missing   # fails under 77%
 ```
 
-`lint.yaml` runs `ruff check` through `chartboost/ruff-action@v1` **without pinning a ruff version**, so a ruff release can turn CI red with no code change. Ruff 0.17 already reports `PLR0917` on `DiagralAPI.__init__` and warns about removed or renamed rules (`PT004`, `UP038`, `TCH*`). Line length is 88, and `E501` is deliberately ignored.
+CI pins `ruff==0.17.2`, the same version as the `dev` extra; bump both together, with the fixes the new release requires. A new ruff release must not be able to turn a green PR red on its own. Ruff takes its target version from `requires-python`. Line length is 88, and `E501` is deliberately ignored. `PLR0917` is ignored because making `DiagralAPI.__init__`'s arguments keyword-only would break callers. `.claude/rules/` is excluded from ruff: ruff also formats Python blocks in Markdown, and those files must stay byte-identical.
 
 There is no Makefile and no `requirements*.txt`.
 
 ## Python versions
 
-`pyproject.toml` declares `requires-python = ">= 3.10"`, but `api.py` and `models.py` import `typing.Self`, which exists only from 3.11. CI tests on 3.14 only, which is what Home Assistant — and so hass-diagral — requires. Do not add code that needs more than 3.11 without raising `requires-python` in the same change.
+`requires-python = ">= 3.11"` — the floor set by `typing.Self` and `datetime.UTC`. CI tests on 3.14 only, which is what Home Assistant — and so hass-diagral — requires. Do not add code that needs more than 3.11 without raising `requires-python` in the same change.
 
 ## CI
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `lint.yaml` | push on `dev`; PR to `main`, `beta`; manual | `ruff check` |
-| `pytest.yaml` | push / PR on `dev`, paths `src/pydiagral/**`; weekly (Monday 01:00); manual | pytest on Python 3.14, coverage and test results to Codecov |
+| `lint.yaml` | push on `dev`; PR to `dev`, `beta`, `main`; manual | `ruff check` + `ruff format --check`, pinned ruff |
+| `pytest.yaml` | push / PR on `dev`, paths `src/pydiagral/**`, `tests/**`, `pyproject.toml`; weekly (Monday 01:00); manual, on a chosen branch | pytest on Python 3.14 with the `dev` extra, coverage gate, coverage and test results to Codecov |
 | `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release, PyPI upload, then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |
@@ -111,10 +111,9 @@ There is no Makefile and no `requirements*.txt`.
 
 Gaps to know about:
 
-- **No lint runs on a PR to `dev`** — only after the push to `dev`, or when the change reaches `beta`.
-- `pytest.yaml` is path-filtered: a PR that only changes `tests/` does not run the suite. Run it locally.
+- `pytest.yaml` is path-filtered: a change to `docs/`, workflows or agent files does not run the suite.
 - The MkDocs build only runs on `main` / `beta`. A broken docstring reference is caught there, not on `dev`.
-- Codecov is informational (`fail_ci_if_error: false`, no threshold).
+- Codecov is informational (`fail_ci_if_error: false`); the coverage gate is `fail_under` in `pyproject.toml`.
 
 ## Branches
 

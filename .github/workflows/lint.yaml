@@ -1,26 +1,39 @@
 name: Ruff Linter
 
+# Configuration lives in pyproject.toml, so the same commands reproduce this
+# job locally:
+#   ruff check .
+#   ruff format --check .
+
 on:
   push:
     branches: [ dev ]
   pull_request:
-    branches: [ main, beta ]
+    branches: [ dev, beta, main ]
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to run linter on'
-        required: true
-        default: 'dev'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ruff:
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.branch == 'dev'
     steps:
     - uses: actions/checkout@v6
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
       with:
-        ref: ${{ github.event.inputs.branch || github.ref }}
-    - uses: chartboost/ruff-action@v1
-      with:
-        args: check --output-format=github --verbose
-        src: "."
+        python-version: '3.14'
+
+    # Pinned, and kept in sync with the dev extra in pyproject.toml: a new ruff
+    # release must not be able to turn a green PR red on its own.
+    - name: Install ruff
+      run: pip install ruff==0.17.2
+
+    - name: Ruff check
+      run: ruff check --output-format=github .
+
+    - name: Ruff format
+      run: ruff format --check --diff .
