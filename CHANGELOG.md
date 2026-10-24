@@ -1,3 +1,17 @@
+# [2.0.0-beta.1](https://github.com/mguyard/pydiagral/compare/v1.7.0-beta.1...v2.0.0-beta.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **api:** 🐛 Name 4xx errors "Diagral API error" ([67dc3a1](https://github.com/mguyard/pydiagral/commit/67dc3a1460930ff7653d0e4bf08b9bf8c8b50680))
+* **api:** 🐛 Preserve transport failures and parse webhook fields (by @Mins95) ([20a3f57](https://github.com/mguyard/pydiagral/commit/20a3f57d86607658b7b12679c641186d470290be))
+* **api:** 🐛 Preserve webhook errors and HTTP context (by @Mins95) ([3dbb208](https://github.com/mguyard/pydiagral/commit/3dbb208970144b99ac2da7d2b26703a027e3763e))
+
+
+### BREAKING CHANGES
+
+* **api:** `login()` and `set_apikey()` now propagate `ServerError` and `ClientError` for transport failures instead of reclassifying them as `AuthenticationError` or `APIKeyCreationError`. Callers must handle the transport classes or their `DiagralAPIError` parent.
+
 # [1.7.0-beta.1](https://github.com/mguyard/pydiagral/compare/v1.6.1...v1.7.0-beta.1) (2026-10-24)
 
 
