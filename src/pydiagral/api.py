@@ -1033,6 +1033,7 @@ class DiagralAPI:
             if e.status_code == 404 and "No anomalies found" in e.message:
                 _LOGGER.info("No anomalies found for the system")
                 return {}
+            raise
         return Anomalies.from_dict(response_data)
 
     async def delete_anomalies(self, anomaly_id: int) -> None:  # NOT-IMPLEMENTED
@@ -1219,6 +1220,7 @@ class DiagralAPI:
                 raise DiagralAPIError(
                     "No subscription found for the specified serial ID"
                 ) from e
+            raise
         return Webhook.from_dict(response_data)
 
     async def register_webhook(

@@ -2296,6 +2296,65 @@ async def test_set_apikey_with_incomplete_response(mock_request):
             await diagral.set_apikey()
 
 
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_anomalies_when_none(mock_request):
+    """Test that a 404 "No anomalies found" returns an empty dict (hass-diagral relies on it)."""
+    mock_request.side_effect = [
+        DiagralAPIError("API error: 404 - No anomalies found", status_code=404)
+    ]
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        assert await diagral.get_anomalies() == {}
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        DiagralAPIError("API error: 404 - Not Found", status_code=404),
+        DiagralAPIError("API error: 502 - Bad Gateway", status_code=502),
+    ],
+    ids=["404-other-message", "502"],
+)
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_anomalies_reraises_other_errors(mock_request, error):
+    """Test that `get_anomalies` re-raises errors it does not handle."""
+    mock_request.side_effect = [error]
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        with pytest.raises(DiagralAPIError) as exc_info:
+            await diagral.get_anomalies()
+    assert exc_info.value is error
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_register_webhook_reraises_other_errors(mock_request):
+    """Test that webhook registration re-raises errors it does not translate."""
+    error = DiagralAPIError("API error: 502 - Bad Gateway", status_code=502)
+    mock_request.side_effect = [error]
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        with pytest.raises(DiagralAPIError) as exc_info:
+            await diagral.register_webhook(
+                webhook_url=WEBHOOK_URL, subscribe_to_state=True
+            )
+    assert exc_info.value is error
+
+
 @pytest.mark.parametrize(
     "build",
     [
