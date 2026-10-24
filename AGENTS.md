@@ -15,7 +15,6 @@ The known divergences, so they do not have to be rediscovered:
 | Format with `black`, sort imports with `isort` | `ruff format` and ruff's isort (`I`) only. Imports use `force-sort-within-sections`, which isort does not reproduce by default, and `black` disagrees with `ruff format` on conditional expressions — running either would fight the configured tools. `lint.yaml` runs `ruff format --check`. |
 | Run `mypy` / `pyright` after editing | No type checker is configured yet. `mypy src/pydiagral` reports 33 errors today, and the package ships no `py.typed` marker. Adding both is planned as separate work; until then, keep annotations complete and accurate rather than silencing anything. |
 | Scan with `bandit` | Ruff's full `S` rule set (flake8-bandit); `tests/` ignores `S101`, `S105`, `S106`. `bandit -r src/` finds nothing either. Neither catches secrets written to logs — see Invariants. |
-| Minimum coverage 80% | `[tool.coverage.report] fail_under = 77`, the current level (`api.py` 66%). The main gap is `_request` itself, which no test executes because every method test mocks it. Raise coverage by testing `_request` at the transport level, not by padding, and raise `fail_under` with it. |
 | `@pytest.mark.unit` / `.integration`, E2E tests | No marker is registered in `pyproject.toml`. Every test is a unit test; a real integration test would need live Diagral credentials in CI, which is not acceptable. End-to-end coverage lives in hass-diagral, against its fake Diagral cloud. |
 | Prefer `@dataclass(frozen=True)` | Models are plain `@dataclass`. Freezing them changes the public API for every consumer, for no gain on response objects. |
 | Load secrets from `.env` with `python-dotenv` | `.env` exists for the maintainer's manual scripts only (`example_code.py`, `diag_code.py`). The library itself takes credentials as constructor arguments. Agents never read `.env` — see Secrets. |
@@ -40,7 +39,7 @@ src/pydiagral/
 ├── constants.py    # BASE_URL, API_VERSION
 └── utils.py        # generate_hmac_signature()
 tests/
-├── test_pydiagral_api.py   # The whole suite (58 tests)
+├── test_pydiagral_api.py   # The whole suite
 └── data/                   # JSON fixtures: configuration_sample.json, system_details_sample.json
 docs/               # MkDocs pages — generated from docstrings, see Documentation
 example_code.py     # Manual end-to-end script, reads .env
@@ -55,10 +54,11 @@ example_code.py     # Manual end-to-end script, reads .env
 - Authenticated endpoints build their headers in the method itself: `Authorization: Bearer <token>` after `login()`, or the HMAC set `X-HMAC`, `X-TIMESTAMP`, `X-APIKEY` — plus `X-PIN-CODE` where the endpoint needs it — from `generate_hmac_signature()`.
 - Models inherit `CamelCaseModel` and are decorated with `@dataclass`. **`from_dict()` does not convert snake_case to camelCase**: it matches the field name or its `alias`, case-insensitively. A field whose API key is camelCase (`inputDelay`) needs `field(metadata={"alias": "inputDelay"})`, or it silently stays `None`. Only `to_dict()` converts automatically.
 - Type hints use PEP 604 (`str | None`) and `list[...]` / `dict[...]`. Annotate every function signature.
-- Raise exceptions from `exceptions.py`, and chain them: `raise ... from err`.
+- Raise exceptions from `exceptions.py`, and chain them: `raise ... from err`. Model validation raises `ModelValidationError`, which is also a `ValueError`.
+- When catching `DiagralAPIError` to translate a specific error, **re-raise everything else** — falling through leaves the response variable unbound.
 - Logging: `_LOGGER = logging.getLogger(__name__)` in `api.py`; `models.py` uses `logger`. Never `print()` in `src/`.
 - All I/O is `async`/`await`. No blocking calls.
-- **Never log a secret**: password, access token, API key, secret key, PIN code, HMAC signature. Request headers carry most of them — never log `headers` as-is. `_request()` currently does; that is a known defect, not a pattern to copy.
+- **Never log a secret**: password, access token, API key, secret key, PIN code, HMAC signature. Wrap anything that may carry one — headers, request bodies, API responses — in `utils.Redacted(...)` when logging it: values of the keys in `constants.SENSITIVE_KEYS` become `**REDACTED**`, and the copy is only made when the record is formatted. Redact rather than drop the line: users attach debug logs to bug reports. A new secret field name goes into `SENSITIVE_KEYS`.
 - Constants live in `constants.py`. No magic strings or numbers inline.
 
 ## Contracts with hass-diagral
@@ -68,6 +68,7 @@ These are relied on by the integration. Changing any of them is a breaking chang
 - **Import paths**, not only `__all__`: hass-diagral imports from `pydiagral`, `pydiagral.api`, `pydiagral.exceptions` and `pydiagral.models` (`AlarmConfiguration`, `Anomalies`, `AnomalyDetail`, `ApiKeyWithSecret`, `DeviceInfos`, `DeviceList`, `Group`, `SystemStatus`, `TryConnectResult`, `Webhook`, `WebHookNotification`, `WebHookNotificationUser`).
 - **`pydiagral.api.BASE_URL` is read at call time.** `_request()` looks the name up in the `api` module on every request, and hass-diagral's fake Diagral cloud reassigns `pydiagral.api.BASE_URL` to redirect traffic. Do not move the lookup to `constants.BASE_URL`, cache it in `__init__`, or bind it as a default argument.
 - **Error strings.** hass-diagral matches `"No subscription found for"` in the `DiagralAPIError` raised by the webhook actions. `get_anomalies()` returns `{}` when the API answers 404 with `"No anomalies found"`, and hass-diagral relies on that empty result.
+- **Every exception the library raises derives from `DiagralAPIError`**, so a single `except DiagralAPIError` covers it. aiohttp errors are wrapped by `_request()`.
 - **Return values used despite their annotation.** `get_configuration()` is annotated `-> None` but returns the `AlarmConfiguration`, and hass-diagral uses it. Fix the annotation, never the return.
 
 ## Secrets
@@ -87,7 +88,7 @@ ruff format --check .
 
 # Tests — asyncio_mode = "auto" is set in pyproject.toml
 pytest -v
-pytest --cov=src/pydiagral --cov-report=term-missing   # fails under 77%
+pytest --cov=src/pydiagral --cov-report=term-missing   # fails under 80%
 ```
 
 CI pins `ruff==0.17.2`, the same version as the `dev` extra; bump both together, with the fixes the new release requires. A new ruff release must not be able to turn a green PR red on its own. Ruff takes its target version from `requires-python`. Line length is 88, and `E501` is deliberately ignored. `PLR0917` is ignored because making `DiagralAPI.__init__`'s arguments keyword-only would break callers. `.claude/rules/` is excluded from ruff: ruff also formats Python blocks in Markdown, and those files must stay byte-identical.
@@ -103,7 +104,7 @@ There is no Makefile and no `requirements*.txt`.
 | Workflow | Trigger | Purpose |
 |---|---|---|
 | `lint.yaml` | push on `dev`; PR to `dev`, `beta`, `main`; manual | `ruff check` + `ruff format --check`, pinned ruff |
-| `pytest.yaml` | push / PR on `dev`, paths `src/pydiagral/**`, `tests/**`, `pyproject.toml`; weekly (Monday 01:00); manual, on a chosen branch | pytest on Python 3.14 with the `dev` extra, coverage gate, coverage and test results to Codecov |
+| `pytest.yaml` | push / PR on `dev`, paths `src/pydiagral/**`, `tests/**`, `pyproject.toml`; weekly (Monday 01:00); manual, on a chosen branch | pytest on Python 3.14 with the `dev` extra, coverage gate (80%), coverage and test results to Codecov |
 | `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release, PyPI upload, then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |

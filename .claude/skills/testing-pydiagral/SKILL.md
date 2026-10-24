@@ -14,7 +14,7 @@ Use this skill for any task that runs, writes or reviews tests.
 ```
 tests/
 ├── __init__.py
-├── test_pydiagral_api.py      # The whole suite — 58 tests, grouped by banner comments
+├── test_pydiagral_api.py      # The whole suite, grouped by banner comments
 └── data/
     ├── configuration_sample.json
     └── system_details_sample.json
@@ -36,7 +36,7 @@ pytest --cov=src/pydiagral --cov-report=term-missing
 
 - `PYPROJECT_VERSION` is required: hatchling takes the version from it.
 - The `dev` extra holds everything CI uses, ruff included, at the pinned version.
-- `pyproject.toml` sets `asyncio_mode = "auto"`, and `fail_under = 77` for coverage: a `--cov` run below it fails.
+- `pyproject.toml` sets `asyncio_mode = "auto"`, and `fail_under = 80` for coverage: a `--cov` run below it fails.
 
 CI (`pytest.yaml`) installs the `dev` extra on Python 3.14 and runs `--cov=src/pydiagral --cov-report=xml --junitxml=junit.xml --html=report.html`, when `src/pydiagral/**`, `tests/**` or `pyproject.toml` changes.
 
@@ -84,7 +84,7 @@ async def test_get_system_status(mock_request):
 
 ## 4. Testing `_request` Itself — mock the transport
 
-`_request` maps HTTP status codes to exceptions and wraps `aiohttp` errors. Mocking it, as in §3, means it is never executed — which is why `api.py` coverage is 66%. Test it by mocking what it calls, for instance `session.request`:
+`_request` maps HTTP status codes to exceptions and wraps `aiohttp` errors. Mocking it, as in §3, means it is never executed. Test it by mocking what it calls, for instance `session.request` — the `_FakeResponse` helper in the regression section of the suite does this:
 
 ```python
 class _FakeResponse:

@@ -31,6 +31,13 @@ class ValidationError(DiagralAPIError):
     """Raised when validation fails."""
 
 
+class ModelValidationError(ValidationError, ValueError):
+    """Raised when data does not satisfy a model's constraints.
+
+    Also a ValueError, which is what model validation raised before.
+    """
+
+
 class ServerError(DiagralAPIError):
     """Raised when server returns 5xx error."""
 
