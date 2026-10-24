@@ -15,6 +15,7 @@ import aiohttp
 import pytest
 
 from pydiagral.api import DiagralAPI
+from pydiagral.constants import REDACTED
 from pydiagral.exceptions import (
     AuthenticationError,
     ClientError,
@@ -192,6 +193,7 @@ async def test_secrets_do_not_appear_in_debug_logs_or_error_messages(
             "DELETE",
             "users/systems/fake-serial/api_keys/private-url-key",
             headers={"X-PIN-CODE": "1234", "Authorization": "private-bearer-token"},
+            log_endpoint=f"users/systems/fake-serial/api_keys/{REDACTED}",
         )
     output = caplog.text + str(caught.value)
     for secret in (
@@ -221,6 +223,8 @@ async def test_webhook_callback_url_is_redacted(
         "POST", "webhooks/fake-serial/subscription", json={"webhook_url": callback_url}
     )
     assert callback_url not in caplog.text
+    assert "private-callback-token" not in caplog.text
+    assert f"https://example.com/{REDACTED}" in caplog.text
     assert "webhooks/fake-serial/subscription" in caplog.text
     assert "**REDACTED**" in caplog.text
 

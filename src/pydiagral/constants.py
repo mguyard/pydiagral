@@ -13,10 +13,12 @@ SENSITIVE_KEYS = frozenset(
         "password",
         "pincode",
         "secret_key",
-        "webhook_url",
         "x-apikey",
         "x-hmac",
         "x-pin-code",
     }
 )
+# URL fields whose path is a secret (a webhook id lets anyone post forged
+# events): the scheme and host are kept, the path is replaced by REDACTED.
+SENSITIVE_URL_PATH_KEYS = frozenset({"webhook_url"})
 REDACTED = "**REDACTED**"

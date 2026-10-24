@@ -3,8 +3,9 @@
 import hashlib
 import hmac
 from typing import Any
+from urllib.parse import urlsplit
 
-from .constants import REDACTED, SENSITIVE_KEYS
+from .constants import REDACTED, SENSITIVE_KEYS, SENSITIVE_URL_PATH_KEYS
 
 
 def generate_hmac_signature(
@@ -25,15 +26,32 @@ def redact(data: Any) -> Any:
     Dicts and lists are walked recursively; any other value is returned as is.
     """
     if isinstance(data, dict):
-        return {
-            key: REDACTED
-            if isinstance(key, str) and key.lower() in SENSITIVE_KEYS
-            else redact(value)
-            for key, value in data.items()
-        }
+        return {key: _redact_value(key, value) for key, value in data.items()}
     if isinstance(data, list):
         return [redact(item) for item in data]
     return data
+
+
+def _redact_value(key: Any, value: Any) -> Any:
+    """Return value redacted according to the key it is stored under."""
+    if not isinstance(key, str):
+        return redact(value)
+    if key.lower() in SENSITIVE_KEYS:
+        return REDACTED
+    if key.lower() in SENSITIVE_URL_PATH_KEYS:
+        return _redact_url_path(value)
+    return redact(value)
+
+
+def _redact_url_path(value: Any) -> str:
+    """Keep the scheme and host of a URL and replace the rest; redact anything else entirely."""
+    if isinstance(value, str):
+        parts = urlsplit(value)
+        # hostname and port, not netloc, which may carry user:password@.
+        if parts.scheme and parts.hostname:
+            port = f":{parts.port}" if parts.port else ""
+            return f"{parts.scheme}://{parts.hostname}{port}/{REDACTED}"
+    return REDACTED
 
 
 class Redacted:
