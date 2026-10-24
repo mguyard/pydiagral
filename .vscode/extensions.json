@@ -1,7 +1,13 @@
 {
     "recommendations": [
-      "charliermarsh.ruff",
-      "esbenp.prettier-vscode",
-      "ms-python.python"
+        "charliermarsh.ruff",
+        "esbenp.prettier-vscode",
+        "ms-python.python"
+    ],
+    "unwantedRecommendations": [
+        "ms-python.flake8",
+        "ms-python.black-formatter",
+        "ms-python.autopep8",
+        "ms-python.isort"
     ]
-  }
+}
