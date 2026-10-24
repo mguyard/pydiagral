@@ -45,7 +45,7 @@ from .utils import generate_hmac_signature
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
-# Minimum Python version: 3.10
+# Minimum Python version: 3.11
 
 
 class DiagralAPI:

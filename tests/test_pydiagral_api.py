@@ -1,6 +1,6 @@
 """Module containing test cases for the DiagralAPI."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import logging
 import os
 import sys
@@ -1801,7 +1801,7 @@ async def test_get_anomalies(mock_request):
         assert isinstance(anomalies.sensors[0], AnomalyDetail)
         assert isinstance(anomalies.sensors[0].anomaly_names[0], AnomalyName)
         assert anomalies.created_at == datetime(
-            2025, 2, 16, 10, 15, 12, 625165, tzinfo=timezone.utc
+            2025, 2, 16, 10, 15, 12, 625165, tzinfo=UTC
         )
         assert anomalies.sensors[0].serial == "12345678"
         assert anomalies.sensors[0].index == 1
