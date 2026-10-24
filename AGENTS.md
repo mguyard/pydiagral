@@ -124,7 +124,13 @@ Gaps to know about:
 | `beta` | Prereleases, published by semantic-release (`.releaserc`) |
 | `main` | Stable releases, published by semantic-release. Repository default. |
 
-Changes flow `dev` → `beta` → `main` through PRs. Never commit or push directly to `beta` or `main`. Always confirm the current branch with `git branch --show-current` before committing.
+Changes flow `dev` → `beta` → `main` through PRs. Never commit or push directly to any of them. Always confirm the current branch with `git branch --show-current` before committing.
+
+Branch protection, identical on the three branches: PR required (no approval, the maintainer is the only reviewer), `ruff` and `pytest` required and up to date, **signed commits required**, conversations resolved, no force-push, **no deletion**. Only merge commits are allowed on the repository — a squash would collapse several `fix` commits into one changelog line. Automatic deletion of head branches is off on purpose; delete feature branches with `gh pr merge --delete-branch`.
+
+- **Every commit must be signed.** Never rewrite commits (`filter-branch`, `rebase`, `commit --amend` on pushed work) without re-signing them, or the PR can no longer be merged without bypassing the rules.
+- Release commits are signed in `release_and_doc.yaml` with a dedicated GPG key (`GPG_PRIVATE_KEY`, `GPG_PASSPHRASE` secrets), whose public half is on the maintainer's account.
+- Never allow deletion on `dev`, `beta` or `main`: it is also what keeps them from being deleted when they are the head of a promotion PR.
 
 Because `main` is the default branch, a `Closes #N` keyword only fires when the change reaches `main`.
 
