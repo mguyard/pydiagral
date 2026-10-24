@@ -106,12 +106,12 @@ There is no Makefile and no `requirements*.txt`.
 |---|---|---|
 | `lint.yaml` | push on `dev`; PR to `dev`, `beta`, `main`; manual | `ruff check` + `ruff format --check`, pinned ruff |
 | `pytest.yaml` | PR to `dev`, `beta`, `main`, any path; push on `dev`, paths `src/pydiagral/**`, `tests/**`, `pyproject.toml`; weekly (Monday 01:00); manual, on a chosen branch | pytest on Python 3.14 with the `dev` extra, coverage gate (80%), coverage and test results to Codecov |
-| `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release with GPG-signed release commits, PyPI upload through the Trusted Publisher (OIDC, no token), then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
+| `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release (toolchain pinned in `.github/release/`) with GPG-signed release commits, PyPI upload through the Trusted Publisher (OIDC, no token), then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |
 | `lock.yml` | daily | locks issues and PRs inactive for 30 days |
 
-Dependabot (`.github/dependabot.yml`) checks monthly, targets `dev`, and waits 7 days after a release before proposing it (30 for a pip major). GitHub Actions updates arrive as one grouped PR titled `chore(deps): 🔧 …`. For pip, runtime dependencies use `fix(deps): 🐛` — widening the `aiohttp` range changes published metadata and must release — and the `dev` extra uses `chore(deps-dev): 🔧`. Only constrained requirements get PRs: today `ruff` and `aiohttp`.
+Dependabot (`.github/dependabot.yml`) checks monthly, targets `dev`, and waits 7 days after a release before proposing it (30 for a pip major). GitHub Actions updates arrive as one grouped PR titled `chore(deps): 🔧 …`. For pip, runtime dependencies use `fix(deps): 🐛` — widening the `aiohttp` range changes published metadata and must release — and the `dev` extra uses `chore(deps-dev): 🔧`. Only constrained requirements get PRs: today `ruff` and `aiohttp`. The semantic-release toolchain (`.github/release/package-lock.json`) arrives as one grouped `chore(deps): 🔧 …` PR; dry-run it before merging, since a release only runs on `beta` and `main`.
 
 Gaps to know about:
 
@@ -124,7 +124,7 @@ Gaps to know about:
 | Branch | Role |
 |---|---|
 | `dev` | Development. **All PRs target this branch.** Dependabot targets it too. |
-| `beta` | Prereleases, published by semantic-release (`.releaserc`) |
+| `beta` | Prereleases, published by semantic-release (`release.config.cjs`) |
 | `main` | Stable releases, published by semantic-release. Repository default. |
 
 Changes flow `dev` → `beta` → `main` through PRs. Never commit or push directly to any of them. Always confirm the current branch with `git branch --show-current` before committing.
@@ -154,7 +154,9 @@ Tests: ✅ N passed, ❌ 0 failed, ⚠️ 0 errors
 - The body explains **why**. Never restate what the diff already shows.
 - A breaking change to a contract listed above takes a `BREAKING CHANGE:` footer.
 
-`.releaserc` uses semantic-release's default (Angular) presets: only `feat`, `fix` and `perf` — plus reverts and breaking changes — trigger a release and appear in `CHANGELOG.md`. A `docs`, `refactor` or `chore` commit is invisible to users and to PyPI.
+`release.config.cjs` uses semantic-release's default (Angular) presets: only `feat`, `fix` and `perf` — plus reverts and breaking changes — trigger a release and appear in `CHANGELOG.md`. A `docs`, `refactor` or `chore` commit is invisible to users and to PyPI.
+
+The changelog credits contributors: an author other than the maintainer appears as `(by …)`, and each `Co-authored-by:` trailer as `(co-authored by …)` — a GitHub login when the address is a noreply one, the name otherwise, never an e-mail address, and never an assistant or a bot. When carrying over someone else's work, add `Co-authored-by: Name <id+login@users.noreply.github.com>` so they are credited.
 
 The pre-commit gate and the PR description template live in the `git-conventions` skill.
 
