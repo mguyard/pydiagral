@@ -1,6 +1,8 @@
 """Module containing test cases for the DiagralAPI."""
 
 from datetime import UTC, datetime
+import hashlib
+import hmac
 import logging
 import os
 import sys
@@ -29,6 +31,7 @@ from pydiagral.models import (
     SystemStatus,
     Webhook,
 )
+from pydiagral.utils import generate_hmac_signature
 
 # Logger configuration
 api_logger = logging.getLogger("pydiagral.api")
@@ -2271,3 +2274,28 @@ async def test_delete_webhook_without_apikey(mock_request):
         await diagral.login()
         with pytest.raises(AuthenticationError):
             await diagral.delete_webhook()
+
+
+##################################
+# Regression tests: logs, errors #
+##################################
+
+
+def test_generate_hmac_signature_uses_given_timestamp():
+    """Test that the signature is computed from the timestamp sent in X-TIMESTAMP."""
+    timestamp = "1700000000"
+    expected = hmac.new(
+        SECRET_KEY.encode(),
+        f"{timestamp}.{SERIAL_ID}.{API_KEY}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    assert (
+        generate_hmac_signature(
+            timestamp=timestamp,
+            serial_id=SERIAL_ID,
+            api_key=API_KEY,
+            secret_key=SECRET_KEY,
+        )
+        == expected
+    )
