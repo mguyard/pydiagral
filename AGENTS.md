@@ -67,8 +67,9 @@ These are relied on by the integration. Changing any of them is a breaking chang
 
 - **Import paths**, not only `__all__`: hass-diagral imports from `pydiagral`, `pydiagral.api`, `pydiagral.exceptions` and `pydiagral.models` (`AlarmConfiguration`, `Anomalies`, `AnomalyDetail`, `ApiKeyWithSecret`, `DeviceInfos`, `DeviceList`, `Group`, `SystemStatus`, `TryConnectResult`, `Webhook`, `WebHookNotification`, `WebHookNotificationUser`).
 - **`pydiagral.api.BASE_URL` is read at call time.** `_request()` looks the name up in the `api` module on every request, and hass-diagral's fake Diagral cloud reassigns `pydiagral.api.BASE_URL` to redirect traffic. Do not move the lookup to `constants.BASE_URL`, cache it in `__init__`, or bind it as a default argument.
-- **Error strings.** hass-diagral matches `"No subscription found for"` in the `DiagralAPIError` raised by the webhook actions. `get_anomalies()` returns `{}` when the API answers 404 with `"No anomalies found"`, and hass-diagral relies on that empty result.
+- **Error strings.** hass-diagral matches `"No subscription found for"` in the `DiagralAPIError` raised by `get_webhook()` when no subscription exists — so that 404's message must keep Diagral's detail — and by the webhook register/update actions. `get_anomalies()` returns `{}` when the API answers 404 with `"No anomalies found"`, and hass-diagral relies on that empty result.
 - **Every exception the library raises derives from `DiagralAPIError`**, so a single `except DiagralAPIError` covers it. aiohttp errors are wrapped by `_request()`.
+- **`request_timeout`** is set by hass-diagral as a ceiling (≥ 60 s); it drives each attempt's deadline below it with `asyncio.timeout()`. Keep it keyword-only and applied to every request.
 - **Return values used despite their annotation.** `get_configuration()` is annotated `-> None` but returns the `AlarmConfiguration`, and hass-diagral uses it. Fix the annotation, never the return.
 
 ## Secrets

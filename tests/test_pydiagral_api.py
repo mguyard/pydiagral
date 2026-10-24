@@ -2584,3 +2584,62 @@ async def test_request_debug_log_redacts_webhook_url_path(caplog):
 def test_redact_webhook_url_edge_cases(url, expected):
     """Test that webhook_url redaction never keeps credentials or a non-URL value."""
     assert redact({"webhook_url": url}) == {"webhook_url": expected}
+
+
+#############################
+# Request timeout ceiling   #
+#############################
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "expected"),
+    [({}, 30), ({"request_timeout": 60}, 60), ({"request_timeout": 0.5}, 0.5)],
+    ids=["default", "custom", "fractional"],
+)
+async def test_request_timeout_is_passed_to_aiohttp(kwargs, expected):
+    """Test that each request uses the client's request timeout, 30 s by default."""
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, **kwargs
+    ) as diagral:
+        with patch.object(
+            diagral.session, "request", return_value=_FakeResponse(200, {})
+        ) as mock_session_request:
+            await diagral._request("GET", "users/me")  # noqa: SLF001
+
+    assert mock_session_request.call_args.kwargs["timeout"] == expected
+    assert diagral.request_timeout == expected
+
+
+async def test_per_call_timeout_overrides_request_timeout():
+    """Test that an explicit timeout passed to `_request` wins over the client ceiling."""
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, request_timeout=60
+    ) as diagral:
+        with patch.object(
+            diagral.session, "request", return_value=_FakeResponse(200, {})
+        ) as mock_session_request:
+            await diagral._request("GET", "users/me", timeout=10)  # noqa: SLF001
+
+    assert mock_session_request.call_args.kwargs["timeout"] == 10
+
+
+@pytest.mark.parametrize(
+    "value",
+    [0, -1, float("nan"), float("inf"), "60", True, None],
+    ids=["zero", "negative", "nan", "inf", "string", "bool", "none"],
+)
+def test_invalid_request_timeout_is_rejected(value):
+    """Test that a request timeout that is not a positive number raises ConfigurationError."""
+    with pytest.raises(ConfigurationError):
+        DiagralAPI(
+            username=USERNAME,
+            password=PASSWORD,
+            serial_id=SERIAL_ID,
+            request_timeout=value,
+        )
+
+
+def test_request_timeout_is_keyword_only():
+    """Test that adding request_timeout did not change the positional signature."""
+    with pytest.raises(TypeError):
+        DiagralAPI(USERNAME, PASSWORD, SERIAL_ID, None, None, None, 60)

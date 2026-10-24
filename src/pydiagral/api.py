@@ -8,13 +8,14 @@ retrieving system status, and controlling various aspects of the alarm system.
 from __future__ import annotations
 
 import logging
+import math
 import re
 import time
 from typing import Any, Self
 
 import aiohttp
 
-from .constants import API_VERSION, BASE_URL, REDACTED
+from .constants import API_VERSION, BASE_URL, DEFAULT_REQUEST_TIMEOUT, REDACTED
 from .exceptions import (
     APIKeyCreationError,
     APIValidationError,
@@ -64,6 +65,8 @@ class DiagralAPI:
         apikey: str | None = None,
         secret_key: str | None = None,
         pincode: str | None = None,
+        *,
+        request_timeout: float = DEFAULT_REQUEST_TIMEOUT,
     ) -> None:
         """Initialize the DiagralAPI instance.
 
@@ -74,6 +77,9 @@ class DiagralAPI:
             apikey (str | None, optional): The API key for additional authentication. Defaults to None.
             secret_key (str | None, optional): The secret key for additional authentication. Defaults to None.
             pincode (str | None, optional): The PIN code for the Diagral system. Defaults to None.
+            request_timeout (float, optional): Seconds allowed for each request to the Diagral
+                cloud, keyword-only. Defaults to 30. To give one call a shorter deadline, wrap it
+                in `asyncio.timeout()`; that deadline cannot exceed this value.
 
         Raises:
             ConfigurationError: If any required field is empty or invalid.
@@ -110,12 +116,27 @@ class DiagralAPI:
                 raise ConfigurationError("pincode must be an string of digits")
         self.__pincode: str | None = pincode
 
+        # bool is an int subclass: True would otherwise be accepted as 1 second.
+        if (
+            isinstance(request_timeout, bool)
+            or not isinstance(request_timeout, int | float)
+            or not math.isfinite(request_timeout)
+            or request_timeout <= 0
+        ):
+            raise ConfigurationError("request_timeout must be a positive number")
+        self.__request_timeout: float = request_timeout
+
         # Initialize session and access_token
         self.session: aiohttp.ClientSession | None = None
         self.__access_token: str | None = None
 
         # Set default values for other attributes
         self.alarm_configuration: AlarmConfiguration | None = None
+
+    @property
+    def request_timeout(self) -> float:
+        """Seconds allowed for each request to the Diagral cloud."""
+        return self.__request_timeout
 
     async def __aenter__(self) -> Self:
         """Initialize the aiohttp ClientSession."""
@@ -132,7 +153,7 @@ class DiagralAPI:
         self,
         method: str,
         endpoint: str,
-        timeout: float = 30,
+        timeout: float | None = None,
         *,
         log_endpoint: str | None = None,
         **kwargs,
@@ -142,7 +163,8 @@ class DiagralAPI:
         Args:
             method (str): The HTTP method to use for the request (e.g., 'GET', 'POST').
             endpoint (str): The API endpoint to send the request to.
-            timeout (float, optional): The timeout for the request in seconds. Defaults to 30.
+            timeout (float | None, optional): The timeout for this request in seconds.
+                Defaults to the client's `request_timeout`.
             log_endpoint (str | None, optional): The endpoint to show in the debug log instead of
                 `endpoint`, when the path itself carries a secret. Defaults to None.
             **kwargs (any): Additional keyword arguments to pass to the request.
@@ -179,7 +201,11 @@ class DiagralAPI:
 
         try:
             async with self.session.request(
-                method, url, headers=headers, timeout=timeout, **kwargs
+                method,
+                url,
+                headers=headers,
+                timeout=self.__request_timeout if timeout is None else timeout,
+                **kwargs,
             ) as response:
                 response_data: Any = await response.json()
                 if response.status == 400:
