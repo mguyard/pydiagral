@@ -351,16 +351,9 @@ class DiagralAPI:
             set_apikey_response: ApiKeyWithSecret = ApiKeyWithSecret.from_dict(
                 response_data
             )
+            # ApiKeyWithSecret already rejects an empty key or secret.
             self.__apikey = set_apikey_response.api_key
-            if not self.__apikey:
-                error_msg = "API key not found in response"
-                _LOGGER.error(error_msg)
-                raise APIKeyCreationError(error_msg)
             self.__secret_key = set_apikey_response.secret_key
-            if not self.__secret_key:
-                error_msg = "Secret key not found in response"
-                _LOGGER.error(error_msg)
-                raise APIKeyCreationError(error_msg)
 
             _LOGGER.info("Successfully created new API key")
             try:
@@ -645,9 +638,13 @@ class DiagralAPI:
         if not self.alarm_configuration:
             raise ConfigurationError("Failed to retrieve alarm configuration")
 
-        device_types: list[str] = sorted(
-            ["cameras", "commands", "sensors", "sirens", "transmitters"]
-        )
+        device_types: list[str] = [
+            "cameras",
+            "commands",
+            "sensors",
+            "sirens",
+            "transmitters",
+        ]
         devices_infos = {}
         for device_type in device_types:
             _LOGGER.debug("Retrieving devices information for %s", device_type)
@@ -792,7 +789,7 @@ class DiagralAPI:
 
         return await self.__system_action("presence")
 
-    async def partial_start_system(self, id: int = 1) -> SystemStatus:  # NOT-TESTED
+    async def partial_start_system(self, id: int = 1) -> SystemStatus:
         """Initiate a partial start of the system.
 
         Args:
@@ -813,7 +810,7 @@ class DiagralAPI:
 
     async def __action_group_system(
         self, action: str, groups: list[int]
-    ) -> SystemStatus:  # TO-TEST
+    ) -> SystemStatus:
         """Perform an action on a group of systems.
 
         This method activates or disables a group of systems based on the provided action.
@@ -1221,7 +1218,7 @@ class DiagralAPI:
         """
 
         _HEADERS = self.__hmac_headers("delete webhook")
-        response_data, *_ = await self._request(
+        await self._request(
             "DELETE",
             f"webhooks/{self.serial_id}/subscription",
             headers=_HEADERS,

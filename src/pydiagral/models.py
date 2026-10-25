@@ -11,7 +11,6 @@ from __future__ import annotations
 from dataclasses import MISSING, Field, dataclass, field, fields
 from datetime import UTC, datetime
 import logging
-import re
 import types
 from typing import (
     TYPE_CHECKING,
@@ -126,8 +125,6 @@ class CamelCaseModel:
             Create an instance of the model from a dictionary.
         snake_to_camel(string: str) -> str:
             Convert a snake_case string to camelCase.
-        camel_to_snake(string: str) -> str:
-            Convert a camelCase string to snake_case.
 
     Examples:
         >>> @dataclass
@@ -298,28 +295,6 @@ class CamelCaseModel:
 
         components = string.split("_")
         return components[0] + "".join(x.title() for x in components[1:])
-
-    @staticmethod
-    def camel_to_snake(string: str) -> str:
-        """Convert a CamelCase string to snake_case.
-
-        Args:
-            string (str): The CamelCase string to be converted.
-
-        Returns:
-            str: The converted snake_case string.
-
-        Example:
-            >>> camel_to_snake("CamelCaseString")
-            'camel_case_string'
-
-        """
-
-        # Replace capital letters with _ followed by the lowercase letter
-        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", string)
-        # Handle cases where multiple capitals are together
-        s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1)
-        return s2.lower()
 
 
 ##############################################
@@ -1629,80 +1604,3 @@ class Rudes(CamelCaseModel):
     """
 
     rudes: list[Rude]
-
-
-###########################
-# Data Model for exceptions
-###########################
-
-
-@dataclass
-class ValidationError(CamelCaseModel):
-    """ValidationError model represents an error that occurs during validation.
-
-    Attributes:
-        loc (list[str] | None): The location of the error, typically indicating the field or attribute that caused the error.
-        message (str | None): A human-readable message describing the error.
-        type (str | None): The type or category of the error.
-        input (str | None): The input value that caused the error.
-        url (str | None): A URL providing more information about the error.
-
-    Example:
-        >>> error = ValidationError(
-        ...     loc=["body", "username"],
-        ...     message="Username is required",
-        ...     type="value_error.missing",
-        ...     input=None,
-        ...     url="https://example.com/errors/username-required"
-        ... )
-        >>> print(error.message)
-        Username is required
-
-    """
-
-    loc: list[str] | None = None
-    message: str | None = None
-    type: str | None = None
-    input: str | None = None
-    url: str | None = None
-
-
-@dataclass
-class HTTPValidationError(ValidationError):
-    """HTTPValidationError is a subclass of ValidationError that represents an HTTP validation error.
-
-    Attributes:
-        detail (list[ValidationError] | None): A list of ValidationError instances or None, providing detailed information about the validation errors.
-
-    Example:
-        >>> error_detail = ValidationError(
-        ...     loc=["body", "username"],
-        ...     message="Username is required",
-        ...     type="value_error.missing",
-        ...     input=None,
-        ...     url="https://example.com/errors/username-required"
-        ... )
-        >>> http_error = HTTPValidationError(detail=[error_detail])
-        >>> print(http_error.detail[0].message)
-        Username is required
-
-    """
-
-    detail: list[ValidationError] | None = None
-
-
-@dataclass
-class HTTPErrorResponse(CamelCaseModel):
-    """HTTPErrorResponse is a model that represents an HTTP error response.
-
-    Attributes:
-        detail (str): A detailed message describing the error.
-
-    Example:
-        >>> error_response = HTTPErrorResponse(detail="Not Found")
-        >>> print(error_response.detail)
-        Not Found
-
-    """
-
-    detail: str
