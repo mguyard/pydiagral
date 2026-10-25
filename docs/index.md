@@ -107,6 +107,20 @@ async with aiohttp.ClientSession() as session:
 
 Without `session`, the client opens its own on `async with` and closes it on exit.
 
+5. Brand
+
+Diagral shares its cloud with sister brands. For an account of another brand, set `vendor` when creating the client, to one of `DIAGRAL` (the default), `DAITEM`, `EDAITEM`, `LOGISTYALMA` or `DISTRIBUTION`, in any case:
+
+```python
+async with DiagralAPI(
+    username=username,
+    password=password,
+    serial_id=serial_id,
+    vendor="DAITEM",
+) as diagral:
+    ...
+```
+
 ## API Structure
 
 For detailed API documentation, please refer to the following sections:

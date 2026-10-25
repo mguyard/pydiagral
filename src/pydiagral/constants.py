@@ -3,6 +3,10 @@
 BASE_URL = "https://appv3.tt-monitor.com/emerald"
 API_VERSION = "v1"
 
+# Brands sharing the Emerald cloud, as the login endpoint names them.
+VENDORS = ("DIAGRAL", "DAITEM", "EDAITEM", "LOGISTYALMA", "DISTRIBUTION")
+DEFAULT_VENDOR = "DIAGRAL"
+
 # Seconds allowed for a whole request (connection, sending, response).
 DEFAULT_REQUEST_TIMEOUT = 30
 

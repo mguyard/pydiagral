@@ -15,7 +15,14 @@ from typing import Any, Self
 
 import aiohttp
 
-from .constants import API_VERSION, BASE_URL, DEFAULT_REQUEST_TIMEOUT, REDACTED
+from .constants import (
+    API_VERSION,
+    BASE_URL,
+    DEFAULT_REQUEST_TIMEOUT,
+    DEFAULT_VENDOR,
+    REDACTED,
+    VENDORS,
+)
 from .exceptions import (
     APIKeyCreationError,
     APIValidationError,
@@ -67,6 +74,7 @@ class DiagralAPI:
         *,
         request_timeout: float = DEFAULT_REQUEST_TIMEOUT,
         session: aiohttp.ClientSession | None = None,
+        vendor: str = DEFAULT_VENDOR,
     ) -> None:
         """Initialize the DiagralAPI instance.
 
@@ -84,6 +92,9 @@ class DiagralAPI:
                 with, keyword-only. The caller keeps ownership: it is neither replaced nor
                 closed. Defaults to None, where the client opens its own session on enter
                 and closes it on exit.
+            vendor (str, optional): The brand the account belongs to, keyword-only: one of
+                `DIAGRAL`, `DAITEM`, `EDAITEM`, `LOGISTYALMA` or `DISTRIBUTION`, in any case.
+                Defaults to `DIAGRAL`.
 
         Raises:
             ConfigurationError: If any required field is empty or invalid.
@@ -129,6 +140,10 @@ class DiagralAPI:
         ):
             raise ConfigurationError("request_timeout must be a positive number")
         self.__request_timeout: float = request_timeout
+
+        if not isinstance(vendor, str) or vendor.upper() not in VENDORS:
+            raise ConfigurationError(f"vendor must be one of {', '.join(VENDORS)}")
+        self.vendor: str = vendor.upper()
 
         # Initialize session and access_token
         self.session: aiohttp.ClientSession | None = session
@@ -304,7 +319,7 @@ class DiagralAPI:
         _DATA: dict[str, str] = {"username": self.username, "password": self.__password}
         try:
             response_data, *_ = await self._request(
-                "POST", "users/authenticate/login?vendor=DIAGRAL", json=_DATA
+                "POST", f"users/authenticate/login?vendor={self.vendor}", json=_DATA
             )
         except AuthenticationError:
             _LOGGER.warning("Diagral authentication rejected")

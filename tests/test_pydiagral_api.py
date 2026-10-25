@@ -169,6 +169,44 @@ async def test_invalid_login(mock_request):
             await diagral.login()
 
 
+@pytest.mark.parametrize(
+    ("kwargs", "vendor"),
+    [
+        ({}, "DIAGRAL"),
+        ({"vendor": "DAITEM"}, "DAITEM"),
+        ({"vendor": "eDaitem"}, "EDAITEM"),
+    ],
+    ids=["default", "daitem", "mixed-case"],
+)
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_login_sends_vendor(mock_request, kwargs, vendor):
+    """Test that login authenticates against the configured brand."""
+    mock_request.return_value = ({"access_token": FAKE_TOKEN}, 200)
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, **kwargs
+    ) as diagral:
+        await diagral.login()
+
+    method, endpoint = mock_request.call_args.args
+    assert (method, endpoint) == ("POST", f"users/authenticate/login?vendor={vendor}")
+    assert diagral.vendor == vendor
+
+
+@pytest.mark.parametrize("vendor", ["SOMFY", "", None, 1])
+def test_invalid_vendor_is_rejected(vendor):
+    """Test that a brand the login endpoint does not accept raises ConfigurationError."""
+    with pytest.raises(ConfigurationError, match="vendor must be one of"):
+        DiagralAPI(
+            username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, vendor=vendor
+        )
+
+
+def test_vendor_is_keyword_only():
+    """Test that adding vendor did not change the positional signature."""
+    with pytest.raises(TypeError):
+        DiagralAPI(USERNAME, PASSWORD, SERIAL_ID, None, None, None, "DAITEM")
+
+
 ################################
 # DiagralAPI APIKey Test Cases #
 ################################
