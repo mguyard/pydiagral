@@ -593,7 +593,7 @@ The user installs and uses this integration at their own risk and with full know
 <li>
 <p>Connect to the Diagral API with username and password</p>
 </li>
-<li>Manage access tokens and their expiration</li>
+<li>Log in to obtain an access token</li>
 <li>
 <p>Create, validate, and delete API keys</p>
 </li>
@@ -618,7 +618,7 @@ The user installs and uses this integration at their own risk and with full know
 <p><strong>System Interraction</strong>:</p>
 </li>
 <li>Activate or Desactivate system (partially or globally)</li>
-<li>Automatism actions</li>
+<li>List automatism rules (running their actions is not implemented yet)</li>
 </ul>
 <h2 id="quick-start">Quick Start</h2>
 <p>To get started with pydiagral, follow these steps:</p>
@@ -656,6 +656,20 @@ LOG_LEVEL=DEBUG
     ...
 </code></pre>
 <p>To give a single call a shorter deadline, wrap it in <code>asyncio.timeout()</code>. That deadline cannot exceed <code>request_timeout</code>.</p>
+<ol>
+<li>Shared session</li>
+</ol>
+<p>To send requests through an <code>aiohttp.ClientSession</code> you already manage, pass it as <code>session</code>. The client uses it as is and never closes it:</p>
+<pre><code class="language-python">async with aiohttp.ClientSession() as session:
+    async with DiagralAPI(
+        username=username,
+        password=password,
+        serial_id=serial_id,
+        session=session,
+    ) as diagral:
+        ...
+</code></pre>
+<p>Without <code>session</code>, the client opens its own on <code>async with</code> and closes it on exit.</p>
 <h2 id="api-structure">API Structure</h2>
 <p>For detailed API documentation, please refer to the following sections:</p>
 <ul>
