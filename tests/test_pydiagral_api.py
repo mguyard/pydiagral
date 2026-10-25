@@ -37,7 +37,7 @@ from pydiagral import (
     api as api_module,
     models,
 )
-from pydiagral.constants import ISSUES_URL, REDACTED
+from pydiagral.constants import ISSUES_URL, MAX_UNEXPECTED_DATA, REDACTED
 from pydiagral.models import (
     AlarmConfiguration,
     Anomalies,
@@ -48,6 +48,7 @@ from pydiagral.models import (
     Cameras,
     CentralInformation,
     DeviceList,
+    FirmwareModel,
     Group,
     LoginResponse,
     Rude,
@@ -58,7 +59,7 @@ from pydiagral.models import (
     Webhook,
     WebHookNotification,
 )
-from pydiagral.utils import generate_hmac_signature, redact
+from pydiagral.utils import generate_hmac_signature, redact, schema_key
 
 # Logger configuration
 api_logger = logging.getLogger("pydiagral.api")
@@ -4077,6 +4078,145 @@ def test_model_validation_error_does_not_quote_the_payload():
 def unreported_fields(monkeypatch: pytest.MonkeyPatch) -> None:
     """Forget which fields were already reported, so each test sees its warning."""
     monkeypatch.setattr(models, "_REPORTED_FIELDS", set())
+    monkeypatch.setattr(models, "_UNEXPECTED_DATA", {})
+
+
+@pytest.mark.parametrize(
+    ("key", "expected"),
+    [
+        ("partialGroup1", "partialGroup1"),
+        ("IsMJPEGArchiveVideoSupported", "IsMJPEGArchiveVideoSupported"),
+        ("RELAIS_1_CENTRALE", "RELAIS_1_CENTRALE"),
+        ("18139037029D91", "<key>"),
+        ("ABCDEF12AB34CD", "<key>"),
+        ("123e4567-e89b-12d3", "<key>"),
+        ("a b", "<key>"),
+        ("", "<key>"),
+        ("x" * 65, "<key>"),
+    ],
+)
+def test_schema_key_masks_what_may_be_an_identifier(key, expected):
+    """Test that field names are kept and serial-like or UUID-like keys are masked."""
+    assert schema_key(key) == expected
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unexpected_data_lists_undeclared_keys_by_name_only(caplog):
+    """Test that a key the model does not declare is recorded once, without a warning."""
+    payload = {"name": "Day", "index": 1, "newField": "private-value"}
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        Group.from_dict(payload)
+        Group.from_dict(payload)
+    assert models.unexpected_data() == [
+        {"model": "Group", "field": "newField", "problem": "is not declared"}
+    ]
+    assert "private-value" not in str(models.unexpected_data())
+    assert not caplog.records
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unexpected_data_masks_keys_that_look_like_identifiers():
+    """Test that a key holding digits or punctuation is not recorded as is."""
+    FirmwareModel.from_dict({"BOX": "1.0", "18139037029D91": "2.0", "a-b": "3.0"})
+    assert models.unexpected_data() == [
+        {"model": "FirmwareModel", "field": "<key>", "problem": "is not declared"}
+    ]
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unexpected_data_lists_missing_and_unparsable_fields_without_values():
+    """Test that the warned problems are recorded, never with a free value."""
+    SystemStatus.from_dict({"activated_groups": []})
+    CentralInformation.from_dict({"hasPlug": "private-flag"})
+    assert models.unexpected_data() == [
+        {"model": "SystemStatus", "field": "status", "problem": "is missing"},
+        {
+            "model": "CentralInformation",
+            "field": "has_plug",
+            "problem": "is not a boolean",
+        },
+    ]
+    assert "private-flag" not in str(models.unexpected_data())
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unexpected_data_keeps_the_value_of_a_documented_mode():
+    """Test that an unknown mode, from a closed list, is recorded with its value."""
+    Rude(name="Gate", canal="RELAIS_1", mode="OFF")
+    Rude(name="Door", canal="RELAIS_2", mode="OFF")
+    Rude(name="Light", canal="LUMIERE_1", mode="X" * 40)
+    assert models.unexpected_data() == [
+        {
+            "model": "Rude",
+            "field": "mode",
+            "problem": "is not a documented mode",
+            "value": "OFF",
+        },
+        {
+            "model": "Rude",
+            "field": "mode",
+            "problem": "is not a documented mode",
+            "value": "<str>",
+        },
+    ]
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unexpected_data_covers_the_models_with_their_own_parser():
+    """Test that Anomalies, ApiKeys and webhook notifications record undeclared keys."""
+    Anomalies.from_dict(
+        {
+            "created_at": "2025-02-16T10:15:12",
+            "badges2": [],
+            "sensors": [{"index": 1, "zone": "private-zone", "anomaly_names": []}],
+        }
+    )
+    ApiKeys.from_dict({"api_keys": [], "count": 0})
+    WebHookNotification.from_dict(
+        {
+            "transmitter_id": "12345",
+            "alarm_code": "1130",
+            "date_time": "2023-10-01T12:00:00Z",
+            "area": "private-area",
+            "detail": {"device_type": "SENSOR", "device_room": "private-room"},
+            "user": {"username": "private-user", "email": "private@example.com"},
+        }
+    )
+    assert {(e["model"], e["field"]) for e in models.unexpected_data()} == {
+        ("Anomalies", "badges2"),
+        ("AnomalyDetail", "zone"),
+        ("ApiKeys", "count"),
+        ("WebHookNotification", "area"),
+        ("WebHookNotificationDetail", "device_room"),
+        ("WebHookNotificationUser", "email"),
+    }
+    assert "private" not in str(models.unexpected_data())
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unexpected_data_is_bounded():
+    """Test that a payload full of new keys, as a forged webhook could send, is capped."""
+    Group.from_dict(
+        {f"key_{letter}{other}": 1 for letter in "abcdefghij" for other in "abcdefghij"}
+        | {"name": "Day"}
+    )
+    Group.from_dict({"zz_last": 1})
+    entries = models.unexpected_data()
+    assert len(entries) == MAX_UNEXPECTED_DATA
+    assert {
+        "model": "Group",
+        "field": "zz_last",
+        "problem": "is not declared",
+    } not in entries
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unexpected_data_returns_a_copy():
+    """Test that changing the returned list leaves the registry untouched."""
+    Group.from_dict({"newField": 1})
+    models.unexpected_data().clear()
+    models.unexpected_data()[0]["field"] = "changed"
+    assert models.unexpected_data()[0]["field"] == "newField"
 
 
 def test_to_dict_uses_aliases_and_nested_models():

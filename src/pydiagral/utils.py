@@ -2,6 +2,7 @@
 
 import hashlib
 import hmac
+import re
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -18,6 +19,23 @@ def generate_hmac_signature(
     """
     message: str = f"{timestamp}.{serial_id}.{api_key}"
     return hmac.new(secret_key.encode(), message.encode(), hashlib.sha256).hexdigest()
+
+
+# A key that names a field, not an identifier such as a serial or a UUID.
+_SCHEMA_KEY = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,63}")
+_SCHEMA_KEY_MAX_DIGITS = 2
+
+
+def schema_key(key: str) -> str:
+    """Return a payload key as is when it names a field, or "<key>" when it may not.
+
+    A key with punctuation or more than two digits may be an identifier, such as
+    a serial or a UUID used to index a dict, rather than part of Diagral's schema.
+    """
+    digits = sum(character.isdigit() for character in key)
+    if _SCHEMA_KEY.fullmatch(key) and digits <= _SCHEMA_KEY_MAX_DIGITS:
+        return key
+    return "<key>"
 
 
 def redact(data: Any) -> Any:

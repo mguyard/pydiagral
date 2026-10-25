@@ -71,6 +71,9 @@ The `DiagralAPI` class offers the following functionalities:
   - Activate or Desactivate system (partially or globally)
   - List automatism rules and run their actions
 
+- **Diagnostics**:
+  - List what Diagral sent that the models did not expect, without any value the user entered (`pydiagral.models.unexpected_data()`)
+
 ## 🧪 Untested features
 
 Some parts of pydiagral are built from the Diagral API documentation only, because they could not be checked on a real installation. pydiagral logs a warning the first time each of them is used:

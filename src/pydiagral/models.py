@@ -25,9 +25,14 @@ from typing import (
     get_type_hints,
 )
 
-from .constants import AUTOMATISM_MODES, ISSUES_URL
+from .constants import (
+    AUTOMATISM_MODES,
+    ISSUES_URL,
+    MAX_LISTED_VALUE_LENGTH,
+    MAX_UNEXPECTED_DATA,
+)
 from .exceptions import ModelValidationError
-from .utils import Redacted
+from .utils import Redacted, schema_key
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -44,6 +49,10 @@ _PARSE_ERRORS = (AttributeError, KeyError, TypeError, ValueError)
 
 # Model fields a payload broke expectations on, so each is reported only once.
 _REPORTED_FIELDS: set[tuple[str, str]] = set()
+
+# What payloads brought that the models did not expect, for diagnostics: model,
+# field, problem and, for a documented list only, the value. Kept in arrival order.
+_UNEXPECTED_DATA: dict[tuple[str, str, str, str | None], None] = {}
 
 
 class _FieldSpec(NamedTuple):
@@ -89,8 +98,72 @@ def _field_specs(model: type) -> tuple[_FieldSpec, ...]:
     return _FIELD_SPECS[model]
 
 
-def _report_unexpected_field(model: type, name: str, problem: str) -> None:
-    """Warn once that a payload does not fit a model, without quoting the payload."""
+def unexpected_data() -> list[dict[str, str]]:
+    """List what Diagral sent that the models did not expect, since the process started.
+
+    Each entry gives the `model`, the `field` and the `problem`: a missing field, a
+    value that could not be parsed, or a key the model does not declare. A key that
+    looks like an identifier reads "<key>". Only a field whose values the Diagral
+    specification lists, such as `Rude.mode`, also gives the `value` received. No
+    other value is ever copied, so the list can be shared in a bug report. It keeps
+    the first entries only.
+
+    Returns:
+        list[dict[str, str]]: One dict per problem, in the order they were met.
+
+    Examples:
+        >>> Group.from_dict({"name": "Day", "colour": "blue"})
+        Group(name='Day', index=None, input_delay=None, output_delay=None)
+        >>> {"model": "Group", "field": "colour", "problem": "is not declared"} in unexpected_data()
+        True
+
+    """
+    return [
+        {"model": model, "field": name, "problem": problem}
+        | ({} if value is None else {"value": value})
+        for model, name, problem, value in _UNEXPECTED_DATA
+    ]
+
+
+def _record_unexpected(
+    model: type, name: str, problem: str, value: str | None = None
+) -> bool:
+    """Add a problem to the registry; return whether it was not there yet."""
+    entry = (model.__name__, name, problem, value)
+    if entry in _UNEXPECTED_DATA or len(_UNEXPECTED_DATA) >= MAX_UNEXPECTED_DATA:
+        return False
+    _UNEXPECTED_DATA[entry] = None
+    return True
+
+
+def _listed_value(value: Any) -> str:
+    """Return a value from a documented list as is, or its type when it cannot be one."""
+    if isinstance(value, str) and len(value) <= MAX_LISTED_VALUE_LENGTH:
+        return value
+    return f"<{type(value).__name__}>"
+
+
+def _report_undeclared_keys(model: type, data: dict) -> None:
+    """Record, by name only, the keys a payload has and the model does not declare."""
+    declared = {spec.alias for spec in _field_specs(model)}
+    for key in data:
+        if isinstance(key, str) and key.lower() not in declared:
+            name = schema_key(key)
+            if _record_unexpected(model, name, "is not declared"):
+                logger.debug(
+                    "Diagral sent %s data with the key %s", model.__name__, name
+                )
+
+
+def _report_unexpected_field(
+    model: type, name: str, problem: str, value: str | None = None
+) -> None:
+    """Warn once that a payload does not fit a model, without quoting the payload.
+
+    `value` is recorded for diagnostics, never logged: pass it only for a field
+    whose values the specification lists.
+    """
+    _record_unexpected(model, name, problem, value)
     if (model.__name__, name) in _REPORTED_FIELDS:
         return
     _REPORTED_FIELDS.add((model.__name__, name))
@@ -219,6 +292,7 @@ class CamelCaseModel:
         if get_origin(target_cls) is Union:
             target_cls = next(t for t in get_args(target_cls) if t is not type(None))
 
+        _report_undeclared_keys(target_cls, data)
         keys: dict[str, str] = {}
         for key in data:
             keys.setdefault(key.lower(), key)
@@ -415,6 +489,7 @@ class ApiKeys(CamelCaseModel):
 
         if not isinstance(data, dict):
             raise ModelValidationError(f"Invalid {cls.__name__} payload")
+        _report_undeclared_keys(cls, data)
         try:
             return cls(
                 api_keys=[ApiKey.from_dict(key) for key in data.get("api_keys") or []]
@@ -1290,6 +1365,9 @@ class Anomalies(CamelCaseModel):
         """
 
         def create_devices(device_data: list[dict] | None) -> list[AnomalyDetail]:
+            for device in device_data or []:
+                if isinstance(device, dict):
+                    _report_undeclared_keys(AnomalyDetail, device)
             return [
                 AnomalyDetail(
                     serial=device.get("serial"),
@@ -1306,6 +1384,7 @@ class Anomalies(CamelCaseModel):
 
         if not isinstance(data, dict):
             raise ModelValidationError(f"Invalid {cls.__name__} payload")
+        _report_undeclared_keys(cls, data)
         try:
             created_at = datetime.fromisoformat(data["created_at"])
             created_at = (
@@ -1486,6 +1565,7 @@ class WebHookNotification(CamelCaseModel):
 
         if not isinstance(data, dict):
             raise ModelValidationError("Webhook notification must be an object")
+        _report_undeclared_keys(cls, data)
         transmitter_id = data.get("transmitter_id")
         if not isinstance(transmitter_id, str) or not transmitter_id.strip():
             raise ModelValidationError(
@@ -1528,9 +1608,12 @@ class WebHookNotification(CamelCaseModel):
             detail_data = {}
         if not isinstance(detail_data, dict):
             raise ModelValidationError("Webhook detail must be an object or null")
+        _report_undeclared_keys(WebHookNotificationDetail, detail_data)
         user_data = data.get("user")
         if user_data is not None and not isinstance(user_data, dict):
             raise ModelValidationError("Webhook user must be an object or null")
+        if user_data:
+            _report_undeclared_keys(WebHookNotificationUser, user_data)
 
         def alarm_type(alarm_code: int) -> str:
             """Determine the type of alarm based on the alarm code."""
@@ -1656,7 +1739,12 @@ class Rude(CamelCaseModel):
     def __post_init__(self):
         """Report once a mode the specification does not list, without rejecting it."""
         if self.mode not in AUTOMATISM_MODES:
-            _report_unexpected_field(type(self), "mode", "is not a documented mode")
+            _report_unexpected_field(
+                type(self),
+                "mode",
+                "is not a documented mode",
+                _listed_value(self.mode),
+            )
 
 
 @dataclass

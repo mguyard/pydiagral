@@ -28,6 +28,12 @@ DEFAULT_REQUEST_TIMEOUT = 30
 # Where the models ask users to report a payload they do not fit.
 ISSUES_URL = "https://github.com/mguyard/pydiagral/issues"
 
+# Entries `models.unexpected_data()` keeps: webhooks are external input, and a
+# forged one must not grow the registry without bound.
+MAX_UNEXPECTED_DATA = 100
+# Longest value from a documented list that the registry copies as is.
+MAX_LISTED_VALUE_LENGTH = 32
+
 # Header and field names whose values are replaced by REDACTED in debug logs.
 # Compared lowercase.
 SENSITIVE_KEYS = frozenset(
