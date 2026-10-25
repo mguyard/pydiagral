@@ -114,7 +114,7 @@ There is no Makefile and no `requirements*.txt`.
 | `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release (toolchain pinned in `.github/release/`) with GPG-signed release commits, PyPI upload through the Trusted Publisher (OIDC, no token), then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |
-| `lock.yml` | daily | locks issues and PRs inactive for 30 days |
+| `lock-stale.yml` | daily | `lock`: locks issues and PRs inactive for 30 days. `stale`: marks `stale` an issue labelled `waiting-for-response` after 30 days without activity, and closes it 7 days later; `no-stale`, `bug` and `documentation` exempt it. Pull requests are never marked stale |
 
 Dependabot (`.github/dependabot.yml`) checks monthly, targets `dev`, and waits 7 days after a release before proposing it (30 for a pip major). GitHub Actions updates arrive as one grouped PR titled `chore(deps): 🔧 …`. For pip, runtime dependencies use `fix(deps): 🐛` — widening the `aiohttp` range changes published metadata and must release — and the `dev` extra uses `chore(deps-dev): 🔧`. Only constrained requirements get PRs: today `ruff`, `mypy` and `aiohttp`. The semantic-release toolchain (`.github/release/package-lock.json`) arrives as one grouped `chore(deps): 🔧 …` PR; dry-run it before merging, since a release only runs on `beta` and `main`.
 
