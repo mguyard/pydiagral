@@ -3981,29 +3981,74 @@ def test_invalid_notification_date_does_not_expose_payload(
 _ANOMALY_DEVICE = {"serial": "SN1", "anomaly_names": [{"id": 1, "name": "Low Battery"}]}
 
 
+def test_anomalies_payload_that_is_not_an_object_is_rejected():
+    """Test that only a payload which is not an object at all is refused."""
+    with pytest.raises(ModelValidationError, match=r"Invalid Anomalies payload"):
+        Anomalies.from_dict([])
+
+
 @pytest.mark.parametrize(
-    "payload",
+    ("payload", "problem"),
     [
-        [],
-        {},
-        {"created_at": "not-a-date"},
-        {"created_at": 1739700912},
-        {"created_at": "2025-02-16T10:15:12", "sensors": [None]},
-        {"created_at": "2025-02-16T10:15:12", "sensors": [{"anomaly_names": [1]}]},
+        ({}, "is missing"),
+        ({"created_at": "private-date"}, "is not an ISO date"),
+        ({"created_at": 1739700912}, "is not an ISO date"),
     ],
-    ids=[
-        "not-an-object",
-        "no-created-at",
-        "bad-date",
-        "numeric-date",
-        "null-device",
-        "bad-anomaly-name",
-    ],
+    ids=["no-created-at", "bad-date", "numeric-date"],
 )
-def test_malformed_anomalies_raise_model_validation_error(payload):
-    """Test that a malformed anomalies payload raises ModelValidationError only."""
-    with pytest.raises(ModelValidationError, match=r"Invalid Anomal\w+ payload"):
+@pytest.mark.usefixtures("unreported_fields")
+def test_anomalies_without_a_readable_date_warn_once(caplog, payload, problem):
+    """Test that a missing or unreadable `created_at` reads as None, with one warning."""
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        first = Anomalies.from_dict(payload)
         Anomalies.from_dict(payload)
+    assert first.created_at is None
+    warnings = [r.getMessage() for r in caplog.records]
+    assert len(warnings) == 1
+    assert "created_at" in warnings[0]
+    assert problem in warnings[0]
+    assert "private-date" not in caplog.text
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_anomalies_skip_malformed_entries_and_keep_the_rest(caplog):
+    """Test that a malformed entry is dropped with a warning, not the whole answer."""
+    payload = {
+        "created_at": "2025-02-16T10:15:12",
+        "sensors": [None, _ANOMALY_DEVICE, "private-entry"],
+        "sirens": "private-list",
+        "commands": [
+            {"serial": "SN3", "anomaly_names": [1, {"id": 2, "name": "Tamper"}]}
+        ],
+        "badges": [{"serial": "SN4", "anomaly_names": "private-names"}],
+    }
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        anomalies = Anomalies.from_dict(payload)
+
+    assert [device.serial for device in anomalies.sensors] == ["SN1"]
+    assert anomalies.sirens == []
+    assert anomalies.commands[0].anomaly_names == [AnomalyName(id=2, name="Tamper")]
+    assert anomalies.badges[0].anomaly_names == []
+    assert {
+        (e["model"], e["field"], e["problem"]) for e in models.unexpected_data()
+    } == {
+        ("Anomalies", "sensors", "has an entry that is not an object"),
+        ("Anomalies", "sirens", "is not a list"),
+        ("AnomalyDetail", "anomaly_names", "has an entry that is not an object"),
+        ("AnomalyDetail", "anomaly_names", "is not a list"),
+    }
+    assert "private" not in caplog.text
+
+
+async def test_get_anomalies_keeps_the_rest_of_a_malformed_answer() -> None:
+    """Test that a malformed anomaly no longer makes `get_anomalies()` fail."""
+    diagral = _signed_client()
+    body = {"sensors": [None, _ANOMALY_DEVICE]}
+    with patch.object(diagral, "_request", new=AsyncMock(return_value=(body, 200))):
+        anomalies = await diagral.get_anomalies()
+
+    assert anomalies.created_at is None
+    assert [device.serial for device in anomalies.sensors] == ["SN1"]
 
 
 def test_anomalies_accept_null_device_lists_and_names():
@@ -4063,9 +4108,9 @@ def test_generic_models_raise_model_validation_error(payload):
 
 def test_model_validation_error_does_not_quote_the_payload():
     """Keep payload values out of the parser error and its traceback."""
-    payload = {"created_at": "private-value"}
+    payload = {"status": "OFF", "activated_groups": [{"private-value": 1}]}
     with pytest.raises(ModelValidationError) as caught:
-        Anomalies.from_dict(payload)
+        SystemStatus.from_dict(payload)
     assert "private-value" not in "".join(traceback.format_exception(caught.value))
 
 

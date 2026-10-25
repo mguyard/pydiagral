@@ -1306,7 +1306,8 @@ class Anomalies(CamelCaseModel):
     """A model representing anomalies detected in various devices.
 
     Attributes:
-        created_at (datetime): The timestamp when the anomalies were created.
+        created_at (datetime): The timestamp when the anomalies were created, in UTC.
+            None, with a one-time warning, when Diagral sends none or an unreadable one.
         sensors (list[AnomalyDetail] | None): A list of anomaly details for sensors, or None if no anomalies.
         badges (list[AnomalyDetail] | None): A list of anomaly details for badges, or None if no anomalies.
         sirens (list[AnomalyDetail] | None): A list of anomaly details for sirens, or None if no anomalies.
@@ -1356,57 +1357,78 @@ class Anomalies(CamelCaseModel):
         """Create an instance of Anomalies from a dictionary.
 
         A `created_at` without an offset is taken as UTC; one with an offset is
-        converted to UTC.
+        converted to UTC. As in the other models, what does not fit is reported once
+        and the rest is kept: a missing or unreadable `created_at` reads as None, and
+        a device list, device entry or anomaly name of the wrong type is left out.
 
         Raises:
-            ModelValidationError: If the data is not an object, `created_at` is missing
-                or not an ISO date, or a device entry is malformed.
+            ModelValidationError: If the data is not an object.
 
         """
-
-        def create_devices(device_data: list[dict] | None) -> list[AnomalyDetail]:
-            for device in device_data or []:
-                if isinstance(device, dict):
-                    _report_undeclared_keys(AnomalyDetail, device)
-            return [
-                AnomalyDetail(
-                    serial=device.get("serial"),
-                    index=device.get("index"),
-                    group=device.get("group"),
-                    label=device.get("label"),
-                    anomaly_names=[
-                        AnomalyName.from_dict(name)
-                        for name in device.get("anomaly_names") or []
-                    ],
-                )
-                for device in device_data or []
-            ]
-
         if not isinstance(data, dict):
             raise ModelValidationError(f"Invalid {cls.__name__} payload")
         _report_undeclared_keys(cls, data)
-        try:
-            created_at = datetime.fromisoformat(data["created_at"])
+
+        def entries(model: type, name: str, value: Any) -> list[dict]:
+            """Return the objects of a list, reporting a non-list or a non-object."""
+            if value is None:
+                return []
+            if not isinstance(value, list):
+                _report_unexpected_field(model, name, "is not a list")
+                return []
+            objects = [item for item in value if isinstance(item, dict)]
+            if len(objects) < len(value):
+                _report_unexpected_field(
+                    model, name, "has an entry that is not an object"
+                )
+            return objects
+
+        def create_devices(name: str) -> list[AnomalyDetail]:
+            devices = []
+            for device in entries(cls, name, data.get(name)):
+                _report_undeclared_keys(AnomalyDetail, device)
+                names = entries(
+                    AnomalyDetail, "anomaly_names", device.get("anomaly_names")
+                )
+                devices.append(
+                    AnomalyDetail(
+                        serial=device.get("serial"),
+                        index=device.get("index"),
+                        group=device.get("group"),
+                        label=device.get("label"),
+                        anomaly_names=[AnomalyName.from_dict(item) for item in names],
+                    )
+                )
+            return devices
+
+        created_at = data.get("created_at")
+        if created_at is None:
+            _report_unexpected_field(cls, "created_at", "is missing")
+        elif isinstance(created_at, str):
+            created_at = _parse_datetime(cls, "created_at", created_at)
+        else:
+            _report_unexpected_field(cls, "created_at", "is not an ISO date")
+            created_at = None
+        if created_at is not None:
             created_at = (
                 created_at.replace(tzinfo=UTC)
                 if created_at.tzinfo is None
                 else created_at.astimezone(UTC)
             )
-            return cls(
-                created_at=created_at,
-                sensors=create_devices(data.get("sensors")),
-                badges=create_devices(data.get("badges")),
-                sirens=create_devices(data.get("sirens")),
-                cameras=create_devices(data.get("cameras")),
-                commands=create_devices(data.get("commands")),
-                transceivers=create_devices(data.get("transceivers")),
-                transmitters=create_devices(data.get("transmitters")),
-                central=create_devices(data.get("central")),
-            )
-        except ModelValidationError:
-            raise
-        except _PARSE_ERRORS:
-            raise ModelValidationError(f"Invalid {cls.__name__} payload") from None
+        # Built as keywords: like the generic parser, a required field may be None.
+        values: dict[str, Any] = {"created_at": created_at}
+        for name in (
+            "sensors",
+            "badges",
+            "sirens",
+            "cameras",
+            "commands",
+            "transceivers",
+            "transmitters",
+            "central",
+        ):
+            values[name] = create_devices(name)
+        return cls(**values)
 
 
 ############################
