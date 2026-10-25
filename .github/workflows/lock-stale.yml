@@ -1,0 +1,44 @@
+name: Lock & Stale Issues and Pull Requests
+
+# yamllint disable-line rule:truthy
+on:
+  schedule:
+    - cron: '7 3 * * *' # 04:07 Paris in winter, 05:07 in summer (cron runs in UTC)
+  workflow_dispatch:
+
+jobs:
+  lock: # Lock inactive issues and pull requests
+    if: github.repository_owner == 'mguyard'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dessant/lock-threads@v6.0.2
+        with:
+          github-token: ${{ github.token }}
+          issue-inactive-days: '30'
+          issue-lock-reason: ''
+          pr-inactive-days: '30'
+          pr-lock-reason: ''
+          log-output: true
+
+  stale: # Mark stale the issues waiting for their reporter, then close them
+    if: github.repository_owner == 'mguyard'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write # keeps the action's state between runs
+      issues: write
+
+    steps:
+      - uses: actions/stale@v11
+        with:
+          any-of-issue-labels: waiting-for-response
+          days-before-issue-stale: 30
+          stale-issue-label: stale
+          stale-issue-message: >
+            This issue has been automatically marked as abandoned because it has not had
+            recent activity. It will be closed if no further activity occurs. Thank you
+            for your contributions.
+          exempt-issue-labels: no-stale, bug, documentation
+          # Pull requests are never marked stale nor closed: the defaults would close
+          # any pull request left idle for 60 days.
+          days-before-pr-stale: -1
+          days-before-pr-close: -1

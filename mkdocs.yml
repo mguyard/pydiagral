@@ -6,6 +6,9 @@ theme:
   name: material
   logo: pydiagral-Logo.png
 
+markdown_extensions:
+  - admonition
+
 plugins:
   - search
   - mkdocstrings:

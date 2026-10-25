@@ -234,6 +234,9 @@ warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# The docstring examples are rendered in the docs: run them too.
+testpaths = ["tests", "src/pydiagral/models.py", "src/pydiagral/utils.py"]
+addopts = "--doctest-modules"
 asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.report]

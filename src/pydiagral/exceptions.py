@@ -7,8 +7,10 @@ class DiagralAPIError(Exception):
     def __init__(self, message: str, status_code: int | None = None) -> None:
         """Initialize the DiagralAPIError.
 
-        :param message: The error message.
-        :param status_code: The status code of the error, if any.
+        Args:
+            message (str): The error message.
+            status_code (int | None): The status code of the error, if any.
+
         """
         self.message: str = message
         self.status_code: int | None = status_code
@@ -25,6 +27,15 @@ class SessionError(DiagralAPIError):
 
 class AuthenticationError(DiagralAPIError):
     """Raised when authentication fails."""
+
+
+class PinCodeError(AuthenticationError):
+    """Raised when Diagral rejects the PIN code.
+
+    Diagral answers a wrong PIN with the same 401 as any other credential, so
+    this is inferred: only `try_connection()` raises it, when the API key it
+    has just created and validated is refused on the first call sending the PIN.
+    """
 
 
 class ValidationError(DiagralAPIError):
