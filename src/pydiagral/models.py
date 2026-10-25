@@ -25,7 +25,7 @@ from typing import (
     get_type_hints,
 )
 
-from .constants import ISSUES_URL
+from .constants import AUTOMATISM_MODES, ISSUES_URL
 from .exceptions import ModelValidationError
 from .utils import Redacted
 
@@ -1636,10 +1636,11 @@ class Rude(CamelCaseModel):
     Attributes:
         name (str): The name of the device.
         canal (str): The canal associated with the device.
-        mode (str): The mode of operation for the device. Must be one of {"ON", "PULSE", "SWITCH", "TIMER"}.
+        mode (str): The mode of operation for the device: ON, PULSE, SWITCH or TIMER in
+            the specification. Any other value is kept, and reported once.
 
     Methods:
-        __post_init__(): Post-initialization processing to validate the mode attribute.
+        __post_init__(): Post-initialization processing to report an unknown mode.
 
     Examples:
         >>> rude = Rude(name="Device1", canal="Canal1", mode="ON")
@@ -1653,15 +1654,9 @@ class Rude(CamelCaseModel):
     mode: str
 
     def __post_init__(self):
-        """Post-initialization processing to validate mode.
-
-        Raises:
-            ModelValidationError: If mode is not one of ON, PULSE, SWITCH or TIMER.
-
-        """
-        valid_modes = {"ON", "PULSE", "SWITCH", "TIMER"}
-        if self.mode not in valid_modes:
-            raise ModelValidationError(f"mode must be one of {valid_modes}")
+        """Report once a mode the specification does not list, without rejecting it."""
+        if self.mode not in AUTOMATISM_MODES:
+            _report_unexpected_field(type(self), "mode", "is not a documented mode")
 
 
 @dataclass

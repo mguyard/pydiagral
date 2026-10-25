@@ -51,6 +51,7 @@ from pydiagral.models import (
     Group,
     LoginResponse,
     Rude,
+    Rudes,
     SystemApiKeys,
     SystemDetails,
     SystemStatus,
@@ -3032,9 +3033,8 @@ async def test_register_webhook_reraises_other_errors(mock_request):
     [
         lambda: ApiKeyWithSecret(api_key="", secret_key=SECRET_KEY),
         lambda: ApiKeyWithSecret(api_key=API_KEY, secret_key=""),
-        lambda: Rude(name="Device1", canal="Canal1", mode="INVALID"),
     ],
-    ids=["empty-api-key", "empty-secret-key", "invalid-rude-mode"],
+    ids=["empty-api-key", "empty-secret-key"],
 )
 def test_model_validation_raises_diagral_api_error(build):
     """Test that model validation errors derive from DiagralAPIError and stay ValueError."""
@@ -4121,6 +4121,29 @@ def test_unparsable_boolean_is_reported_once_and_read_as_none(caplog):
     assert len(warnings) == 1
     assert "is not a boolean" in warnings[0].getMessage()
     assert "private-flag" not in caplog.text
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unknown_rude_mode_is_reported_once_and_kept(caplog):
+    """Test that a mode the specification does not list warns once and stays readable."""
+    payload = {"rudes": [{"name": "Gate", "canal": "1", "mode": "OFF"}]}
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        first = Rudes.from_dict(payload)
+        Rudes.from_dict(payload)
+    assert first.rudes[0].mode == "OFF"
+    warnings = [r for r in caplog.records if "mode" in r.getMessage()]
+    assert len(warnings) == 1
+    assert "Rude" in warnings[0].getMessage()
+
+
+@pytest.mark.parametrize("mode", ["ON", "PULSE", "SWITCH", "TIMER"])
+@pytest.mark.usefixtures("unreported_fields")
+def test_documented_rude_modes_are_not_reported(caplog, mode):
+    """Test that the four modes of the specification parse without a warning."""
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        rude = Rude(name="Gate", canal="1", mode=mode)
+    assert rude.mode == mode
+    assert not caplog.records
 
 
 @pytest.mark.usefixtures("unreported_fields")
