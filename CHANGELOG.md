@@ -1,3 +1,47 @@
+# [2.0.0-beta.2](https://github.com/mguyard/pydiagral/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2026-10-25)
+
+
+### Bug Fixes
+
+* **api:** 🐛 Delete a created API key that fails validation ([126b8f4](https://github.com/mguyard/pydiagral/commit/126b8f4e1f8af4c37ba0d8950a4adaa0ec3f3e87))
+* **api:** 🐛 Handle configurations without an alarm or groups ([6a2d06e](https://github.com/mguyard/pydiagral/commit/6a2d06efcf23ee5909dc90c92bfb7c368eb3a465))
+* **api:** 🐛 Keep the HTTP status on translated webhook errors ([a335555](https://github.com/mguyard/pydiagral/commit/a3355552e6c27fc1394d463411bb9e2d803a4e60))
+* **api:** 🐛 Raise `AuthenticationError` for missing keys in status ([207dfaa](https://github.com/mguyard/pydiagral/commit/207dfaafc84578f624cf4e0d388f2b67c43cc8f8))
+* **api:** 🐛 Raise `SessionError` once the session is closed ([014dfe1](https://github.com/mguyard/pydiagral/commit/014dfe19f05c7cb1127686569a6cb89442fc8ad0))
+* **models:** 🐛 Make `CamelCaseModel.to_dict()` work ([80b25d1](https://github.com/mguyard/pydiagral/commit/80b25d117ebdca22b1101317bed3edd1a8ef1757))
+* **models:** 🐛 Parse fields annotated as `datetime` ([177db8d](https://github.com/mguyard/pydiagral/commit/177db8d55c60f0853e438996c55c3a4ea41f8a09))
+* **models:** 🐛 Raise `ModelValidationError` for malformed payloads ([1424486](https://github.com/mguyard/pydiagral/commit/14244866b1d572230c49f24ff3154b4479046cbc))
+* **packaging:** 🐛 Trim the published metadata and sdist ([9b229d2](https://github.com/mguyard/pydiagral/commit/9b229d250bead776f691abf0f42f763260db229c))
+
+
+### Code Refactoring
+
+* 🔥 Remove unused models and helpers ([ae40444](https://github.com/mguyard/pydiagral/commit/ae4044496d367a32ac7e326d11b72453159428be))
+
+
+### Features
+
+* ✨ Export `APIKeyCreationError` and `APIValidationError` ([56d24fd](https://github.com/mguyard/pydiagral/commit/56d24fdc0113de8f410788f00cd23c67590d5c13))
+* ✨ Ship a `py.typed` marker ([8f3a094](https://github.com/mguyard/pydiagral/commit/8f3a094b24d04f081fd94ab3ad7c8a57e407b062))
+* **api:** ✨ Accept a caller's aiohttp session ([32b2486](https://github.com/mguyard/pydiagral/commit/32b2486da172bee7d7913a09eba1c09badf842cf))
+* **models:** ✨ Warn once about a required field Diagral left out ([1848391](https://github.com/mguyard/pydiagral/commit/1848391fd445574bb29ecef6ff1c3dc588d2c0fd))
+
+
+### Performance Improvements
+
+* **models:** ⚡ Resolve each model's fields once and log a parse once ([cda5faf](https://github.com/mguyard/pydiagral/commit/cda5fafcafd4334634a0f682ca12a0195ae31b31))
+
+
+### BREAKING CHANGES
+
+* `pydiagral.models.ValidationError`,
+`HTTPValidationError`, `HTTPErrorResponse` and
+`CamelCaseModel.camel_to_snake()` are removed. The exception
+`pydiagral.exceptions.ValidationError` is unchanged.
+* **api:** `get_system_status()` raises `AuthenticationError`
+instead of `ConfigurationError` when the API key, secret key or PIN
+code is missing. Both derive from `DiagralAPIError`.
+
 # [2.0.0-beta.1](https://github.com/mguyard/pydiagral/compare/v1.7.0-beta.1...v2.0.0-beta.1) (2026-10-24)
 
 
