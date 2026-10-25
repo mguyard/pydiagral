@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import logging
 import os
+import re
 import sys
 import traceback
 from types import SimpleNamespace, TracebackType
@@ -2740,6 +2741,54 @@ def test_request_timeout_is_keyword_only():
     """Test that adding request_timeout did not change the positional signature."""
     with pytest.raises(TypeError):
         DiagralAPI(USERNAME, PASSWORD, SERIAL_ID, None, None, None, 60)
+
+
+@pytest.mark.parametrize(
+    ("call", "purpose"),
+    [
+        (lambda api: api.get_configuration(), "get configuration"),
+        (lambda api: api.get_system_details(), "get system details"),
+        (lambda api: api.start_system(), "do system action start"),
+        (lambda api: api.activate_group([1]), "activate group [1]"),
+        (lambda api: api.get_anomalies(), "get anomalies"),
+        (lambda api: api.get_webhook(), "get webhook"),
+        (lambda api: api.delete_webhook(), "delete webhook"),
+    ],
+    ids=[
+        "configuration",
+        "details",
+        "action",
+        "group",
+        "anomalies",
+        "webhook",
+        "delete",
+    ],
+)
+async def test_missing_keys_error_names_the_operation(call, purpose):
+    """Test that a missing API key is reported for the operation that needs it."""
+    api = DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, pincode=PIN_CODE
+    )
+    with pytest.raises(
+        AuthenticationError,
+        match=f"^API key and secret key required to {re.escape(purpose)}$",
+    ):
+        await call(api)
+
+
+async def test_missing_pin_error_names_the_operation():
+    """Test that a missing PIN code is reported for the operation that needs it."""
+    api = DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    )
+    with pytest.raises(
+        AuthenticationError, match="^PIN code required to do system action stop$"
+    ):
+        await api.stop_system()
 
 
 #####################
