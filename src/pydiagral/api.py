@@ -1286,11 +1286,13 @@ class DiagralAPI:
         except DiagralAPIError as e:
             if "Subscription already exists" in str(e):
                 raise DiagralAPIError(
-                    "Webhook subscription already exists. Please use the 'update' action to modify it."
+                    "Webhook subscription already exists. Please use the 'update' action to modify it.",
+                    status_code=e.status_code,
                 ) from e
             if "There is no subscription for" in str(e):
                 raise DiagralAPIError(
-                    "No subscription found for the specified serial ID"
+                    "No subscription found for the specified serial ID",
+                    status_code=e.status_code,
                 ) from e
             raise
         return Webhook.from_dict(response_data)

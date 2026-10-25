@@ -2106,7 +2106,7 @@ async def test_register_webhook_subscription_already_exist(mock_request):
     mock_request.side_effect = [
         ({"access_token": FAKE_TOKEN}, 200),  # Response for login
         DiagralAPIError(
-            "Subscription already exists"
+            "Subscription already exists", status_code=409
         ),  # Response for __webhook_action_create_update
     ]
     async with DiagralAPI(
@@ -2118,13 +2118,15 @@ async def test_register_webhook_subscription_already_exist(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(DiagralAPIError):
+        with pytest.raises(DiagralAPIError) as caught:
             await diagral.register_webhook(
                 webhook_url=WEBHOOK_URL,
                 subscribe_to_anomaly=True,
                 subscribe_to_alert=True,
                 subscribe_to_state=True,
             )
+    assert str(caught.value).startswith("Webhook subscription already exists")
+    assert caught.value.status_code == 409
 
 
 @pytest.mark.asyncio
@@ -2147,7 +2149,7 @@ async def test_register_webhook_no_subscription_exist(mock_request):
     mock_request.side_effect = [
         ({"access_token": FAKE_TOKEN}, 200),  # Response for login
         DiagralAPIError(
-            "There is no subscription for XXXX"
+            "There is no subscription for XXXX", status_code=404
         ),  # Response for __webhook_action_create_update
     ]
     async with DiagralAPI(
@@ -2159,13 +2161,15 @@ async def test_register_webhook_no_subscription_exist(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(DiagralAPIError):
+        with pytest.raises(DiagralAPIError) as caught:
             await diagral.register_webhook(
                 webhook_url=WEBHOOK_URL,
                 subscribe_to_anomaly=True,
                 subscribe_to_alert=True,
                 subscribe_to_state=True,
             )
+    assert str(caught.value).startswith("No subscription found for")
+    assert caught.value.status_code == 404
 
 
 @pytest.mark.asyncio
