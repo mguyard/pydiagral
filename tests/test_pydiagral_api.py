@@ -2812,7 +2812,54 @@ async def test_delete_apikey_debug_log_redacts_key_in_url(caplog):
             await diagral.delete_apikey()
 
     assert API_KEY not in caplog.text
+    assert SERIAL_ID not in caplog.text
     assert f"api_keys/{API_KEY}" in mock_session_request.call_args.args[1]
+
+
+async def test_request_debug_log_redacts_the_serial_in_the_url(caplog):
+    """Test that the central serial in a request URL does not reach the debug log."""
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with (
+            patch.object(
+                diagral.session, "request", return_value=_FakeResponse(200, {})
+            ) as mock_session_request,
+            caplog.at_level(logging.DEBUG, logger="pydiagral.api"),
+        ):
+            await diagral._request("GET", f"systems/{SERIAL_ID}/status")  # noqa: SLF001
+
+    assert SERIAL_ID not in caplog.text
+    assert f"systems/{REDACTED}/status" in caplog.text
+    assert f"systems/{SERIAL_ID}/status" in mock_session_request.call_args.args[1]
+
+
+def test_parsing_debug_log_redacts_serial_numbers(caplog):
+    """Test that the box, central and device serials of a configuration are redacted."""
+    configuration = load_sample("configuration_sample.json")
+    with caplog.at_level(logging.DEBUG, logger="pydiagral.models"):
+        parsed = AlarmConfiguration.from_dict(configuration)
+
+    serials = [parsed.alarm.box.serial, parsed.alarm.central.serial]
+    serials += [device.serial for device in parsed.sensors + parsed.sirens]
+    assert all(serials)
+    for serial in serials:
+        assert serial not in caplog.text
+    assert "SENSOR1" in caplog.text
+
+
+def test_parsing_debug_log_redacts_the_webhook_transmitter_id(caplog):
+    """Test that the transmitter ID, the central's serial, is redacted from the log."""
+    payload = {
+        "transmitter_id": SERIAL_ID,
+        "webhook_url": WEBHOOK_URL,
+        "subscriptions": {"anomaly": True, "alert": True, "state": True},
+    }
+    with caplog.at_level(logging.DEBUG, logger="pydiagral.models"):
+        webhook = Webhook.from_dict(payload)
+
+    assert webhook.transmitter_id == SERIAL_ID
+    assert SERIAL_ID not in caplog.text
 
 
 @patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
@@ -3361,8 +3408,8 @@ async def test_webhook_callback_url_is_redacted(
     assert callback_url not in caplog.text
     assert "private-callback-token" not in caplog.text
     assert f"https://example.com/{REDACTED}" in caplog.text
-    assert "webhooks/fake-serial/subscription" in caplog.text
-    assert "**REDACTED**" in caplog.text
+    assert f"webhooks/{REDACTED}/subscription" in caplog.text
+    assert "fake-serial" not in caplog.text
 
 
 @pytest.mark.asyncio

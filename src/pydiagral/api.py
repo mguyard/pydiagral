@@ -236,7 +236,8 @@ class DiagralAPI:
             timeout (float | None, optional): The timeout for this request in seconds.
                 Defaults to the client's `request_timeout`.
             log_endpoint (str | None, optional): The endpoint to show in the debug log instead of
-                `endpoint`, when the path itself carries a secret. Defaults to None.
+                `endpoint`, when the path itself carries a secret. The serial ID is
+                redacted from either one. Defaults to None.
             versioned (bool, optional): Whether `endpoint` sits under the API version.
                 Defaults to True; False only for the unversioned root.
             list_body (bool, optional): Whether the endpoint answers with a JSON list instead
@@ -267,10 +268,14 @@ class DiagralAPI:
         prefix: str = f"{BASE_URL}/{API_VERSION}" if versioned else BASE_URL
         url: str = f"{prefix}/{endpoint}"
         headers: Any = kwargs.pop("headers", {})
+        logged_endpoint = log_endpoint or endpoint
+        if self.serial_id:
+            # Most paths name the central; users attach debug logs to public issues.
+            logged_endpoint = logged_endpoint.replace(self.serial_id, REDACTED)
         _LOGGER.debug(
             "Sending %s request to %s with headers %s and data %s",
             method,
-            f"{prefix}/{log_endpoint or endpoint}",
+            f"{prefix}/{logged_endpoint}",
             Redacted(headers),
             Redacted(kwargs.get("json", {})),
         )
