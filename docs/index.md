@@ -78,23 +78,22 @@ To get started with pydiagral, follow these steps:
 
 2. Example
 
-A modular and easy-to-use test script is available [example_code.py](https://github.com/mguyard/pydiagral/blob/main/example_code.py) to help you get started with the library.
+[try_pydiagral.py](https://github.com/mguyard/pydiagral/blob/main/try_pydiagral.py) runs ready-made scenarios against your own alarm. Copy [.env.example](https://github.com/mguyard/pydiagral/blob/main/.env.example) to `.env` next to the script, fill it in, then run it with [uv](https://docs.astral.sh/uv/), which installs the latest pydiagral, betas included:
 
-Simply create a `.env` file with the following content:
-
-```properties
-USERNAME=your_email@example.com
-PASSWORD=your_password
-SERIAL_ID=your_serial_id
-PIN_CODE=your_pin_code  // Also named Master Code
-LOG_LEVEL=DEBUG
+```bash
+uv run try_pydiagral.py                  # every read-only scenario
+uv run try_pydiagral.py status anomalies # only these
+uv run try_pydiagral.py arm --wait 10    # arm, wait 10 s, then disarm
+uv run try_pydiagral.py --help           # every scenario and option
 ```
 
-And run the [example_code.py](https://github.com/mguyard/pydiagral/blob/main/example_code.py).
+No Python at hand? The script also runs in [GitHub Codespaces](https://codespaces.new/mguyard/pydiagral), from your browser, with nothing to install.
 
-> TIP
->
-> You can customize the actions performed by [example_code.py](https://github.com/mguyard/pydiagral/blob/main/example_code.py) by modifying the parameters in the code, as indicated by the `CUSTOMIZE THE TESTS` section title.
+Every scenario, option and message is explained in [Try it on your alarm](try-pydiagral.md).
+
+!!! tip
+
+    Without arguments, the script changes nothing on your alarm: the scenarios that arm, disarm or register a webhook only run when you name them, and those that arm always disarm at the end, even on an error or Ctrl+C. Its output ends with a diagnostics report, ready to attach to an issue.
 
 3. Request timeout
 
