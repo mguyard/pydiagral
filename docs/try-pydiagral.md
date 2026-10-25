@@ -107,7 +107,7 @@ python try_pydiagral.py arm --wait 10    # arm, wait 10 s, then disarm
 python try_pydiagral.py --help           # every scenario and option
 ```
 
-Without arguments, the script runs every read-only scenario: nothing changes on your alarm. Each scenario prints a `== name ==` header followed by what it found. When one fails, its error is printed and the next one runs.
+Without arguments, the script runs every read-only scenario: nothing changes on your alarm. Each scenario prints a `== name ==` header, what it found, then how long it took, such as `(status: 2.4 s)`. When one fails, its error is printed with the time it took, and the next one runs.
 
 A good first run is `ping systems`: it only needs the username and password, checks that the Diagral cloud answers, and shows the serial ID of each system of your account.
 
@@ -150,6 +150,7 @@ The scenarios that arm **always disarm at the end**: after the wait, and when th
 | Option | Default | Effect |
 |---|---|---|
 | `--wait SECONDS` | `30` | How long the arming scenarios stay armed before disarming |
+| `--timeout SECONDS` | `30` | How long each request to Diagral may take before it fails — see [Troubleshooting](#troubleshooting) |
 | `--partial {1,2}` | `1` | Which partial start `partial` runs |
 | `--groups N [N ...]` | `1` | Which groups `groups` arms, e.g. `--groups 1 2` |
 | `--keep-apikey` | off | Keeps the API key the script creates, and prints it |
@@ -258,6 +259,7 @@ python try_pydiagral.py status --debug 2> debug.log
 | `DIAGRAL_SERIAL_ID is required for these scenarios` | Set it, or run `systems` to find it |
 | `!! status failed: PIN code required to …` | Set `DIAGRAL_PIN_CODE` |
 | `error: unknown scenario` | A typo in a scenario name: `--help` lists them |
+| `Diagral request timed out` | Diagral did not answer within `--timeout`, 30 seconds by default. Its answers can be slow, which is why hass-diagral allows 60 seconds or more: run the scenario again with `--timeout 60`. The time printed after each scenario shows which ones are slow |
 | `A webhook subscription already exists` | See [One subscription per box](#testing-webhooks) |
 | `Outside Codespaces, start a tunnel` | Start a tunnel and pass its address with `--public-url` |
 | `The listener is not reachable` | In Codespaces, port 8080 is still private. Locally, the tunnel is not running, points to another port than `--port`, or a firewall blocks it: `cloudflared` needs to reach Cloudflare on port 7844 |

@@ -39,6 +39,7 @@ import secrets
 import shutil
 import signal
 import sys
+import time
 from types import FrameType
 from typing import Any
 from urllib.parse import urlsplit
@@ -47,6 +48,7 @@ from aiohttp import ClientError, ClientSession, ClientTimeout, web
 from dotenv import load_dotenv
 
 from pydiagral import DiagralAPI, DiagralAPIError
+from pydiagral.constants import DEFAULT_REQUEST_TIMEOUT
 from pydiagral.models import (
     Anomalies,
     SystemStatus,
@@ -109,6 +111,7 @@ class Options:
     wait: int
     partial: int
     groups: list[int]
+    timeout: float
     trigger: str
     listen_for: int
     port: int
@@ -622,17 +625,22 @@ async def run(
         secret_key=settings.secret_key,
         pincode=settings.pincode,
         vendor=settings.vendor,
+        request_timeout=options.timeout,
     ) as api:
         if temporary_key:
             await create_apikey(api, keep_apikey)
         try:
             for name in names:
                 print(f"\n== {name} ==")
+                started = time.monotonic()
                 try:
                     await SCENARIOS[name].run(api, options)
                 except (DiagralAPIError, ScenarioFailed) as err:
                     failures += 1
-                    print(f"!! {name} failed: {err}")
+                    elapsed = time.monotonic() - started
+                    print(f"!! {name} failed after {elapsed:.1f} s: {err}")
+                else:
+                    print(f"({name}: {time.monotonic() - started:.1f} s)")
         finally:
             if temporary_key and not keep_apikey:
                 await api.delete_apikey()
@@ -679,6 +687,13 @@ def parse_args() -> argparse.Namespace:
         help="groups to arm (default: 1)",
     )
     parser.add_argument(
+        "--timeout",
+        type=float,
+        default=DEFAULT_REQUEST_TIMEOUT,
+        help="seconds each request to Diagral may take "
+        f"(default: {DEFAULT_REQUEST_TIMEOUT:g})",
+    )
+    parser.add_argument(
         "--keep-apikey",
         action="store_true",
         help="keep the API key created when .env holds none, and print it",
@@ -717,6 +732,8 @@ def parse_args() -> argparse.Namespace:
         parser.error(f"unknown scenario: {', '.join(unknown)} (see --help)")
     if args.wait < 0 or args.listen_for < 0:
         parser.error("--wait and --listen-for cannot be negative")
+    if not args.timeout > 0:
+        parser.error("--timeout must be a positive number of seconds")
     if args.public_url and urlsplit(args.public_url).scheme not in {"http", "https"}:
         parser.error("--public-url must start with http:// or https://")
     return args
@@ -740,6 +757,7 @@ def main() -> None:
         wait=args.wait,
         partial=args.partial,
         groups=args.groups,
+        timeout=args.timeout,
         trigger=args.trigger,
         listen_for=args.listen_for,
         port=args.port,
