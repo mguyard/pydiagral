@@ -125,6 +125,6 @@ A change it depends on is a breaking change: `BREAKING CHANGE:` footer, and a co
 - [ ] Model with aliases for every renamed key, documented under `Attributes:`
 - [ ] Method through `_request()`, Google docstring, accurate annotation, no secret logged
 - [ ] Tests: nominal with request assertion, preconditions, error paths
-- [ ] `ruff check .` and `ruff format --check .` clean
+- [ ] `ruff check .`, `ruff format --check .` and `mypy` clean
 - [ ] `pytest` green
 - [ ] `docs/index.md` / `README.md` feature list updated if the capability is user-visible (see `docs-pydiagral`)
