@@ -8,7 +8,7 @@ and other related data structures.
 
 from __future__ import annotations
 
-from dataclasses import Field, dataclass, field, fields
+from dataclasses import MISSING, Field, dataclass, field, fields
 from datetime import UTC, datetime
 import logging
 import re
@@ -17,6 +17,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    NamedTuple,
     Self,
     TypeVar,
     Union,
@@ -25,6 +26,7 @@ from typing import (
     get_type_hints,
 )
 
+from .constants import ISSUES_URL
 from .exceptions import ModelValidationError
 from .utils import Redacted
 
@@ -40,6 +42,76 @@ _ModelT = TypeVar("_ModelT", bound="CamelCaseModel")
 
 # What a payload of the wrong shape makes the parsers raise.
 _PARSE_ERRORS = (AttributeError, KeyError, TypeError, ValueError)
+
+# Model fields a payload broke expectations on, so each is reported only once.
+_REPORTED_FIELDS: set[tuple[str, str]] = set()
+
+
+class _FieldSpec(NamedTuple):
+    """How `_from_dict_recursive` reads one model field."""
+
+    name: str
+    alias: str
+    type: Any
+    required: bool
+
+
+# Resolved once per model: evaluating annotations dominated parsing time.
+_FIELD_SPECS: dict[type, tuple[_FieldSpec, ...]] = {}
+
+
+def _field_specs(model: type) -> tuple[_FieldSpec, ...]:
+    """Return how to read each field of a model, resolving it on first use."""
+    if model in _FIELD_SPECS:
+        return _FIELD_SPECS[model]
+    model_fields = {model_field.name: model_field for model_field in fields(model)}
+    specs = []
+    for name, hint in get_type_hints(model).items():
+        model_field = model_fields.get(name)
+        if model_field is None:
+            continue
+        args = get_args(hint)
+        optional = get_origin(hint) in (Union, types.UnionType) and type(None) in args
+        if optional:
+            hint = next(t for t in args if t is not type(None))
+        has_default = (
+            model_field.default is not MISSING
+            or model_field.default_factory is not MISSING
+        )
+        specs.append(
+            _FieldSpec(
+                name=name,
+                alias=model_field.metadata.get("alias", name).lower(),
+                type=hint,
+                required=not (optional or has_default),
+            )
+        )
+    _FIELD_SPECS[model] = tuple(specs)
+    return _FIELD_SPECS[model]
+
+
+def _report_unexpected_field(model: type, name: str, problem: str) -> None:
+    """Warn once that a payload does not fit a model, without quoting the payload."""
+    if (model.__name__, name) in _REPORTED_FIELDS:
+        return
+    _REPORTED_FIELDS.add((model.__name__, name))
+    logger.warning(
+        "Diagral sent %s data whose %s field %s. Please report it at %s, with your "
+        "pydiagral version, so the model can be fixed",
+        model.__name__,
+        name,
+        problem,
+        ISSUES_URL,
+    )
+
+
+def _parse_datetime(model: type, name: str, value: str) -> datetime | None:
+    """Parse an ISO date; an unknown format is reported and read as None."""
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        _report_unexpected_field(model, name, "is not an ISO date")
+        return None
 
 
 class CamelCaseModel:
@@ -64,11 +136,9 @@ class CamelCaseModel:
         ...     last_name: str
         ...
         >>> example = ExampleModel(first_name="Luke", last_name="Skywalker")
-        >>> example_dict = example.to_dict()
-        >>> print(example_dict)
+        >>> example.to_dict()
         {'firstName': 'Luke', 'lastName': 'Skywalker'}
-        >>> new_example = ExampleModel.from_dict(example_dict)
-        >>> print(new_example)
+        >>> ExampleModel.from_dict({"first_name": "Luke", "last_name": "Skywalker"})
         ExampleModel(first_name='Luke', last_name='Skywalker')
 
     """
@@ -78,44 +148,51 @@ class CamelCaseModel:
         __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
 
     def to_dict(self) -> dict:
-        """Convert the instance attributes to a dictionary, transforming attribute names.
+        """Convert the instance to a dictionary with camelCase keys.
 
-        from snake_case to camelCase and handling nested CamelCaseModel instances.
+        A field's `alias` is used as its key when it has one. Nested models, including
+        those in lists, are converted too, and None values are left out.
 
         Returns:
             dict: A dictionary representation of the instance with camelCase keys.
 
         Example:
-            >>> class ExampleModel(CamelCaseModel):
+            >>> @dataclass
+            ... class ExampleModel(CamelCaseModel):
             ...     first_name: str
             ...     last_name: str
             ...
-            >>> example = ExampleModel(first_name="Luke", last_name="Skywalker")
-            >>> example.to_dict()
+            >>> ExampleModel(first_name="Luke", last_name="Skywalker").to_dict()
             {'firstName': 'Luke', 'lastName': 'Skywalker'}
 
         """
 
         result = {}
-        for k, v in self.__dict__.items():
-            if v is not None:
-                if isinstance(v, CamelCaseModel):
-                    v = v.to_dict()
-                elif isinstance(v, list) and v and isinstance(v[0], CamelCaseModel):
-                    v = [item.to_dict() for item in v]
-                key = getattr(self.__class__, k).metadata.get(
-                    "alias", self.snake_to_camel(k)
-                )
-                result[key] = v
+        for model_field in fields(self):
+            value = getattr(self, model_field.name)
+            if value is None:
+                continue
+            if isinstance(value, CamelCaseModel):
+                value = value.to_dict()
+            elif isinstance(value, list):
+                value = [
+                    item.to_dict() if isinstance(item, CamelCaseModel) else item
+                    for item in value
+                ]
+            key = model_field.metadata.get(
+                "alias", self.snake_to_camel(model_field.name)
+            )
+            result[key] = value
         return result
 
     @classmethod
     def _from_dict_recursive(cls, data: dict, target_cls: type[_ModelT]) -> _ModelT:
         """Recursively converts a dictionary to an instance of the specified target class.
 
-        This method handles nested dictionaries and lists, converting them to the appropriate
-        types as specified by the target class's type hints. It also supports optional fields
-        by handling `Union` types and removing `None` from the type hints.
+        Each field is matched, case-insensitively, against its `alias` or its name; keys
+        are not converted from camelCase. Nested dictionaries and lists of dictionaries
+        become the annotated models, and ISO strings become `datetime` objects. A missing
+        field is set to None.
 
         Args:
             cls (type[Self]): The class that this method is a part of.
@@ -128,83 +205,42 @@ class CamelCaseModel:
         Raises:
             TypeError: If the target class cannot be instantiated with the provided data.
 
-        Notes:
-            - The method assumes that the target class and its nested classes (if any) are
-              annotated with type hints.
-            - The method uses snake_case to camelCase conversion for dictionary keys to match
-              the field names in the target class.
-            - The method logs detailed debug information about the conversion process.
-
         """
 
-        logger.debug("Converting data: %s to %s", Redacted(data), target_cls)
-
-        logger.debug("Extracted target_cls: %s", target_cls)
         if get_origin(target_cls) is Union:
-            # Extract the real type by removing None
             target_cls = next(t for t in get_args(target_cls) if t is not type(None))
-            logger.debug("Extracted target_cls: %s", target_cls)
+
+        keys: dict[str, str] = {}
+        for key in data:
+            keys.setdefault(key.lower(), key)
 
         init_values: dict[str, Any] = {}
-        fields_dict = {field.name: field for field in fields(target_cls)}
-        for field_name, field_type in get_type_hints(target_cls).items():
-            field = fields_dict.get(field_name)
-            metadata = field.metadata if field else {}
-            logger.debug("Field Metadata: %s", metadata)
-            # alias = cls.snake_to_camel(field_name) # Old version who don't support field with underscore and without alias
-            alias = metadata.get("alias", field_name)
-            logger.debug(
-                "Processing field: %s (alias: %s, type: %s)",
-                field_name,
-                alias,
-                field_type,
-            )
-
-            logger.debug("Extracted field_type: %s", field_type)
-            if get_origin(field_type) is types.UnionType:
-                # Extract the real type by removing None
-                field_type = next(
-                    t for t in get_args(field_type) if t is not type(None)
-                )
-                logger.debug("Extracted field_type: %s", field_type)
-
-            logger.debug("Checking if alias %s is in data: %s", alias, Redacted(data))
-            if any(alias.lower() == key.lower() for key in data):
-                alias = next(key for key in data if alias.lower() == key.lower())
-                value = data[alias]
-                logger.debug("Found value: %s", Redacted({alias: value}))
-
-                if (
-                    isinstance(value, dict)
-                    and isinstance(field_type, type)
-                    and issubclass(field_type, CamelCaseModel)
-                ):
-                    logger.debug(
-                        "Recursively converting nested dict for field: %s", field_name
-                    )
-                    init_values[field_name] = cls._from_dict_recursive(
-                        value, field_type
-                    )
-                elif isinstance(value, list) and get_origin(field_type) is list:
-                    item_type = get_args(field_type)[0]
-                    logger.debug(
-                        "Recursively converting list for field: %s with item type: %s",
-                        field_name,
-                        item_type,
-                    )
-                    init_values[field_name] = [
-                        cls._from_dict_recursive(item, item_type)
-                        if isinstance(item, dict)
-                        else item
-                        for item in value
-                    ]
-                else:
-                    init_values[field_name] = value
+        for spec in _field_specs(target_cls):
+            key = keys.get(spec.alias)
+            value = data[key] if key is not None else None
+            if value is None:
+                if spec.required:
+                    _report_unexpected_field(target_cls, spec.name, "is missing")
+                init_values[spec.name] = None
+            elif (
+                isinstance(value, dict)
+                and isinstance(spec.type, type)
+                and issubclass(spec.type, CamelCaseModel)
+            ):
+                init_values[spec.name] = cls._from_dict_recursive(value, spec.type)
+            elif isinstance(value, list) and get_origin(spec.type) is list:
+                item_type = get_args(spec.type)[0]
+                init_values[spec.name] = [
+                    cls._from_dict_recursive(item, item_type)
+                    if isinstance(item, dict)
+                    else item
+                    for item in value
+                ]
+            elif spec.type is datetime and isinstance(value, str):
+                init_values[spec.name] = _parse_datetime(target_cls, spec.name, value)
             else:
-                init_values[field_name] = None
-                logger.debug("No value found for %s, setting to None", alias)
+                init_values[spec.name] = value
 
-        logger.debug("Initialized values for %s: %s", target_cls, Redacted(init_values))
         return target_cls(**init_values)
 
     @classmethod
@@ -235,6 +271,7 @@ class CamelCaseModel:
 
         if not isinstance(data, dict):
             raise ModelValidationError(f"Invalid {cls.__name__} payload")
+        logger.debug("Parsing %s from %s", cls.__name__, Redacted(data))
         try:
             return cls._from_dict_recursive(data, cls)
         except ModelValidationError:

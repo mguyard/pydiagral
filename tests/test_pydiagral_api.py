@@ -28,15 +28,18 @@ from pydiagral.exceptions import (
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 import json
 
-from pydiagral import AuthenticationError, DiagralAPI, ValidationError
+from pydiagral import AuthenticationError, DiagralAPI, ValidationError, models
 from pydiagral.constants import REDACTED
 from pydiagral.models import (
+    AlarmConfiguration,
     Anomalies,
     AnomalyDetail,
     AnomalyName,
     ApiKeys,
     ApiKeyWithSecret,
     DeviceList,
+    Group,
+    LoginResponse,
     Rude,
     SystemDetails,
     SystemStatus,
@@ -3327,3 +3330,91 @@ def test_model_validation_error_does_not_quote_the_payload():
     with pytest.raises(ModelValidationError) as caught:
         Anomalies.from_dict(payload)
     assert "private-value" not in "".join(traceback.format_exception(caught.value))
+
+
+#########################
+# Generic model parsing #
+#########################
+
+
+@pytest.fixture
+def unreported_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Forget which fields were already reported, so each test sees its warning."""
+    monkeypatch.setattr(models, "_REPORTED_FIELDS", set())
+
+
+def test_to_dict_uses_aliases_and_nested_models():
+    """Test that `to_dict()` converts names, aliases and nested models."""
+    assert LoginResponse(access_token="token").to_dict() == {"accessToken": "token"}
+    configuration = AlarmConfiguration(
+        groups=[Group(name="Day", index=1, input_delay=30)]
+    )
+    assert configuration.to_dict() == {
+        "groups": [{"name": "Day", "index": 1, "inputDelay": 30}]
+    }
+
+
+def test_from_dict_matches_aliases_case_insensitively():
+    """Test that keys match a field's alias or name whatever their case."""
+    group = Group.from_dict({"NAME": "Night", "Index": 2, "INPUTDELAY": 15})
+    assert group == Group(name="Night", index=2, input_delay=15)
+
+
+def test_iso_strings_become_datetimes():
+    """Test that a field annotated as datetime is parsed from its ISO string."""
+    configuration = AlarmConfiguration.from_dict(
+        {"readingDate": "2024-01-01T10:00:00Z"}
+    )
+    assert configuration.reading_date == datetime(2024, 1, 1, 10, tzinfo=UTC)
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unparsable_date_is_reported_once_and_read_as_none(caplog):
+    """Test that an unknown date format warns once instead of failing the parse."""
+    payload = {"readingDate": "private-date"}
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        first = AlarmConfiguration.from_dict(payload)
+        AlarmConfiguration.from_dict(payload)
+    assert first.reading_date is None
+    warnings = [r for r in caplog.records if "reading_date" in r.getMessage()]
+    assert len(warnings) == 1
+    assert "is not an ISO date" in warnings[0].getMessage()
+    assert "private-date" not in caplog.text
+
+
+@pytest.mark.usefixtures("unreported_fields")
+@pytest.mark.parametrize(
+    "payload",
+    [{"activated_groups": [1]}, {"status": None, "activated_groups": [1]}],
+    ids=["missing", "null"],
+)
+def test_missing_required_field_is_reported_once(caplog, payload):
+    """Test that a required field without a value warns once and still parses."""
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        first = SystemStatus.from_dict(payload)
+        SystemStatus.from_dict(payload)
+    assert first == SystemStatus(status=None, activated_groups=[1])
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    message = warnings[0].getMessage()
+    assert "SystemStatus" in message
+    assert "status field is missing" in message
+    assert "github.com/mguyard/pydiagral/issues" in message
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_optional_fields_are_not_reported(caplog):
+    """Test that absent optional or defaulted fields stay silent."""
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        AlarmConfiguration.from_dict({})
+        Group.from_dict({})
+    assert not caplog.records
+
+
+def test_parsing_logs_one_redacted_debug_line(caplog):
+    """Test that a parse logs the payload once, redacted, not once per field."""
+    configuration = load_sample("configuration_sample.json")
+    with caplog.at_level(logging.DEBUG, logger="pydiagral.models"):
+        AlarmConfiguration.from_dict(configuration)
+    assert len(caplog.records) == 1
+    assert caplog.records[0].getMessage().startswith("Parsing AlarmConfiguration")
