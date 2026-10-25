@@ -35,6 +35,8 @@ classifiers = [
     "Operating System :: OS Independent",
 
     "Topic :: Security",
+
+    "Typing :: Typed",
 ]
 keywords = ["diagral", "home automation", "python"]
 
