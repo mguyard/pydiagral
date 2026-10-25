@@ -53,7 +53,7 @@ The `DiagralAPI` class offers the following functionalities:
 
 - **Authentication**:
   - Connect to the Diagral API with username and password
-  - Manage access tokens and their expiration
+  - Log in to obtain an access token
   - Create, validate, and delete API keys
 
 - **System Configuration**:
@@ -67,7 +67,7 @@ The `DiagralAPI` class offers the following functionalities:
 
 - **System Interraction**:
   - Activate or Desactivate system (partially or globally)
-  - Automatism actions
+  - List automatism rules (running their actions is not implemented yet)
 
 ## 🚀 Quick Start
 
@@ -194,7 +194,7 @@ Contributions are welcome! Here are several ways you can contribute:
    ```
 7. **Submit a Pull Request**: Create a PR against the original project repository. Clearly describe the changes and their motivations.
 
-Once your PR is reviewed and approved, it will be merged into the `beta` branch. After final testing, it will be merged into the `main` branch.
+Open your PR against the `dev` branch. Once it is reviewed and approved, it is merged there, then promoted to `beta` for a prerelease and to `main` for a stable release.
 
 </details>
 

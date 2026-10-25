@@ -5,6 +5,8 @@ This package provides the necessary components to interact with the Diagral API.
 
 from .api import DiagralAPI
 from .exceptions import (
+    APIKeyCreationError,
+    APIValidationError,
     AuthenticationError,
     ClientError,
     ConfigurationError,
@@ -27,4 +29,6 @@ __all__ = [
     "ServerError",
     "ApiKeyWithSecret",
     "ClientError",
+    "APIKeyCreationError",
+    "APIValidationError",
 ]
