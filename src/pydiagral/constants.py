@@ -7,10 +7,20 @@ API_VERSION = "v1"
 VENDORS = ("DIAGRAL", "DAITEM", "EDAITEM", "LOGISTYALMA", "DISTRIBUTION")
 DEFAULT_VENDOR = "DIAGRAL"
 
-# From the OpenAPI specification: the mode an automatism is configured with, and
-# the actions it accepts, which add OFF. How the two relate is not documented.
+# From the OpenAPI specification: the mode an automatism is configured with, the
+# actions it accepts (they add OFF; how the two relate is not documented), and the
+# canals that address it.
 AUTOMATISM_MODES = ("ON", "PULSE", "SWITCH", "TIMER")
 AUTOMATISM_ACTIONS = ("PULSE", "OFF", "ON", "SWITCH", "TIMER")
+AUTOMATISM_CANALS = (
+    "LUMIERE_1",
+    "RELAIS_1",
+    "RELAIS_2",
+    "RELAIS_3",
+    "RELAIS_4",
+    "RELAIS_1_CENTRALE",
+    "RELAIS_2_CENTRALE",
+)
 
 # Seconds allowed for a whole request (connection, sending, response).
 DEFAULT_REQUEST_TIMEOUT = 30

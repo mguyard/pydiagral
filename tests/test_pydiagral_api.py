@@ -2218,38 +2218,44 @@ async def test_delete_anomalies_is_announced_as_untested_once(
     assert ISSUES_URL in notices[0].getMessage()
 
 
-@pytest.mark.parametrize("action", ["PULSE", "off", "Timer"])
-async def test_set_automatism_action(unannounced_features: None, action: str) -> None:
+@pytest.mark.parametrize(
+    ("canal", "action"),
+    [("RELAIS_1", "PULSE"), ("lumiere_1", "off"), ("Relais_2_Centrale", "Timer")],
+)
+async def test_set_automatism_action(
+    unannounced_features: None, canal: str, action: str
+) -> None:
     """Test that the action is posted, upper-cased, to the canal with the PIN code."""
     diagral = _signed_client()
     with patch.object(
         diagral, "_request", new=AsyncMock(return_value=({}, 204))
     ) as request:
-        assert await diagral.set_automatism_action("2", action) is None
+        assert await diagral.set_automatism_action(canal, action) is None
 
     method, endpoint = request.call_args.args
-    assert (method, endpoint) == ("POST", f"systems/{SERIAL_ID}/rudes/2")
+    assert (method, endpoint) == ("POST", f"systems/{SERIAL_ID}/rudes/{canal.upper()}")
     assert request.call_args.kwargs["params"] == {"action": action.upper()}
     assert request.call_args.kwargs["headers"]["X-PIN-CODE"] == PIN_CODE
 
 
-async def test_set_automatism_action_quotes_the_canal(
-    unannounced_features: None,
-) -> None:
-    """Test that a canal cannot reach another path of the API."""
-    diagral = _signed_client()
-    with patch.object(
-        diagral, "_request", new=AsyncMock(return_value=({}, 204))
-    ) as request:
-        await diagral.set_automatism_action("../2", "ON")
-
-    assert request.call_args.args[1] == f"systems/{SERIAL_ID}/rudes/..%2F2"
-
-
 @pytest.mark.parametrize(
     ("canal", "action"),
-    [("2", "OPEN"), ("2", None), ("", "ON"), (None, "ON")],
-    ids=["unknown-action", "no-action", "empty-canal", "no-canal"],
+    [
+        ("RELAIS_1", "OPEN"),
+        ("RELAIS_1", None),
+        ("RELAIS_9", "ON"),
+        ("../RELAIS_1", "ON"),
+        ("", "ON"),
+        (None, "ON"),
+    ],
+    ids=[
+        "unknown-action",
+        "no-action",
+        "unknown-canal",
+        "path-in-canal",
+        "empty-canal",
+        "no-canal",
+    ],
 )
 async def test_set_automatism_action_rejects_invalid_arguments(
     canal: str | None, action: str | None
@@ -2274,8 +2280,8 @@ async def test_set_automatism_action_is_announced_as_untested_once(
         patch.object(diagral, "_request", new=AsyncMock(return_value=({}, 204))),
         caplog.at_level(logging.WARNING, logger="pydiagral.api"),
     ):
-        await diagral.set_automatism_action("2", "ON")
-        await diagral.set_automatism_action("2", "OFF")
+        await diagral.set_automatism_action("RELAIS_1", "ON")
+        await diagral.set_automatism_action("RELAIS_1", "OFF")
 
     notices = [r for r in caplog.records if "set_automatism_action()" in r.getMessage()]
     assert len(notices) == 1

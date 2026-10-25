@@ -12,13 +12,13 @@ import math
 import re
 import time
 from typing import Any, Literal, Self, overload
-from urllib.parse import quote
 
 import aiohttp
 
 from .constants import (
     API_VERSION,
     AUTOMATISM_ACTIONS,
+    AUTOMATISM_CANALS,
     BASE_URL,
     DEFAULT_REQUEST_TIMEOUT,
     DEFAULT_VENDOR,
@@ -1280,25 +1280,28 @@ class DiagralAPI:
             - `TIMER` takes no duration in the specification: the box probably uses
               the one configured for the automatism.
             - Whether `action` must match the automatism's `mode`.
-            - What a `canal` looks like: it is passed as `Rude.canal` gives it.
+            - Whether `Rude.canal` holds one of the canals below: the specification
+              types it as any string.
 
             If you use automatisms, please open an issue at
             https://github.com/mguyard/pydiagral/issues with what you observe, so this
             part can be fully supported.
 
         Args:
-            canal (str): The canal of the automatism, as `get_automatism_rudes()`
-                returns it.
+            canal (str): LUMIERE_1, RELAIS_1, RELAIS_2, RELAIS_3, RELAIS_4,
+                RELAIS_1_CENTRALE or RELAIS_2_CENTRALE, in any case.
             action (str): PULSE, OFF, ON, SWITCH or TIMER, in any case.
 
         Raises:
-            ConfigurationError: If `canal` is empty, if `action` is not one of the
-                actions above, or if the client was created without a serial ID.
+            ConfigurationError: If `canal` or `action` is not one of the values above,
+                or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is missing.
 
         """
-        if not canal or not isinstance(canal, str):
-            raise ConfigurationError("canal must be a non-empty string")
+        if not isinstance(canal, str) or canal.upper() not in AUTOMATISM_CANALS:
+            raise ConfigurationError(
+                f"canal must be one of {', '.join(AUTOMATISM_CANALS)}"
+            )
         if not isinstance(action, str) or action.upper() not in AUTOMATISM_ACTIONS:
             raise ConfigurationError(
                 f"action must be one of {', '.join(AUTOMATISM_ACTIONS)}"
@@ -1307,7 +1310,7 @@ class DiagralAPI:
         _HEADERS = self.__hmac_headers("set automatism action", with_pin=True)
         await self._request(
             "POST",
-            f"systems/{self.__serial}/rudes/{quote(canal, safe='')}",
+            f"systems/{self.__serial}/rudes/{canal.upper()}",
             headers=_HEADERS,
             params={"action": action.upper()},
         )
