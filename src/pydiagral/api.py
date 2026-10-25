@@ -42,6 +42,7 @@ from .models import (
     ApiKeyWithSecret,
     DeviceList,
     LoginResponse,
+    Ping,
     Rudes,
     SystemDetails,
     SystemStatus,
@@ -179,6 +180,7 @@ class DiagralAPI:
         timeout: float | None = None,
         *,
         log_endpoint: str | None = None,
+        versioned: bool = True,
         **kwargs,
     ) -> tuple[dict[str, Any], int]:
         """Make an asynchronous HTTP request to the specified endpoint.
@@ -190,6 +192,8 @@ class DiagralAPI:
                 Defaults to the client's `request_timeout`.
             log_endpoint (str | None, optional): The endpoint to show in the debug log instead of
                 `endpoint`, when the path itself carries a secret. Defaults to None.
+            versioned (bool, optional): Whether `endpoint` sits under the API version.
+                Defaults to True; False only for the unversioned root.
             **kwargs (any): Additional keyword arguments to pass to the request.
 
         Returns:
@@ -212,12 +216,13 @@ class DiagralAPI:
             _LOGGER.error(error_msg)
             raise SessionError(error_msg)
 
-        url: str = f"{BASE_URL}/{API_VERSION}/{endpoint}"
+        prefix: str = f"{BASE_URL}/{API_VERSION}" if versioned else BASE_URL
+        url: str = f"{prefix}/{endpoint}"
         headers: Any = kwargs.pop("headers", {})
         _LOGGER.debug(
             "Sending %s request to %s with headers %s and data %s",
             method,
-            f"{BASE_URL}/{API_VERSION}/{log_endpoint or endpoint}",
+            f"{prefix}/{log_endpoint or endpoint}",
             Redacted(headers),
             Redacted(kwargs.get("json", {})),
         )
@@ -545,6 +550,22 @@ class DiagralAPI:
 
         result.result = True
         return result
+
+    async def ping(self) -> Ping:
+        """Check that the Diagral cloud answers. No credential is needed.
+
+        Returns:
+            Ping: The status the cloud reports.
+
+        Raises:
+            SessionError: If the session is not initialized or is closed.
+            ServerError: If the Diagral service is unavailable.
+            ClientError: If there is a network error or timeout.
+            ValidationError: If the answer is not a JSON object.
+
+        """
+        response_data, *_ = await self._request("GET", "", versioned=False)
+        return Ping.from_dict(response_data)
 
     def __credentials(
         self, purpose: str, *, with_pin: bool = False

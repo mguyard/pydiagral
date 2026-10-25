@@ -3051,6 +3051,37 @@ async def test_success_rejects_malformed_json(api: DiagralAPI) -> None:
     assert "(HTTP 200)" in str(caught.value)
 
 
+async def test_ping_calls_the_unversioned_root_without_credentials(
+    api: DiagralAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that ping reads the cloud status from the root, at the current BASE_URL."""
+    monkeypatch.setattr("pydiagral.api.BASE_URL", "http://fake-cloud")
+    install_response(api, 200, {"status": "we're alive"})
+    ping = await api.ping()
+    assert ping.status == "we're alive"
+    request = api.session.request  # type: ignore[union-attr]
+    assert request.call_args.args == ("GET", "http://fake-cloud/")
+    assert request.call_args.kwargs["headers"] == {}
+
+
+async def test_versioned_requests_keep_the_api_version(
+    api: DiagralAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that other requests still go under the API version, at the current BASE_URL."""
+    monkeypatch.setattr("pydiagral.api.BASE_URL", "http://fake-cloud")
+    install_response(api, 200, {})
+    await api._request("GET", "users/me")  # noqa: SLF001
+    request = api.session.request  # type: ignore[union-attr]
+    assert request.call_args.args == ("GET", "http://fake-cloud/v1/users/me")
+
+
+async def test_ping_reports_an_unavailable_cloud(api: DiagralAPI) -> None:
+    """Test that ping raises ServerError when the cloud answers with a 5xx status."""
+    install_response(api, 503, {"detail": "maintenance"})
+    with pytest.raises(ServerError):
+        await api.ping()
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "error", [aiohttp.ClientConnectionError("offline"), TimeoutError()]

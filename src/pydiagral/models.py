@@ -454,6 +454,23 @@ class TryConnectResult(CamelCaseModel):
     keys: ApiKeyWithSecret | None = None
 
 
+@dataclass
+class Ping(CamelCaseModel):
+    """Answer of the Diagral cloud health check.
+
+    Attributes:
+        status (str): The status the cloud reports, such as "we're alive".
+
+    Example:
+        >>> ping = Ping(status="we're alive")
+        >>> print(ping.status)
+        we're alive
+
+    """
+
+    status: str
+
+
 #####################################
 # Data models for alarm configuration
 #####################################

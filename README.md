@@ -62,6 +62,7 @@ The `DiagralAPI` class offers the following functionalities:
 - **System Information**:
   - Obtain system details
   - Retrieve the current system status
+  - Check that the Diagral cloud answers (health check, no credential needed)
   - Manage webhooks
   - Manage anomalies
 
