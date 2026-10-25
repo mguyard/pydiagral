@@ -2281,6 +2281,82 @@ async def test_set_automatism_action_is_announced_as_untested_once(
     assert ISSUES_URL in notices[0].getMessage()
 
 
+@pytest.mark.parametrize("action", ["enable", "disable"])
+async def test_enable_and_disable_product(
+    unannounced_features: None, action: str
+) -> None:
+    """Test that the product action is posted with the PIN code and parsed."""
+    diagral = _signed_client()
+    status = {"status": "OFF", "activated_groups": []}
+    with patch.object(
+        diagral, "_request", new=AsyncMock(return_value=(status, 200))
+    ) as request:
+        result = await getattr(diagral, f"{action}_product")("SENSOR", 3)
+
+    assert result == SystemStatus(status="OFF", activated_groups=[])
+    method, endpoint = request.call_args.args
+    assert (method, endpoint) == ("POST", f"systems/{SERIAL_ID}/SENSOR/3/{action}")
+    assert request.call_args.kwargs["headers"]["X-PIN-CODE"] == PIN_CODE
+
+
+async def test_enable_product_rejects_an_unknown_type() -> None:
+    """Test that a product type the specification does not list is refused."""
+    diagral = _signed_client()
+    with (
+        patch.object(diagral, "_request", new=AsyncMock()) as request,
+        pytest.raises(ConfigurationError),
+    ):
+        await diagral.enable_product("CAMERA", 3)
+
+    request.assert_not_awaited()
+
+
+async def test_product_actions_are_announced_as_untested_once(
+    unannounced_features: None, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test that the first enable and the first disable each log one warning."""
+    diagral = _signed_client()
+    status = {"status": "OFF", "activated_groups": []}
+    with (
+        patch.object(diagral, "_request", new=AsyncMock(return_value=(status, 200))),
+        caplog.at_level(logging.WARNING, logger="pydiagral.api"),
+    ):
+        for _ in range(2):
+            await diagral.enable_product("SENSOR", 3)
+            await diagral.disable_product("SENSOR", 3)
+
+    messages = [r.getMessage() for r in caplog.records]
+    assert sum("enable_product()" in m for m in messages) == 1
+    assert sum("disable_product()" in m for m in messages) == 1
+
+
+@pytest.mark.parametrize(
+    ("rudes", "announced"),
+    [([{"name": "Gate", "canal": "1", "mode": "PULSE"}], True), ([], False)],
+    ids=["automatisms", "none"],
+)
+async def test_get_automatism_rudes_announces_automatisms_as_untested(
+    unannounced_features: None,
+    caplog: pytest.LogCaptureFixture,
+    rudes: list,
+    announced: bool,
+) -> None:
+    """Test that only a non-empty list, never seen yet, logs the warning."""
+    diagral = _signed_client()
+    with (
+        patch.object(
+            diagral, "_request", new=AsyncMock(return_value=({"rudes": rudes}, 200))
+        ) as request,
+        caplog.at_level(logging.WARNING, logger="pydiagral.api"),
+    ):
+        result = await diagral.get_automatism_rudes()
+
+    assert [rude.name for rude in result.rudes] == [r["name"] for r in rudes]
+    assert request.call_args.args == ("GET", f"systems/{SERIAL_ID}/rudes")
+    notices = [r for r in caplog.records if "automatism" in r.getMessage().lower()]
+    assert len(notices) == (1 if announced else 0)
+
+
 #################################
 # DiagralAPI WebHook Test Cases #
 #################################

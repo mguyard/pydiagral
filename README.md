@@ -76,8 +76,9 @@ The `DiagralAPI` class offers the following functionalities:
 Some parts of pydiagral are built from the Diagral API documentation only, because they could not be checked on a real installation. pydiagral logs a warning the first time each of them is used:
 
 - **Cameras**: `AlarmConfiguration.cameras` follows the `CameraModel` of the Diagral OpenAPI specification. The warning appears when a configuration includes cameras.
-- **Automatisms**: `set_automatism_action()` runs an action on an automatism. What `TIMER` does, and whether an action must match the automatism's mode, are unknown.
+- **Automatisms**: `get_automatism_rudes()` lists the automatisms and `set_automatism_action()` runs one. Only an empty list has been seen; what `TIMER` does, and whether an action must match the automatism's mode, are unknown.
 - **Anomaly deletion**: `delete_anomalies()` deletes an anomaly. Which identifier it expects is unknown: the anomalies `get_anomalies()` returns have none of their own.
+- **Product enabling and disabling**: `enable_product()` and `disable_product()` follow the specification. What disabling does, and which identifier designates a device, are unknown.
 
 If you own the matching equipment or use these calls, please [open an issue](https://github.com/mguyard/pydiagral/issues) describing what you observe. For cameras, include the `cameras` part of the configuration Diagral sends: pydiagral logs that configuration at debug level, on the line starting with `Parsing AlarmConfiguration from`. To get it, enable the `pydiagral` logger at debug level, with `logging.getLogger("pydiagral").setLevel(logging.DEBUG)`, or in Home Assistant with `pydiagral: debug` under `logger: logs:`. Keys, tokens, PIN codes and serial numbers are redacted, but the line still shows the names of your devices: read it before posting.
 

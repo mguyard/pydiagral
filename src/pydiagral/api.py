@@ -1067,7 +1067,7 @@ class DiagralAPI:
 
     async def __action_product(
         self, action: str, type: str, product_id: int
-    ) -> SystemStatus:  # NOT-TESTED
+    ) -> SystemStatus:
         """Perform an action on a product in the Diagral system.
 
         This method enables or disables a product based on the provided action.
@@ -1094,6 +1094,7 @@ class DiagralAPI:
                 "Product type must be one of 'CENTRAL', 'SENSOR', 'COMMAND', 'ALARM', 'BOX', or 'PLUG'"
             )
 
+        _announce_untested(f"{action}_product()")
         _HEADERS = self.__hmac_headers(f"{action} product", with_pin=True)
         response_data, *_ = await self._request(
             "POST",
@@ -1102,10 +1103,22 @@ class DiagralAPI:
         )
         return SystemStatus.from_dict(response_data)
 
-    async def enable_product(
-        self, type: str, product_id: int
-    ) -> SystemStatus:  # NOT-TESTED
+    async def enable_product(self, type: str, product_id: int) -> SystemStatus:
         """Asynchronously enables a product in the system.
+
+        Warning:
+            Untested. This call follows the Diagral OpenAPI specification only: it has
+            never been run on a real installation. pydiagral logs a warning the first
+            time it is used. Open questions:
+
+            - What disabling does: the specification does not say, it presumably
+              inhibits the product, as `SensorModel.inhibited` reports.
+            - Which `product_id` designates a device: presumably its `index` in the
+              configuration.
+
+            If you can try it, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
 
         Args:
             type (str): The type of the product to enable.
@@ -1123,10 +1136,22 @@ class DiagralAPI:
             action="enable", type=type, product_id=product_id
         )
 
-    async def disable_product(
-        self, type: str, product_id: int
-    ) -> SystemStatus:  # NOT-TESTED
+    async def disable_product(self, type: str, product_id: int) -> SystemStatus:
         """Asynchronously disables a product in the system.
+
+        Warning:
+            Untested. This call follows the Diagral OpenAPI specification only: it has
+            never been run on a real installation. pydiagral logs a warning the first
+            time it is used. Open questions:
+
+            - What disabling does: the specification does not say, it presumably
+              inhibits the product, as `SensorModel.inhibited` reports.
+            - Which `product_id` designates a device: presumably its `index` in the
+              configuration.
+
+            If you can try it, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
 
         Args:
             type (str): The type of the product to disable.
@@ -1209,11 +1234,19 @@ class DiagralAPI:
             headers=_HEADERS,
         )
 
-    async def get_automatism_rudes(self) -> Rudes:  # NOT-TESTED
+    async def get_automatism_rudes(self) -> Rudes:
         """Asynchronously retrieves the automatism Rudes for the system.
 
         This method fetches the Rudes data for the system identified by the serial ID.
         It requires valid API and secret keys for authentication.
+
+        Warning:
+            Partly tested. The call answers on a real installation, but only with an
+            empty list: the `Rude` fields follow the Diagral OpenAPI specification.
+            pydiagral logs a warning the first time it returns automatisms. If you use
+            automatisms, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
 
         Returns:
             Rudes: An instance of the Rudes class populated with the data from the response.
@@ -1230,7 +1263,10 @@ class DiagralAPI:
             f"systems/{self.__serial}/rudes",
             headers=_HEADERS,
         )
-        return Rudes.from_dict(response_data)
+        rudes = Rudes.from_dict(response_data)
+        if rudes.rudes:
+            _announce_untested("Reading automatisms")
+        return rudes
 
     async def set_automatism_action(self, canal: str, action: str) -> None:
         """Run an action on an automatism of the system.
