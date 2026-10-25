@@ -1,3 +1,47 @@
+# [2.0.0-beta.3](https://github.com/mguyard/pydiagral/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2026-10-25)
+
+
+### Bug Fixes
+
+* **api:** 🐛 Check the automatism canal against the specification's list ([07f0af1](https://github.com/mguyard/pydiagral/commit/07f0af14939445dead97020b8444bdfe837aceec))
+* **api:** 🐛 Redact serial numbers in debug logs ([01190c3](https://github.com/mguyard/pydiagral/commit/01190c394eb9a3b29a99b340a9a86289b0eba284))
+* **api:** 🐛 Redact the account e-mail in debug logs ([49af252](https://github.com/mguyard/pydiagral/commit/49af2528f35bb546bb4e267587a4778b821f5faf))
+* **models:** 🐛 Keep the readable anomalies when an entry is malformed ([765819f](https://github.com/mguyard/pydiagral/commit/765819f95b9eb2d7194d5529eefa045fbbcde76e))
+* **models:** 🐛 Parse the `SystemDetails` flags into booleans ([39de3d0](https://github.com/mguyard/pydiagral/commit/39de3d082a1c1ba115bd003ceb7d363d8cd899a1))
+* **models:** 🐛 Report an unknown automatism mode instead of rejecting it ([cef2105](https://github.com/mguyard/pydiagral/commit/cef2105837ba6baa8a2800eb4bebd12d956cf20d))
+* **utils:** 🐛 Hide numbers that may identify a user in response shapes ([3abee60](https://github.com/mguyard/pydiagral/commit/3abee607dda3a36f551b4491b9c45808725cf03b))
+
+
+### Features
+
+* **api:** ✨ Add `get_systems()` to discover the account's serials ([f7ead80](https://github.com/mguyard/pydiagral/commit/f7ead80f7f95fd1557bf5b98ce2b460c24d867de))
+* **api:** ✨ Add `ping()` to check that the Diagral cloud answers ([c3aedf9](https://github.com/mguyard/pydiagral/commit/c3aedf9d3e9b1f830f59227ace16e28e7996466a))
+* **api:** ✨ Add `response_shapes()` to describe Diagral's answers ([e25ee00](https://github.com/mguyard/pydiagral/commit/e25ee009333aea3fdbca092da2d6b9f476a71593))
+* **api:** ✨ Flag the untested product and automatism calls ([1b33471](https://github.com/mguyard/pydiagral/commit/1b33471e1b4c187fe49cd898c44c91e7d15516c5))
+* **api:** ✨ Implement `delete_anomalies()` from the OpenAPI spec ([c1a0c37](https://github.com/mguyard/pydiagral/commit/c1a0c379f490c8f638c42b7670d90adc290ba9a2))
+* **api:** ✨ Implement `set_automatism_action()` from the OpenAPI spec ([aa582f1](https://github.com/mguyard/pydiagral/commit/aa582f1c13a1cebcd06b246f3e813c5ccfec539c))
+* **api:** ✨ Let accounts of Diagral's sister brands log in ([8bbc6c2](https://github.com/mguyard/pydiagral/commit/8bbc6c21326f82a3d4b2be440901647043745730))
+* **api:** ✨ Let the client log in and list systems without a serial ([df0426d](https://github.com/mguyard/pydiagral/commit/df0426df632ff958284797d8f681b51fac582ca8))
+* **api:** ✨ Raise `PinCodeError` when `try_connection()` meets a wrong PIN ([35f22b1](https://github.com/mguyard/pydiagral/commit/35f22b1c329ed9fdc46c4e2327cbfd3379a7bef4))
+* **models:** ✨ Add `unexpected_data()` to list what the models did not expect ([c5646d3](https://github.com/mguyard/pydiagral/commit/c5646d316657fa1588d2f3586171917df391506e))
+* **models:** ✨ Align `Cameras` with the OpenAPI `CameraModel` ([3b5c0f0](https://github.com/mguyard/pydiagral/commit/3b5c0f0f48afc7a6251182be9762bf839bc82373))
+* **models:** ✨ Keep the box radio, KNX plug and plug firmwares ([53ea018](https://github.com/mguyard/pydiagral/commit/53ea0182c6e86e0d7feb80a4c6c7b485c3c0ad53))
+
+
+### BREAKING CHANGES
+
+* **models:** `Cameras` no longer inherits `SensorModel`. It keeps
+only `uid`, `name`, `type`, `group`, `index` and `installation_date`,
+`type` is now a `str`, and `label` is a read-only property returning
+`name`.
+* **api:** `DiagralAPI.serial_id` is now typed `str | None`. Code
+that passes it where a `str` is expected must handle None; runtime
+behaviour is unchanged for a client created with a serial ID.
+* **models:** the `is_mjpeg_archive_video_supported`,
+`is_mass_storage_present`, `is_remote_startup_shutdown_allowed` and
+`is_video_password_protected` fields of `SystemDetails` are now bool
+instead of the "True" / "False" strings. Compare them as booleans.
+
 # [2.0.0-beta.2](https://github.com/mguyard/pydiagral/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2026-10-25)
 
 
