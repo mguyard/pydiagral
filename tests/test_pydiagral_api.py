@@ -59,7 +59,7 @@ from pydiagral.models import (
     Webhook,
     WebHookNotification,
 )
-from pydiagral.utils import generate_hmac_signature, redact, schema_key
+from pydiagral.utils import generate_hmac_signature, redact, schema_key, shape
 
 # Logger configuration
 api_logger = logging.getLogger("pydiagral.api")
@@ -4067,6 +4067,128 @@ def test_model_validation_error_does_not_quote_the_payload():
     with pytest.raises(ModelValidationError) as caught:
         Anomalies.from_dict(payload)
     assert "private-value" not in "".join(traceback.format_exception(caught.value))
+
+
+###################
+# Response shapes #
+###################
+
+
+def test_shape_keeps_the_structure_and_technical_values_only():
+    """Test that text a user may have typed is replaced, and technical values kept."""
+    payload = {
+        "name": "Home",
+        "serial": "SAMPLEBOXSERIAL",
+        "IpAddress": "192.168.1.10",
+        "index": 3,
+        "inhibited": False,
+        "label": None,
+        "mode": "TIMER",
+        "status": "OFF",
+        "DeviceType": "PLUG_IP~DIAGRAL",
+        "vendor": "diagral",
+        "FirmwareVersion": "2.1.0",
+        "firmwares": {"BOX": "1.6.0", "PLUGKNX": "1.4.2"},
+        "IsAlarmFilePresent": "False",
+        "rudes": [{"canal": "relais_1", "mode": "PULSE"}, {"canal": "garage door"}],
+        "type": "x" * 40,
+        "activated_groups": [1, 2],
+        "ratio": 0.5,
+    }
+    assert shape(payload) == {
+        "name": "<str:4>",
+        "serial": "<str:15>",
+        "IpAddress": "<str:12>",
+        "index": 3,
+        "inhibited": False,
+        "label": None,
+        "mode": "TIMER",
+        "status": "OFF",
+        "DeviceType": "PLUG_IP~DIAGRAL",
+        "vendor": "diagral",
+        "FirmwareVersion": "2.1.0",
+        "firmwares": {"BOX": "1.6.0", "PLUGKNX": "1.4.2"},
+        "IsAlarmFilePresent": "False",
+        "rudes": [{"canal": "relais_1", "mode": "PULSE"}, {"canal": "<str:11>"}],
+        "type": "<str:40>",
+        "activated_groups": [1, 2],
+        "ratio": 0.5,
+    }
+
+
+def test_shape_numbers_the_keys_that_may_be_identifiers():
+    """Test that a dict indexed by serials keeps one entry per key, none readable."""
+    payload = {"18139037029D91": {"mode": "ON"}, "ABCDEF12AB34CD": {"mode": "OFF"}}
+    assert shape(payload) == {"<key:1>": {"mode": "ON"}, "<key:2>": {"mode": "OFF"}}
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("private", "<str:7>"), ([], []), (None, None), (b"x", "<bytes>")],
+    ids=["text", "list", "none", "other"],
+)
+def test_shape_of_a_bare_value(value, expected):
+    """Test that a payload which is not an object is described too."""
+    assert shape(value) == expected
+
+
+_READS = {
+    "get_configuration": lambda: load_sample("configuration_sample.json"),
+    "get_system_details": lambda: load_sample("system_details_sample.json"),
+    "get_system_status": lambda: {"status": "OFF", "activated_groups": [1]},
+    "get_anomalies": lambda: {"created_at": "2025-02-16T10:15:12", "sensors": []},
+    "get_automatism_rudes": lambda: {"rudes": []},
+    "get_webhook": lambda: {
+        "transmitter_id": SERIAL_ID,
+        "webhook_url": WEBHOOK_URL,
+        "subscriptions": {"anomaly": True, "alert": True, "state": True},
+    },
+}
+
+
+@pytest.mark.parametrize("method", list(_READS))
+async def test_reads_keep_the_shape_of_their_response(method: str) -> None:
+    """Test that each read keeps the shape of the last response it received."""
+    diagral = _signed_client()
+    body = _READS[method]()
+    assert diagral.response_shapes() == {}
+    with patch.object(diagral, "_request", new=AsyncMock(return_value=(body, 200))):
+        await getattr(diagral, method)()
+
+    assert diagral.response_shapes() == {method: shape(body)}
+
+
+async def test_response_shapes_hold_no_serial_or_name() -> None:
+    """Test that the configuration shape shows neither serials nor device labels."""
+    diagral = _signed_client()
+    body = load_sample("configuration_sample.json")
+    with patch.object(diagral, "_request", new=AsyncMock(return_value=(body, 200))):
+        await diagral.get_configuration()
+
+    text = str(diagral.response_shapes())
+    for private in ("SAMPLEBOXSERIAL", "SENSOR1SERIAL", "SENSOR1", "SIREN1"):
+        assert private not in text
+
+
+async def test_response_shapes_skip_the_no_anomalies_answer() -> None:
+    """Test that the 404 meaning "no anomalies" leaves no shape behind."""
+    diagral = _signed_client()
+    error = DiagralAPIError("No anomalies found", status_code=404)
+    with patch.object(diagral, "_request", new=AsyncMock(side_effect=error)):
+        assert await diagral.get_anomalies() == {}
+
+    assert diagral.response_shapes() == {}
+
+
+async def test_response_shapes_returns_a_copy() -> None:
+    """Test that changing the returned shapes leaves the client's untouched."""
+    diagral = _signed_client()
+    body = {"status": "OFF", "activated_groups": []}
+    with patch.object(diagral, "_request", new=AsyncMock(return_value=(body, 200))):
+        await diagral.get_system_status()
+
+    diagral.response_shapes()["get_system_status"]["status"] = "changed"
+    assert diagral.response_shapes()["get_system_status"]["status"] == "OFF"
 
 
 #########################

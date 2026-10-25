@@ -6,7 +6,14 @@ import re
 from typing import Any
 from urllib.parse import urlsplit
 
-from .constants import REDACTED, SENSITIVE_KEYS, SENSITIVE_URL_PATH_KEYS
+from .constants import (
+    AUTOMATISM_CANALS,
+    MAX_LISTED_VALUE_LENGTH,
+    REDACTED,
+    SENSITIVE_KEYS,
+    SENSITIVE_URL_PATH_KEYS,
+    SHAPE_VISIBLE_KEYS,
+)
 
 
 def generate_hmac_signature(
@@ -36,6 +43,55 @@ def schema_key(key: str) -> str:
     if _SCHEMA_KEY.fullmatch(key) and digits <= _SCHEMA_KEY_MAX_DIGITS:
         return key
     return "<key>"
+
+
+def shape(data: Any) -> Any:
+    """Return the structure of a payload without the values a user could have typed.
+
+    Keys are kept, except those that may be identifiers, which read "<key:1>",
+    "<key:2>"... Text becomes "<str:N>", N being its length, unless it is a state,
+    a device type or a version (`constants.SHAPE_VISIBLE_KEYS`), a documented
+    automatism canal, or "True" / "False". Numbers, booleans and None are kept.
+
+    Examples:
+        >>> shape({"label": "Kitchen", "mode": "ON", "index": 2, "groups": [1]})
+        {'label': '<str:7>', 'mode': 'ON', 'index': 2, 'groups': [1]}
+
+    """
+    return _shape_value(None, data)
+
+
+def _shape_value(key: str | None, value: Any) -> Any:
+    """Return the shape of a value stored under key."""
+    if isinstance(value, dict):
+        shaped: dict[str, Any] = {}
+        masked = 0
+        for item_key, item in value.items():
+            name = schema_key(item_key) if isinstance(item_key, str) else "<key>"
+            if name == "<key>":
+                masked += 1
+                name = f"<key:{masked}>"
+            shaped[name] = _shape_value(item_key, item)
+        return shaped
+    if isinstance(value, list):
+        return [_shape_value(key, item) for item in value]
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    if isinstance(value, str):
+        return value if _is_technical(key, value) else f"<str:{len(value)}>"
+    return f"<{type(value).__name__}>"
+
+
+def _is_technical(key: str | None, value: str) -> bool:
+    """Tell whether a text value is technical enough to show in a shape."""
+    if len(value) > MAX_LISTED_VALUE_LENGTH:
+        return False
+    name = key.lower() if isinstance(key, str) else ""
+    return (
+        name in SHAPE_VISIBLE_KEYS
+        or (name == "canal" and value.upper() in AUTOMATISM_CANALS)
+        or value.lower() in ("true", "false")
+    )
 
 
 def redact(data: Any) -> Any:

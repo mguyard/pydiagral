@@ -7,6 +7,7 @@ retrieving system status, and controlling various aspects of the alarm system.
 
 from __future__ import annotations
 
+import copy
 import logging
 import math
 import re
@@ -54,7 +55,7 @@ from .models import (
     TryConnectResult,
     Webhook,
 )
-from .utils import Redacted, generate_hmac_signature
+from .utils import Redacted, generate_hmac_signature, shape
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -178,6 +179,7 @@ class DiagralAPI:
 
         # Set default values for other attributes
         self.alarm_configuration: AlarmConfiguration | None = None
+        self.__response_shapes: dict[str, Any] = {}
 
     @property
     def request_timeout(self) -> float:
@@ -667,6 +669,26 @@ class DiagralAPI:
         result.result = True
         return result
 
+    def response_shapes(self) -> dict[str, Any]:
+        """Return the shape of the last response each read received, for diagnostics.
+
+        The reads are `get_configuration()`, `get_system_details()`,
+        `get_system_status()`, `get_anomalies()`, `get_automatism_rudes()` and
+        `get_webhook()`; a read not called yet is absent. A shape keeps the keys and
+        replaces any text a user could have typed, as `pydiagral.utils.shape()`
+        describes, so it can be shared in a bug report. It is kept before the
+        response is parsed, so it is there even when parsing fails.
+
+        Returns:
+            dict[str, Any]: A copy of the shapes, keyed by method name.
+
+        """
+        return copy.deepcopy(self.__response_shapes)
+
+    def __keep_shape(self, read: str, response_data: Any) -> None:
+        """Keep the shape of a read's response, never the response itself."""
+        self.__response_shapes[read] = shape(response_data)
+
     async def ping(self) -> Ping:
         """Check that the Diagral cloud answers. No credential is needed.
 
@@ -742,6 +764,7 @@ class DiagralAPI:
         response_data, *_ = await self._request(
             "GET", f"systems/{self.__serial}/configurations", headers=_HEADERS
         )
+        self.__keep_shape("get_configuration", response_data)
         self.alarm_configuration = AlarmConfiguration.from_dict(response_data)
         if self.alarm_configuration.cameras:
             _announce_untested("Reading cameras from the configuration")
@@ -833,6 +856,7 @@ class DiagralAPI:
         response_data, *_ = await self._request(
             "GET", f"systems/{self.__serial}", headers=_HEADERS
         )
+        self.__keep_shape("get_system_details", response_data)
         _LOGGER.debug(
             "Successfully retrieved system details: %s", Redacted(response_data)
         )
@@ -858,6 +882,7 @@ class DiagralAPI:
         response_data, *_ = await self._request(
             "GET", f"systems/{self.__serial}/status", headers=_HEADERS
         )
+        self.__keep_shape("get_system_status", response_data)
         _LOGGER.debug(
             "Successfully retrieved system status: %s", Redacted(response_data)
         )
@@ -1195,6 +1220,7 @@ class DiagralAPI:
                 _LOGGER.info("No anomalies found for the system")
                 return {}
             raise
+        self.__keep_shape("get_anomalies", response_data)
         return Anomalies.from_dict(response_data)
 
     async def delete_anomalies(self, anomaly_id: int) -> None:
@@ -1263,6 +1289,7 @@ class DiagralAPI:
             f"systems/{self.__serial}/rudes",
             headers=_HEADERS,
         )
+        self.__keep_shape("get_automatism_rudes", response_data)
         rudes = Rudes.from_dict(response_data)
         if rudes.rudes:
             _announce_untested("Reading automatisms")
@@ -1333,6 +1360,7 @@ class DiagralAPI:
             f"webhooks/{self.__serial}/subscription",
             headers=_HEADERS,
         )
+        self.__keep_shape("get_webhook", response_data)
         return Webhook.from_dict(response_data)
 
     async def __webhook_action_create_update(

@@ -33,6 +33,25 @@ ISSUES_URL = "https://github.com/mguyard/pydiagral/issues"
 MAX_UNEXPECTED_DATA = 100
 # Longest value from a documented list that the registry copies as is.
 MAX_LISTED_VALUE_LENGTH = 32
+# Keys whose text values `utils.shape()` shows: states, device types and
+# versions, never text a user typed. Compared lowercase.
+SHAPE_VISIBLE_KEYS = frozenset(
+    {
+        "box",
+        "boxradio",
+        "central",
+        "centralradio",
+        "devicetype",
+        "firmwareversion",
+        "ipodaversion",
+        "mode",
+        "plug",
+        "plugknx",
+        "status",
+        "type",
+        "vendor",
+    }
+)
 
 # Header and field names whose values are replaced by REDACTED in debug logs.
 # Compared lowercase.

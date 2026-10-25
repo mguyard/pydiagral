@@ -73,6 +73,7 @@ The `DiagralAPI` class offers the following functionalities:
 
 - **Diagnostics**:
   - List what Diagral sent that the models did not expect, without any value the user entered (`pydiagral.models.unexpected_data()`)
+  - Describe the structure of the last response of each read, without any value the user entered (`DiagralAPI.response_shapes()`)
 
 ## 🧪 Untested features
 
