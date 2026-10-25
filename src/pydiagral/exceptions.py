@@ -27,6 +27,15 @@ class AuthenticationError(DiagralAPIError):
     """Raised when authentication fails."""
 
 
+class PinCodeError(AuthenticationError):
+    """Raised when Diagral rejects the PIN code.
+
+    Diagral answers a wrong PIN with the same 401 as any other credential, so
+    this is inferred: only `try_connection()` raises it, when the API key it
+    has just created and validated is refused on the first call sending the PIN.
+    """
+
+
 class ValidationError(DiagralAPIError):
     """Raised when validation fails."""
 

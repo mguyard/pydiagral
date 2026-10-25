@@ -31,6 +31,7 @@ from .exceptions import (
     ConfigurationError,
     DiagralAPIError,
     ModelValidationError,
+    PinCodeError,
     ServerError,
     SessionError,
     ValidationError,
@@ -588,6 +589,9 @@ class DiagralAPI:
             SessionError: If the session is not initialized or is closed.
             DiagralAPIError: If the request results in a 400 status code or other API errors.
             AuthenticationError: If authentication fails or request results in a 401 or 403 status code.
+            PinCodeError: If the client was created without API keys and Diagral refuses
+                the PIN code. With API keys given, a wrong PIN raises AuthenticationError,
+                as a wrong key does.
             ValidationError: If the request results in a 422 status code.
             ServerError: If the request results in a 500 or 503 status code.
             ClientError: If there is a network error.
@@ -611,7 +615,7 @@ class DiagralAPI:
         # Retrieve system status to validate connection
         try:
             await self.get_system_status()
-        except DiagralAPIError:
+        except DiagralAPIError as err:
             # If connection fails, clean up keys
             if not api_keys_provided:
                 try:
@@ -620,6 +624,12 @@ class DiagralAPI:
                     _LOGGER.warning(
                         "Unable to clean up temporary API key after connection failure"
                     )
+                # The key was just created and validated: the PIN is the only
+                # credential this call adds.
+                if isinstance(err, AuthenticationError) and err.status_code == 401:
+                    raise PinCodeError(
+                        "Diagral rejected the PIN code (HTTP 401)", status_code=401
+                    ) from err
             raise
 
         # If connection is successful, clean up temporary keys if requested (ephemeral)

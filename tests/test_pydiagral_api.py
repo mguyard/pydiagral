@@ -22,6 +22,7 @@ from pydiagral.exceptions import (
     ConfigurationError,
     DiagralAPIError,
     ModelValidationError,
+    PinCodeError,
     ServerError,
     SessionError,
 )
@@ -3003,6 +3004,15 @@ def test_api_key_errors_are_exported():
     assert {"APIKeyCreationError", "APIValidationError"} <= set(pydiagral.__all__)
 
 
+def test_pin_code_error_is_an_exported_authentication_error():
+    """Test that `PinCodeError` imports from the package and is an `AuthenticationError`."""
+    import pydiagral  # noqa: PLC0415
+
+    assert pydiagral.PinCodeError is PinCodeError
+    assert "PinCodeError" in pydiagral.__all__
+    assert issubclass(PinCodeError, AuthenticationError)
+
+
 #####################
 # Session lifecycle #
 #####################
@@ -3412,6 +3422,72 @@ async def test_ephemeral_cleanup_preserves_original_connection_failure(
     if cleanup_error is None:
         assert api._DiagralAPI__apikey is None  # noqa: SLF001 - verify successful deletion.
         assert api._DiagralAPI__secret_key is None  # noqa: SLF001
+
+
+@pytest.mark.parametrize("ephemeral", [True, False], ids=["ephemeral", "kept"])
+async def test_try_connection_reports_a_rejected_pin_on_a_created_key(
+    ephemeral: bool,
+) -> None:
+    """Test that a 401 on the status read after creating the key raises `PinCodeError`."""
+    api = DiagralAPI("audit@example.com", "password", "serial", pincode="1234")
+    api.session = SimpleNamespace(closed=False)
+    rejected = AuthenticationError("Diagral authentication error (HTTP 401)", 401)
+    with (
+        patch.object(
+            api,
+            "_request",
+            new=AsyncMock(
+                side_effect=[
+                    ({"access_token": "token"}, 200),
+                    ({"api_key": "key", "secret_key": "secret"}, 200),
+                    ({"api_keys": [{"api_key": "key"}]}, 200),
+                    rejected,
+                    ({}, 204),
+                ]
+            ),
+        ) as request,
+        pytest.raises(PinCodeError, match="PIN code") as caught,
+    ):
+        await api.try_connection(ephemeral=ephemeral)
+    assert caught.value.status_code == 401
+    assert caught.value.__cause__ is rejected
+    assert request.call_args.args[0] == "DELETE"
+    assert api._DiagralAPI__apikey is None  # noqa: SLF001 - the key is not handed over.
+
+
+@pytest.mark.parametrize(
+    ("keys_given", "error"),
+    [
+        (True, AuthenticationError("Diagral authentication error (HTTP 401)", 401)),
+        (False, AuthenticationError("Diagral authentication error (HTTP 403)", 403)),
+    ],
+    ids=["given-keys-401", "created-key-403"],
+)
+async def test_try_connection_keeps_other_authentication_errors(
+    keys_given: bool, error: AuthenticationError
+) -> None:
+    """Test that a refusal the PIN cannot be singled out for stays an `AuthenticationError`."""
+    keys = {"apikey": "key", "secret_key": "secret"} if keys_given else {}
+    api = DiagralAPI("audit@example.com", "password", "serial", pincode="1234", **keys)
+    api.session = SimpleNamespace(closed=False)
+    responses: list = (
+        [error]
+        if keys_given
+        else [
+            ({"access_token": "token"}, 200),
+            ({"api_key": "key", "secret_key": "secret"}, 200),
+            ({"api_keys": [{"api_key": "key"}]}, 200),
+            error,
+            ({}, 204),
+        ]
+    )
+    with (
+        patch.object(api, "_request", new=AsyncMock(side_effect=responses)),
+        pytest.raises(AuthenticationError) as caught,
+    ):
+        await api.try_connection()
+    assert caught.value is error
+    assert not isinstance(caught.value, PinCodeError)
 
 
 @pytest.mark.asyncio
