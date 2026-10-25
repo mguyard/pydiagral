@@ -37,7 +37,9 @@ import os
 from pathlib import Path
 import secrets
 import shutil
+import signal
 import sys
+from types import FrameType
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -196,6 +198,27 @@ async def current_webhook(api: DiagralAPI) -> Webhook | None:
         raise
 
 
+async def wait_or_ctrl_c(seconds: float) -> None:
+    """Wait `seconds`, or until Ctrl+C, which ends the wait instead of the run."""
+    loop = asyncio.get_running_loop()
+    pressed = asyncio.Event()
+    previous = signal.getsignal(signal.SIGINT)
+
+    def on_ctrl_c(signum: int, frame: FrameType | None) -> None:
+        # Hand Ctrl+C back to asyncio at once: outside a wait, it quits.
+        signal.signal(signal.SIGINT, previous)
+        loop.call_soon_threadsafe(pressed.set)
+
+    signal.signal(signal.SIGINT, on_ctrl_c)
+    try:
+        with contextlib.suppress(TimeoutError):
+            await asyncio.wait_for(pressed.wait(), seconds)
+    finally:
+        signal.signal(signal.SIGINT, previous)
+    if pressed.is_set():
+        print("\nStopped waiting")
+
+
 async def arm_then_disarm(
     api: DiagralAPI,
     label: str,
@@ -207,7 +230,7 @@ async def arm_then_disarm(
         status = await arm
         print(f"{label}: {status.status}, active groups {status.activated_groups}")
         print(f"Disarming in {wait} s (Ctrl+C disarms now)")
-        await asyncio.sleep(wait)
+        await wait_or_ctrl_c(wait)
     finally:
         try:
             print(f"Disarmed: {(await api.stop_system()).status}")
@@ -332,9 +355,9 @@ async def provoke_and_listen(api: DiagralAPI, options: Options) -> None:
     if options.trigger == "none":
         print(
             f"Listening for {options.listen_for} s: arm or disarm from a keypad, "
-            "a badge or the Diagral app"
+            "a badge or the Diagral app (Ctrl+C stops listening)"
         )
-        await asyncio.sleep(options.listen_for)
+        await wait_or_ctrl_c(options.listen_for)
         return
     if options.trigger == "presence":
         await arm_then_disarm(api, "Presence", api.presence(), options.listen_for)
@@ -342,8 +365,11 @@ async def provoke_and_listen(api: DiagralAPI, options: Options) -> None:
         wait = max(options.listen_for, ARM_LISTEN_MINIMUM)
         print(f"An away arm notifies after its exit delay: listening {wait} s")
         await arm_then_disarm(api, "Armed", api.start_system(), wait)
-    print(f"Listening {AFTER_DISARM} s more for the disarm notification")
-    await asyncio.sleep(AFTER_DISARM)
+    print(
+        f"Listening {AFTER_DISARM} s more for the disarm notification "
+        "(Ctrl+C stops listening)"
+    )
+    await wait_or_ctrl_c(AFTER_DISARM)
 
 
 @scenario(
