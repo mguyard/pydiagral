@@ -12,11 +12,13 @@ import math
 import re
 import time
 from typing import Any, Literal, Self, overload
+from urllib.parse import quote
 
 import aiohttp
 
 from .constants import (
     API_VERSION,
+    AUTOMATISM_ACTIONS,
     BASE_URL,
     DEFAULT_REQUEST_TIMEOUT,
     DEFAULT_VENDOR,
@@ -66,9 +68,9 @@ def _announce_untested(feature: str) -> None:
         return
     _ANNOUNCED_UNTESTED.add(feature)
     _LOGGER.warning(
-        "Your configuration includes %s. pydiagral reads them from the Diagral API "
-        "documentation only: this has never been tested on a real installation. "
-        "Please share what you observe at %s so it can be fully supported",
+        "%s relies on the Diagral API documentation only: it has never been tested "
+        "on a real installation. Please share what you observe at %s so it can be "
+        "fully supported",
         feature,
         ISSUES_URL,
     )
@@ -742,7 +744,7 @@ class DiagralAPI:
         )
         self.alarm_configuration = AlarmConfiguration.from_dict(response_data)
         if self.alarm_configuration.cameras:
-            _announce_untested("cameras")
+            _announce_untested("Reading cameras from the configuration")
         # The redacted payload is already logged by from_dict().
         _LOGGER.debug("Successfully retrieved configuration")
         return self.alarm_configuration
@@ -1204,22 +1206,49 @@ class DiagralAPI:
         )
         return Rudes.from_dict(response_data)
 
-    async def set_automatism_action(
-        self, canal: str, action: str
-    ) -> None:  # NOT-IMPLEMENTED
-        """Set the automatism action.
+    async def set_automatism_action(self, canal: str, action: str) -> None:
+        """Run an action on an automatism of the system.
 
-        This method is currently not implemented.
+        Warning:
+            Untested. This call follows the Diagral OpenAPI specification only: it has
+            never been run on a real installation, and it drives real equipment such
+            as a gate or a garage door. pydiagral logs a warning the first time it is
+            used. Open questions:
+
+            - `TIMER` takes no duration in the specification: the box probably uses
+              the one configured for the automatism.
+            - Whether `action` must match the automatism's `mode`.
+            - What a `canal` looks like: it is passed as `Rude.canal` gives it.
+
+            If you use automatisms, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
 
         Args:
-            canal (str): The canal for the automatism action.
-            action (str): The action to be set for the automatism.
+            canal (str): The canal of the automatism, as `get_automatism_rudes()`
+                returns it.
+            action (str): PULSE, OFF, ON, SWITCH or TIMER, in any case.
 
         Raises:
-            NotImplementedError: Always, as this method is not yet implemented.
+            ConfigurationError: If `canal` is empty, if `action` is not one of the
+                actions above, or if the client was created without a serial ID.
+            AuthenticationError: If the API key, secret key, or PIN code is missing.
 
         """
-        raise NotImplementedError("Method not yet implemented")
+        if not canal or not isinstance(canal, str):
+            raise ConfigurationError("canal must be a non-empty string")
+        if not isinstance(action, str) or action.upper() not in AUTOMATISM_ACTIONS:
+            raise ConfigurationError(
+                f"action must be one of {', '.join(AUTOMATISM_ACTIONS)}"
+            )
+        _announce_untested("set_automatism_action()")
+        _HEADERS = self.__hmac_headers("set automatism action", with_pin=True)
+        await self._request(
+            "POST",
+            f"systems/{self.__serial}/rudes/{quote(canal, safe='')}",
+            headers=_HEADERS,
+            params={"action": action.upper()},
+        )
 
     async def get_webhook(self) -> Webhook:
         """Retrieve the webhook subscription details for the system.

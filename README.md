@@ -69,15 +69,16 @@ The `DiagralAPI` class offers the following functionalities:
 
 - **System Interraction**:
   - Activate or Desactivate system (partially or globally)
-  - List automatism rules (running their actions is not implemented yet)
+  - List automatism rules and run their actions
 
 ## 🧪 Untested features
 
-Some parts of pydiagral are built from the Diagral API documentation only, because they could not be checked on a real installation:
+Some parts of pydiagral are built from the Diagral API documentation only, because they could not be checked on a real installation. pydiagral logs a warning the first time each of them is used:
 
-- **Cameras**: `AlarmConfiguration.cameras` follows the `CameraModel` of the Diagral OpenAPI specification. pydiagral logs a warning once when a configuration includes cameras.
+- **Cameras**: `AlarmConfiguration.cameras` follows the `CameraModel` of the Diagral OpenAPI specification. The warning appears when a configuration includes cameras.
+- **Automatisms**: `set_automatism_action()` runs an action on an automatism. What `TIMER` does, and whether an action must match the automatism's mode, are unknown.
 
-If you own the matching equipment, please [open an issue](https://github.com/mguyard/pydiagral/issues) describing what you observe, with the `cameras` part of the configuration Diagral sends. pydiagral logs that configuration at debug level, on the line starting with `Parsing AlarmConfiguration from`. To get it, enable the `pydiagral` logger at debug level, with `logging.getLogger("pydiagral").setLevel(logging.DEBUG)`, or in Home Assistant with `pydiagral: debug` under `logger: logs:`. Keys, tokens, PIN codes and serial numbers are redacted, but the line still shows the names of your devices: read it before posting.
+If you own the matching equipment or use these calls, please [open an issue](https://github.com/mguyard/pydiagral/issues) describing what you observe. For cameras, include the `cameras` part of the configuration Diagral sends: pydiagral logs that configuration at debug level, on the line starting with `Parsing AlarmConfiguration from`. To get it, enable the `pydiagral` logger at debug level, with `logging.getLogger("pydiagral").setLevel(logging.DEBUG)`, or in Home Assistant with `pydiagral: debug` under `logger: logs:`. Keys, tokens, PIN codes and serial numbers are redacted, but the line still shows the names of your devices: read it before posting.
 
 ## 🚀 Quick Start
 

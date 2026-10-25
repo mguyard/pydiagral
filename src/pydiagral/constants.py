@@ -7,6 +7,9 @@ API_VERSION = "v1"
 VENDORS = ("DIAGRAL", "DAITEM", "EDAITEM", "LOGISTYALMA", "DISTRIBUTION")
 DEFAULT_VENDOR = "DIAGRAL"
 
+# Actions the automatism endpoint accepts, from the OpenAPI specification.
+AUTOMATISM_ACTIONS = ("PULSE", "OFF", "ON", "SWITCH", "TIMER")
+
 # Seconds allowed for a whole request (connection, sending, response).
 DEFAULT_REQUEST_TIMEOUT = 30
 
