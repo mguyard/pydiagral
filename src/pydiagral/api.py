@@ -138,15 +138,18 @@ class DiagralAPI:
         return self.__request_timeout
 
     async def __aenter__(self) -> Self:
-        """Initialize the aiohttp ClientSession."""
-        self.session = aiohttp.ClientSession()
-        _LOGGER.info("Successfully initialized DiagralAPI session")
+        """Open the aiohttp ClientSession."""
+        # Entering twice must not orphan the first session.
+        if self.session is None or self.session.closed:
+            self.session = aiohttp.ClientSession()
+            _LOGGER.info("Successfully initialized DiagralAPI session")
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
         """Close the aiohttp ClientSession."""
         if self.session:
             await self.session.close()
+            self.session = None
 
     async def _request(
         self,
@@ -174,7 +177,7 @@ class DiagralAPI:
                 - int: The HTTP status code of the response.
 
         Raises:
-            SessionError: If the session is not initialized.
+            SessionError: If the session is not initialized or is closed.
             DiagralAPIError: If the request results in a 400 status code or other API errors.
             AuthenticationError: If the request results in a 401 or 403 status code.
             ValidationError: If the request results in a 422 status code or a successful
@@ -183,8 +186,8 @@ class DiagralAPI:
             ClientError: If there is a network error or timeout.
 
         """
-        if not self.session:
-            error_msg = "Session not initialized from __aenter__."
+        if self.session is None or self.session.closed:
+            error_msg = "Session not initialized from __aenter__, or already closed."
             _LOGGER.error(error_msg)
             raise SessionError(error_msg)
 
@@ -290,11 +293,6 @@ class DiagralAPI:
             ClientError: If there is a network error or timeout.
 
         """
-
-        if not self.session:
-            error_msg = "Session not initialized from __aenter__."
-            _LOGGER.error(error_msg)
-            raise SessionError(error_msg)
 
         _LOGGER.debug("Attempting to login to Diagral API")
         _DATA: dict[str, str] = {"username": self.username, "password": self.__password}
@@ -480,7 +478,7 @@ class DiagralAPI:
         Raises:
             APIKeyCreationError: If creation of temporary API keys fails
             APIValidationError: If API key validation fails
-            SessionError: If the session is not initialized.
+            SessionError: If the session is not initialized or is closed.
             DiagralAPIError: If the request results in a 400 status code or other API errors.
             AuthenticationError: If authentication fails or request results in a 401 or 403 status code.
             ValidationError: If the request results in a 422 status code.

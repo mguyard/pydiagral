@@ -22,6 +22,7 @@ from pydiagral.exceptions import (
     DiagralAPIError,
     ModelValidationError,
     ServerError,
+    SessionError,
 )
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
@@ -2698,6 +2699,41 @@ def test_request_timeout_is_keyword_only():
         DiagralAPI(USERNAME, PASSWORD, SERIAL_ID, None, None, None, 60)
 
 
+#####################
+# Session lifecycle #
+#####################
+
+
+async def test_request_after_exit_raises_session_error():
+    """Test that a request on a closed client raises SessionError, not RuntimeError."""
+    diagral = DiagralAPI(username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID)
+    async with diagral:
+        pass
+    assert diagral.session is None
+    with pytest.raises(SessionError):
+        await diagral._request("GET", "users/me")  # noqa: SLF001
+
+
+async def test_entering_twice_keeps_the_open_session():
+    """Test that a second enter reuses the session instead of orphaning it."""
+    diagral = DiagralAPI(username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID)
+    async with diagral:
+        first = diagral.session
+        await diagral.__aenter__()
+        assert diagral.session is first
+    assert first.closed
+
+
+async def test_client_reopens_its_session_after_exit():
+    """Test that an owned session is recreated when the client is entered again."""
+    diagral = DiagralAPI(username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID)
+    async with diagral:
+        pass
+    async with diagral:
+        assert diagral.session is not None
+        assert not diagral.session.closed
+
+
 class Response:
     """Supply the asynchronous response context consumed by ``_request``."""
 
@@ -2743,7 +2779,7 @@ def install_response(
 ) -> Response:
     """Provide a response without constructing a real HTTP connection."""
     response = Response(status, payload, error)
-    api.session = SimpleNamespace(request=Mock(return_value=response))
+    api.session = SimpleNamespace(closed=False, request=Mock(return_value=response))
     return response
 
 
@@ -2822,7 +2858,7 @@ async def test_network_and_timeout_are_not_authentication_errors_or_retried(
 ) -> None:
     """Classify transport failure without repeating a command."""
     request = Mock(side_effect=error)
-    api.session = SimpleNamespace(request=request)
+    api.session = SimpleNamespace(closed=False, request=request)
     with pytest.raises(ClientError):
         await api._request("POST", "fake-command")  # noqa: SLF001
     request.assert_called_once()
@@ -2834,7 +2870,7 @@ async def test_login_preserves_transient_error_category(
     api: DiagralAPI, error: DiagralAPIError
 ) -> None:
     """Do not turn a cloud outage into an invalid-credentials error."""
-    api.session = SimpleNamespace()
+    api.session = SimpleNamespace(closed=False)
     with (
         patch.object(api, "_request", new=AsyncMock(side_effect=error)),
         pytest.raises(type(error)) as caught,
@@ -2941,7 +2977,7 @@ async def test_webhook_callback_url_is_redacted(
 async def test_ephemeral_keys_are_cleared_after_success() -> None:
     """Remove deleted temporary keys from both the result and client memory."""
     api = DiagralAPI("audit@example.com", "password", "serial", pincode="1234")
-    api.session = SimpleNamespace()
+    api.session = SimpleNamespace(closed=False)
     with patch.object(
         api,
         "_request",
@@ -2969,7 +3005,7 @@ async def test_ephemeral_cleanup_preserves_original_connection_failure(
 ) -> None:
     """Attempt temporary-key deletion without masking the failed status read."""
     api = DiagralAPI("audit@example.com", "password", "serial", pincode="1234")
-    api.session = SimpleNamespace()
+    api.session = SimpleNamespace(closed=False)
     original_error = ServerError("status unavailable", 503)
     with (
         patch.object(
@@ -3002,7 +3038,7 @@ async def test_key_creation_preserves_transient_error_category(
     api: DiagralAPI, error: DiagralAPIError
 ) -> None:
     """Keep cloud/transport failures distinguishable from a rejected API key."""
-    api.session = SimpleNamespace()
+    api.session = SimpleNamespace(closed=False)
     with (
         patch.object(
             api,
@@ -3026,7 +3062,8 @@ async def test_transport_exception_traceback_does_not_expose_private_url(
 ) -> None:
     """Suppress transport exception context which can contain secret URLs."""
     api.session = SimpleNamespace(
-        request=Mock(side_effect=aiohttp.ClientConnectionError("private-url-key"))
+        closed=False,
+        request=Mock(side_effect=aiohttp.ClientConnectionError("private-url-key")),
     )
     with pytest.raises(ClientError) as caught:
         await api._request("DELETE", "fake")  # noqa: SLF001
