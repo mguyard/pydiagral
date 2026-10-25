@@ -604,6 +604,28 @@ async def test_get_configuration_with_validation_error(mock_request):
             await diagral.get_configuration()
 
 
+@pytest.mark.parametrize(
+    ("alarm", "expected"),
+    [({"name": "Sample Alarm"}, "Sample Alarm"), ({"name": None}, None), (None, None)],
+    ids=["named", "unnamed", "no-alarm"],
+)
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_alarm_name(mock_request, alarm, expected):
+    """Test that `get_alarm_name` returns the configured name, or None without one."""
+    configuration = load_sample("configuration_sample.json")
+    configuration["alarm"] = alarm
+    mock_request.return_value = (configuration, 200)
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        assert await diagral.get_alarm_name() == expected
+    mock_request.assert_awaited_once()
+
+
 #####################################
 # DiagralAPI Device Type Test Cases #
 #####################################
@@ -1578,6 +1600,24 @@ async def test_activate_group_invalid_group(mock_request):
         await diagral.get_configuration()
         with pytest.raises(ConfigurationError):
             await diagral.activate_group([1, 2, 99])
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_activate_group_without_configured_groups(mock_request):
+    """Test that a configuration without groups rejects the group instead of crashing."""
+    configuration = load_sample("configuration_sample.json")
+    configuration["groups"] = None
+    mock_request.return_value = (configuration, 200)
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+        pincode=PIN_CODE,
+    ) as diagral:
+        with pytest.raises(ConfigurationError, match=r"\[1\]"):
+            await diagral.activate_group([1])
 
 
 @pytest.mark.asyncio
@@ -2615,7 +2655,9 @@ async def test_request_timeout_is_passed_to_aiohttp(kwargs, expected):
         ) as mock_session_request:
             await diagral._request("GET", "users/me")  # noqa: SLF001
 
-    assert mock_session_request.call_args.kwargs["timeout"] == expected
+    assert mock_session_request.call_args.kwargs["timeout"] == aiohttp.ClientTimeout(
+        total=expected
+    )
     assert diagral.request_timeout == expected
 
 
@@ -2629,7 +2671,9 @@ async def test_per_call_timeout_overrides_request_timeout():
         ) as mock_session_request:
             await diagral._request("GET", "users/me", timeout=10)  # noqa: SLF001
 
-    assert mock_session_request.call_args.kwargs["timeout"] == 10
+    assert mock_session_request.call_args.kwargs["timeout"] == aiohttp.ClientTimeout(
+        total=10
+    )
 
 
 @pytest.mark.parametrize(

@@ -35,6 +35,8 @@ classifiers = [
     "Operating System :: OS Independent",
 
     "Topic :: Security",
+
+    "Typing :: Typed",
 ]
 keywords = ["diagral", "home automation", "python"]
 
@@ -47,6 +49,7 @@ Changelog = "https://github.com/mguyard/pydiagral/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
+    "mypy==2.4.0",
     "python-dotenv",
     "pytest",
     "pytest-asyncio",
@@ -212,6 +215,13 @@ split-on-trailing-comma = false
 
 [tool.ruff.lint.mccabe]
 max-complexity = 25
+
+[tool.mypy]
+files = ["src/pydiagral"]
+# The requires-python floor, so 3.12+ only typing is caught.
+python_version = "3.11"
+warn_redundant_casts = true
+warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

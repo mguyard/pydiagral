@@ -1,6 +1,6 @@
 ---
 name: testing-pydiagral
-description: Test setup for pydiagral — installing, running pytest and coverage, the _request() mocking pattern, testing _request() itself, fixtures, the ruff gate, and the mandatory test impact analysis.
+description: Test setup for pydiagral — installing, running pytest and coverage, the _request() mocking pattern, testing _request() itself, fixtures, the lint gate, and the mandatory test impact analysis.
 ---
 
 # Testing — pydiagral
@@ -145,14 +145,15 @@ For a bug fix, write the test first and watch it fail for the right reason. A te
 
 ---
 
-## 7. Ruff Gate
+## 7. Lint Gate
 
 ```bash
 ruff check .
 ruff format --check .
+mypy
 ```
 
-`lint.yaml` runs both, with the ruff version pinned in the `dev` extra. Use that version locally: another one may report different findings.
+`lint.yaml` runs all three, with the ruff and mypy versions pinned in the `dev` extra. Use those versions locally: another one may report different findings.
 
 ---
 

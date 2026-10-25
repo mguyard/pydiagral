@@ -26,7 +26,7 @@ updates:
       default-days: 7
       semver-major-days: 30
     # Runtime dependencies are published metadata: widening the aiohttp range
-    # must trigger a release. The dev extra (ruff) must not.
+    # must trigger a release. The dev extra (ruff, mypy) must not.
     commit-message:
       prefix: "fix(deps): 🐛 "
       prefix-development: "chore(deps-dev): 🔧 "
