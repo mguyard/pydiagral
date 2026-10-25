@@ -118,8 +118,7 @@ Dependabot (`.github/dependabot.yml`) checks monthly, targets `dev`, and waits 7
 
 Gaps to know about:
 
-- `ruff` and `pytest` are **required checks** on `dev`, `beta` and `main`, so both run on every PR to those branches. Do not add a path filter to their `pull_request` trigger or drop a branch from it: a PR that never reports a required check can never be merged.
-- `mypy` runs on the same triggers as `ruff` but is not a required check: a red `mypy` job does not block a merge.
+- `ruff`, `mypy` and `pytest` are **required checks** on `dev`, `beta` and `main`, so all three run on every PR to those branches. Do not add a path filter to their `pull_request` trigger or drop a branch from it: a PR that never reports a required check can never be merged.
 - The MkDocs build only runs on `main` / `beta`. A broken docstring reference is caught there, not on `dev`.
 - Codecov is informational (`fail_ci_if_error: false`); the coverage gate is `fail_under` in `pyproject.toml`.
 
@@ -133,7 +132,7 @@ Gaps to know about:
 
 Changes flow `dev` → `beta` → `main` through PRs. Never commit or push directly to any of them. Always confirm the current branch with `git branch --show-current` before committing.
 
-Branch protection, identical on the three branches: PR required (no approval, the maintainer is the only reviewer), `ruff` and `pytest` required and up to date, **signed commits required**, conversations resolved, no force-push, **no deletion**. Only merge commits are allowed on the repository — a squash would collapse several `fix` commits into one changelog line. Automatic deletion of head branches is off on purpose; delete feature branches with `gh pr merge --delete-branch`.
+Branch protection, identical on the three branches: PR required (no approval, the maintainer is the only reviewer), `ruff`, `mypy` and `pytest` required and up to date, **signed commits required**, conversations resolved, no force-push, **no deletion**. Only merge commits are allowed on the repository — a squash would collapse several `fix` commits into one changelog line. Automatic deletion of head branches is off on purpose; delete feature branches with `gh pr merge --delete-branch`.
 
 - **Every commit must be signed.** Never rewrite commits (`filter-branch`, `rebase`, `commit --amend` on pushed work) without re-signing them, or the PR can no longer be merged without bypassing the rules.
 - Release commits are signed in `release_and_doc.yaml` with a dedicated GPG key (`GPG_PRIVATE_KEY`, `GPG_PASSPHRASE` secrets), whose public half is on the maintainer's account.
