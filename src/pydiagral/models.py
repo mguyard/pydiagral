@@ -457,7 +457,7 @@ class TryConnectResult(CamelCaseModel):
         >>> print(result.result)
         True
         >>> print(result.keys)
-        ApiKeyWithSecret(api_key='abc123', api_secret='xyz789')
+        ApiKeyWithSecret(api_key='abc123', secret_key='xyz789')
 
     """
 

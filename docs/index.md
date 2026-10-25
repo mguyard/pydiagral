@@ -26,7 +26,7 @@ The `DiagralAPI` class offers the following functionalities:
 - **Authentication**:
 
   - Connect to the Diagral API with username and password
-  - Manage access tokens and their expiration
+  - Log in to obtain an access token
   - Create, validate, and delete API keys
 
 - **System Configuration**:
@@ -42,7 +42,7 @@ The `DiagralAPI` class offers the following functionalities:
 
 - **System Interraction**:
   - Activate or Desactivate system (partially or globally)
-  - Automatism actions
+  - List automatism rules (running their actions is not implemented yet)
 
 ## Quick Start
 

@@ -234,8 +234,8 @@ class DiagralAPI:
                             f"Diagral request validation error (HTTP {status})",
                             status_code=status,
                         )
-                    # Error pages may be HTML, empty or malformed JSON. The HTTP
-                    # status still determines whether retry/authentication applies.
+                    # Error pages may be HTML, empty or malformed JSON; the status
+                    # above already chose the exception class.
                     try:
                         error_data = await response.json()
                     except (aiohttp.ContentTypeError, ValueError):
@@ -579,9 +579,8 @@ class DiagralAPI:
         """Asynchronously retrieve the configuration of the Diagral system.
 
         This method retrieves the configuration of the Diagral system by sending a GET
-        request to the appropriate endpoint. If the access token is not available, it
-        attempts to log in to obtain one. Upon successful retrieval, it logs an informational
-        message with the configuration details. The retrieved configuration is stored in
+        request to the appropriate endpoint, signed with the API key and secret key. The
+        retrieved configuration is stored in
         the self.alarm_configuration attribute, allowing it to be reused within the same
         session without needing to collect it multiple times.
 
@@ -589,7 +588,7 @@ class DiagralAPI:
             AlarmConfiguration: The configuration details of the Diagral system.
 
         Raises:
-            AuthenticationError: If the access token is not available.
+            AuthenticationError: If the API key or the secret key is missing.
 
         """
 
@@ -629,12 +628,11 @@ class DiagralAPI:
     async def get_devices_info(self) -> DeviceList:
         """Asynchronously retrieves information about various device types from the alarm configuration.
 
-        The method retrieve information for each device type (cameras, commands, sensors, sirens,
-        transmitters) from the alarm configuration, and compiles this information into a dictionary.
+        The method retrieves the index and label of each device of every type (cameras,
+        commands, sensors, sirens, transmitters) from the alarm configuration.
 
         Returns:
-            dict: A dictionary where the keys are device types and the values are lists of dictionaries
-            containing device information (index and label).
+            DeviceList: One list of `DeviceInfos` per device type.
 
         Raises:
             ConfigurationError: If the alarm configuration cannot be retrieved.
@@ -974,11 +972,11 @@ class DiagralAPI:
     async def disable_product(
         self, type: str, product_id: int
     ) -> SystemStatus:  # NOT-TESTED
-        """Asynchronously enables a product in the system.
+        """Asynchronously disables a product in the system.
 
         Args:
-            type (str): The type of the product to enable.
-            product_id (int): The unique identifier of the product to enable.
+            type (str): The type of the product to disable.
+            product_id (int): The unique identifier of the product to disable.
 
         Returns:
             SystemStatus: An instance of SystemStatus containing the system status after disabling the product.
