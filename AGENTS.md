@@ -111,7 +111,7 @@ There is no Makefile and no `requirements*.txt`.
 |---|---|---|
 | `lint.yaml` | push on `dev`; PR to `dev`, `beta`, `main`; manual | `ruff` job: `ruff check` + `ruff format --check`, pinned ruff. `mypy` job: `mypy` with the `dev` extra, pinned mypy |
 | `pytest.yaml` | PR to `dev`, `beta`, `main`, any path; push on `dev`, paths `src/pydiagral/**`, `tests/**`, `pyproject.toml`; weekly (Monday 01:00); manual, on a chosen branch | pytest on Python 3.14 with the `dev` extra, coverage gate (80%), coverage and test results to Codecov |
-| `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release (toolchain pinned in `.github/release/`) with GPG-signed release commits, PyPI upload through the Trusted Publisher (OIDC, no token), then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
+| `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release (toolchain pinned in `.github/release/`) with GPG-signed release commits, PyPI upload through the Trusted Publisher (OIDC, no token), then MkDocs `build --strict` and `mike deploy` to GitHub Pages when a release was published or `docs/`, `mkdocs.yml` or `overrides/` changed: `main` publishes `/stable/`, the default, and `beta` publishes `/beta/` |
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |
 | `lock-stale.yml` | daily | `lock`: locks issues and PRs inactive for 30 days. `stale`: marks `stale` an issue labelled `waiting-for-response` after 30 days without activity, and closes it 7 days later; `no-stale`, `bug` and `documentation` exempt it. Pull requests are never marked stale |

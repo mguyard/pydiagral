@@ -1,10 +1,12 @@
 site_name: pydiagral
+site_url: https://mguyard.github.io/pydiagral/
 site_description: A Python library for interacting with Diagral systems
 site_author: Marc Guyard
 repo_url: https://github.com/mguyard/pydiagral
 theme:
   name: material
   logo: pydiagral-Logo.png
+  custom_dir: overrides
 
 markdown_extensions:
   - admonition
@@ -13,6 +15,16 @@ plugins:
   - search
   - mkdocstrings:
       default_handler: python
+      handlers:
+        python:
+          # The checked-out code, not an installed pydiagral: mike builds older tags.
+          paths: [src]
+
+# mike publishes `stable` from main and `beta` from beta, each under its own path.
+extra:
+  version:
+    provider: mike
+    default: stable
 
 nav:
   - Home: index.md

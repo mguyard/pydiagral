@@ -6,6 +6,10 @@ on:
       - main
       - beta
   workflow_dispatch:
+    inputs:
+      release:
+        description: Tag or ref to build the docs from, e.g. v1.6.1 (defaults to the branch)
+        required: false
 
 jobs:
   release:
@@ -115,47 +119,65 @@ jobs:
             doc:
               - 'docs/**'
               - 'mkdocs.yml'
+              - 'overrides/**'
 
   deploy-docs:
     runs-on: ubuntu-latest
     needs: [release, check-doc-changes]
     if: |
+      github.event_name == 'workflow_dispatch' ||
       needs.release.outputs.new_release_published == 'true' ||
       needs.check-doc-changes.outputs.doc_changed == 'true'
+    # mike commits the built version to gh-pages.
+    permissions:
+      contents: write
+    # A main and a beta release close together would both push to gh-pages.
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
         with:
           ref: ${{ github.event.inputs.release || github.ref }}
+          # Tags name the version; gh-pages holds the other channel's docs.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.12'
+          python-version: '3.14'
 
-      - name: Resolve package version
-        id: version
+      - name: Resolve the docs version and channel
         run: |
           if [ "${{ needs.release.outputs.new_release_published }}" == "true" ]; then
-            echo "PYPROJECT_VERSION=${{ needs.release.outputs.new_release_version }}" >> $GITHUB_ENV
+            VERSION="${{ needs.release.outputs.new_release_version }}"
           else
-            LATEST=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest \
-              | grep '"tag_name"' \
-              | sed 's/.*"tag_name": "v\([^"]*\)".*/\1/')
-            echo "PYPROJECT_VERSION=$LATEST" >> $GITHUB_ENV
+            # The branch's own latest tag: the releases API skips prereleases.
+            VERSION=$(git describe --tags --abbrev=0 --match 'v*' | sed 's/^v//')
           fi
+          case "${{ github.ref_name }}" in
+            main) CHANNEL=stable ;;
+            beta) CHANNEL=beta ;;
+            *) echo "Docs are published from main or beta only"; exit 1 ;;
+          esac
+          echo "PYPROJECT_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "DOCS_CHANNEL=$CHANNEL" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install mkdocs mkdocstrings[python] mkdocs-material
+          pip install mkdocs mkdocstrings[python] mkdocs-material mike
           pip install -e .
 
       - name: Build documentation
         run: mkdocs build --strict
 
+      # Only this channel's directory changes: the other channel and the
+      # redirects for the old paths stay on gh-pages.
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages:gh-pages
+          mike deploy --push --title "$PYPROJECT_VERSION ($DOCS_CHANNEL)" "$DOCS_CHANNEL"
