@@ -9,9 +9,11 @@ from urllib.parse import urlsplit
 from .constants import (
     AUTOMATISM_CANALS,
     MAX_LISTED_VALUE_LENGTH,
+    MAX_SHAPE_INT_DIGITS,
     REDACTED,
     SENSITIVE_KEYS,
     SENSITIVE_URL_PATH_KEYS,
+    SHAPE_HIDDEN_KEY_PARTS,
     SHAPE_VISIBLE_KEYS,
 )
 
@@ -50,19 +52,23 @@ def shape(data: Any) -> Any:
 
     Keys are kept, except those that may be identifiers, which read "<key:1>",
     "<key:2>"... Text becomes "<str:N>", N being its length, unless it is a state,
-    a device type or a version (`constants.SHAPE_VISIBLE_KEYS`), a documented
-    automatism canal, or "True" / "False". Numbers, booleans and None are kept.
+    a device type, a version or a product reference (`constants.SHAPE_VISIBLE_KEYS`),
+    a documented automatism canal, or "True" / "False". Booleans, None and numbers
+    are kept, except an integer of more than six digits, which reads "<int:N>".
+    Under a sensitive key, such as a serial or a phone number, every value but None
+    is replaced by its type.
 
     Examples:
         >>> shape({"label": "Kitchen", "mode": "ON", "index": 2, "groups": [1]})
         {'label': '<str:7>', 'mode': 'ON', 'index': 2, 'groups': [1]}
 
     """
-    return _shape_value(None, data)
+    return _shape_value(None, data, hidden=False)
 
 
-def _shape_value(key: str | None, value: Any) -> Any:
-    """Return the shape of a value stored under key."""
+def _shape_value(key: str | None, value: Any, *, hidden: bool) -> Any:
+    """Return the shape of a value stored under key, hiding it under a sensitive one."""
+    hidden = hidden or _is_sensitive(key)
     if isinstance(value, dict):
         shaped: dict[str, Any] = {}
         masked = 0
@@ -71,15 +77,33 @@ def _shape_value(key: str | None, value: Any) -> Any:
             if name == "<key>":
                 masked += 1
                 name = f"<key:{masked}>"
-            shaped[name] = _shape_value(item_key, item)
+            shaped[name] = _shape_value(item_key, item, hidden=hidden)
         return shaped
     if isinstance(value, list):
-        return [_shape_value(key, item) for item in value]
-    if value is None or isinstance(value, (bool, int, float)):
-        return value
+        return [_shape_value(key, item, hidden=hidden) for item in value]
+    if value is None:
+        return None
     if isinstance(value, str):
-        return value if _is_technical(key, value) else f"<str:{len(value)}>"
+        visible = not hidden and _is_technical(key, value)
+        return value if visible else f"<str:{len(value)}>"
+    if hidden:
+        return f"<{type(value).__name__}>"
+    if isinstance(value, int) and not isinstance(value, bool):
+        digits = len(str(abs(value)))
+        return value if digits <= MAX_SHAPE_INT_DIGITS else f"<int:{digits}>"
+    if isinstance(value, (bool, float)):
+        return value
     return f"<{type(value).__name__}>"
+
+
+def _is_sensitive(key: str | None) -> bool:
+    """Tell whether a key may hold a secret or an identifier, whatever its type."""
+    if not isinstance(key, str):
+        return False
+    name = key.lower()
+    return name in SENSITIVE_KEYS or any(
+        part in name for part in SHAPE_HIDDEN_KEY_PARTS
+    )
 
 
 def _is_technical(key: str | None, value: str) -> bool:

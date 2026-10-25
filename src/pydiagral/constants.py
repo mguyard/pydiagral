@@ -47,11 +47,18 @@ SHAPE_VISIBLE_KEYS = frozenset(
         "mode",
         "plug",
         "plugknx",
+        "refcode",
         "status",
         "type",
         "vendor",
     }
 )
+# Besides SENSITIVE_KEYS, key fragments whose values `utils.shape()` hides whatever
+# their type: the raw JSON may send a serial or a phone number as a number.
+SHAPE_HIDDEN_KEY_PARTS = ("serial", "phone", "vocal", "contact")
+# Longest integer `utils.shape()` shows: indexes, groups, delays and counters fit,
+# identifiers, timestamps and phone numbers do not.
+MAX_SHAPE_INT_DIGITS = 6
 
 # Header and field names whose values are replaced by REDACTED in debug logs.
 # Compared lowercase.

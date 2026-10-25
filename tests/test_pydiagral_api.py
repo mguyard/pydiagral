@@ -4116,6 +4116,51 @@ def test_shape_keeps_the_structure_and_technical_values_only():
     }
 
 
+def test_shape_hides_any_value_under_a_sensitive_key():
+    """Test that a serial or a phone number sent as a number is hidden too."""
+    payload = {
+        "serial": 234,
+        "transmitter_id": 12345678,
+        "FirstVocalContact": "0612345678",
+        "phoneNumber": 612345678,
+        "contact_id": True,
+        "serial_id": 1.5,
+        "username": None,
+        "api_keys": [7, "key"],
+        "boxSerial": {"value": 99},
+    }
+    assert shape(payload) == {
+        "serial": "<int>",
+        "transmitter_id": "<int>",
+        "FirstVocalContact": "<str:10>",
+        "phoneNumber": "<int>",
+        "contact_id": "<bool>",
+        "serial_id": "<float>",
+        "username": None,
+        "api_keys": ["<int>", "<str:3>"],
+        "boxSerial": {"value": "<int>"},
+    }
+
+
+def test_shape_hides_integers_longer_than_six_digits():
+    """Test that identifiers and timestamps are hidden, counters and indexes kept."""
+    payload = {"index": 3, "count": 999999, "created": 1700000000, "id": -12345678}
+    assert shape(payload) == {
+        "index": 3,
+        "count": 999999,
+        "created": "<int:10>",
+        "id": "<int:8>",
+    }
+
+
+def test_shape_shows_the_product_reference():
+    """Test that refCode, a catalogue reference such as 900B, stays readable."""
+    assert shape({"refCode": "900B", "label": "900B"}) == {
+        "refCode": "900B",
+        "label": "<str:4>",
+    }
+
+
 def test_shape_numbers_the_keys_that_may_be_identifiers():
     """Test that a dict indexed by serials keeps one entry per key, none readable."""
     payload = {"18139037029D91": {"mode": "ON"}, "ABCDEF12AB34CD": {"mode": "OFF"}}
