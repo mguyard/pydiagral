@@ -69,7 +69,7 @@ class DiagralAPI:
         self,
         username: str,
         password: str,
-        serial_id: str,
+        serial_id: str | None = None,
         apikey: str | None = None,
         secret_key: str | None = None,
         pincode: str | None = None,
@@ -83,7 +83,9 @@ class DiagralAPI:
         Args:
             username (str): The email address for Diagral API authentication.
             password (str): The password for Diagral API authentication.
-            serial_id (str): The serial ID of the Diagral system.
+            serial_id (str | None, optional): The serial ID of the Diagral system. Defaults to
+                None, which only `login()`, `get_systems()` and `ping()` accept: list the
+                account's serials with `get_systems()`, then create the client with one.
             apikey (str | None, optional): The API key for additional authentication. Defaults to None.
             secret_key (str | None, optional): The secret key for additional authentication. Defaults to None.
             pincode (str | None, optional): The PIN code for the Diagral system. Defaults to None.
@@ -117,9 +119,9 @@ class DiagralAPI:
         self.__password: str = password
 
         # Validate serial_id
-        if not serial_id or not isinstance(serial_id, str):
-            raise ConfigurationError("serial_id must be a non-empty string")
-        self.serial_id: str = serial_id
+        if serial_id is not None and (not serial_id or not isinstance(serial_id, str)):
+            raise ConfigurationError("serial_id must be a non-empty string or None")
+        self.serial_id: str | None = serial_id
 
         # Set apikey and secret_key
         self.__apikey: str | None = apikey
@@ -159,6 +161,20 @@ class DiagralAPI:
     def request_timeout(self) -> float:
         """Seconds allowed for each request to the Diagral cloud."""
         return self.__request_timeout
+
+    @property
+    def __serial(self) -> str:
+        """The serial ID, for the calls that address the system.
+
+        Raises:
+            ConfigurationError: If the client was created without one.
+
+        """
+        if self.serial_id is None:
+            raise ConfigurationError(
+                "serial_id is required for this call; create the client with one"
+            )
+        return self.serial_id
 
     async def __aenter__(self) -> Self:
         """Open the aiohttp ClientSession, unless the caller provided one."""
@@ -391,7 +407,7 @@ class DiagralAPI:
         if not self.__access_token:
             await self.login()
 
-        _DATA: dict[str, str] = {"serial_id": self.serial_id}
+        _DATA: dict[str, str] = {"serial_id": self.__serial}
         _HEADERS: dict[str, str] = {
             "Authorization": f"Bearer {self.__access_token}",
         }
@@ -466,7 +482,7 @@ class DiagralAPI:
         }
         response_data, *_ = await self._request(
             "GET",
-            f"users/systems/{self.serial_id}/api_keys",
+            f"users/systems/{self.__serial}/api_keys",
             headers=_HEADERS,
         )
         validate_apikey_response: ApiKeys = ApiKeys.from_dict(response_data)
@@ -511,9 +527,9 @@ class DiagralAPI:
         }
         await self._request(
             "DELETE",
-            f"users/systems/{self.serial_id}/api_keys/{apikey_to_delete}",
+            f"users/systems/{self.__serial}/api_keys/{apikey_to_delete}",
             headers=_HEADERS,
-            log_endpoint=f"users/systems/{self.serial_id}/api_keys/{REDACTED}",
+            log_endpoint=f"users/systems/{self.__serial}/api_keys/{REDACTED}",
         )
         _LOGGER.info("Successfully deleted API key: ...%s", apikey_to_delete[-4:])
 
@@ -524,8 +540,8 @@ class DiagralAPI:
     async def get_systems(self) -> list[SystemApiKeys]:
         """List the systems of the account, with the API keys created for each.
 
-        Only the username and password are needed: this is how to discover the serial
-        IDs of an account.
+        Only the username and password are needed, so the client may be created without
+        a serial ID: this is how to discover the serial IDs of an account.
 
         Returns:
             list[SystemApiKeys]: One entry per system of the account.
@@ -656,7 +672,7 @@ class DiagralAPI:
         headers |= {
             "X-HMAC": generate_hmac_signature(
                 timestamp=timestamp,
-                serial_id=self.serial_id,
+                serial_id=self.__serial,
                 api_key=apikey,
                 secret_key=secret_key,
             ),
@@ -684,7 +700,7 @@ class DiagralAPI:
 
         _HEADERS = self.__hmac_headers("get configuration")
         response_data, *_ = await self._request(
-            "GET", f"systems/{self.serial_id}/configurations", headers=_HEADERS
+            "GET", f"systems/{self.__serial}/configurations", headers=_HEADERS
         )
         self.alarm_configuration = AlarmConfiguration.from_dict(response_data)
         # The redacted payload is already logged by from_dict().
@@ -772,7 +788,7 @@ class DiagralAPI:
 
         _HEADERS = self.__hmac_headers("get system details", with_pin=True)
         response_data, *_ = await self._request(
-            "GET", f"systems/{self.serial_id}", headers=_HEADERS
+            "GET", f"systems/{self.__serial}", headers=_HEADERS
         )
         _LOGGER.debug(
             "Successfully retrieved system details: %s", Redacted(response_data)
@@ -796,7 +812,7 @@ class DiagralAPI:
 
         _HEADERS = self.__hmac_headers("get system status", with_pin=True)
         response_data, *_ = await self._request(
-            "GET", f"systems/{self.serial_id}/status", headers=_HEADERS
+            "GET", f"systems/{self.__serial}/status", headers=_HEADERS
         )
         _LOGGER.debug(
             "Successfully retrieved system status: %s", Redacted(response_data)
@@ -831,7 +847,7 @@ class DiagralAPI:
 
         _HEADERS = self.__hmac_headers(f"do system action {action}", with_pin=True)
         response_data, *_ = await self._request(
-            "POST", f"systems/{self.serial_id}/{action}", headers=_HEADERS
+            "POST", f"systems/{self.__serial}/{action}", headers=_HEADERS
         )
         _LOGGER.debug(
             "Successfully performed action %s: %s",
@@ -949,7 +965,7 @@ class DiagralAPI:
         data: dict[str, list[int]] = {"groups": groups}
         response_data, *_ = await self._request(
             "POST",
-            f"systems/{self.serial_id}/{action}",
+            f"systems/{self.__serial}/{action}",
             headers=_HEADERS,
             json=data,
         )
@@ -1037,7 +1053,7 @@ class DiagralAPI:
         _HEADERS = self.__hmac_headers(f"{action} product", with_pin=True)
         response_data, *_ = await self._request(
             "POST",
-            f"systems/{self.serial_id}/{type}/{product_id}/{action}",
+            f"systems/{self.__serial}/{type}/{product_id}/{action}",
             headers=_HEADERS,
         )
         return SystemStatus.from_dict(response_data)
@@ -1101,7 +1117,7 @@ class DiagralAPI:
         try:
             response_data, *_ = await self._request(
                 "GET",
-                f"systems/{self.serial_id}/anomalies",
+                f"systems/{self.__serial}/anomalies",
                 headers=_HEADERS,
             )
         except DiagralAPIError as e:
@@ -1139,7 +1155,7 @@ class DiagralAPI:
         _HEADERS = self.__hmac_headers("get automatism rudes")
         response_data, *_ = await self._request(
             "GET",
-            f"systems/{self.serial_id}/rudes",
+            f"systems/{self.__serial}/rudes",
             headers=_HEADERS,
         )
         return Rudes.from_dict(response_data)
@@ -1175,7 +1191,7 @@ class DiagralAPI:
         _HEADERS = self.__hmac_headers("get webhook")
         response_data, *_ = await self._request(
             "GET",
-            f"webhooks/{self.serial_id}/subscription",
+            f"webhooks/{self.__serial}/subscription",
             headers=_HEADERS,
         )
         return Webhook.from_dict(response_data)
@@ -1231,7 +1247,7 @@ class DiagralAPI:
         try:
             response_data, *_ = await self._request(
                 method,
-                f"webhooks/{self.serial_id}/subscription",
+                f"webhooks/{self.__serial}/subscription",
                 headers=_HEADERS,
                 json=data,
             )
@@ -1317,7 +1333,7 @@ class DiagralAPI:
         _HEADERS = self.__hmac_headers("delete webhook")
         await self._request(
             "DELETE",
-            f"webhooks/{self.serial_id}/subscription",
+            f"webhooks/{self.__serial}/subscription",
             headers=_HEADERS,
         )
 

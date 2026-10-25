@@ -123,6 +123,16 @@ async with DiagralAPI(
     ...
 ```
 
+6. Discover the serial IDs
+
+Without a serial ID, the client can still log in and list the systems of the account. Create it with the serial ID you pick to use every other call:
+
+```python
+async with DiagralAPI(username=username, password=password) as diagral:
+    systems = await diagral.get_systems()
+serial_id = systems[0].serial_id
+```
+
 ## API Structure
 
 For detailed API documentation, please refer to the following sections:

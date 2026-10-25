@@ -605,6 +605,53 @@ async def test_get_systems_with_malformed_response(mock_request, body):
             await diagral.get_systems()
 
 
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_systems_without_serial_id(mock_request):
+    """Test that a client created without serial_id can log in and list the systems."""
+    mock_request.side_effect = [
+        ({"access_token": FAKE_TOKEN}, 200),
+        (SYSTEMS_SAMPLE, 200),
+    ]
+    async with DiagralAPI(USERNAME, PASSWORD) as diagral:
+        assert diagral.serial_id is None
+        systems = await diagral.get_systems()
+
+    assert [system.serial_id for system in systems] == [SERIAL_ID, OTHER_SERIAL_ID]
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda api: api.get_configuration(),
+        lambda api: api.get_system_status(),
+        lambda api: api.get_webhook(),
+        lambda api: api.set_apikey(),
+        lambda api: api.validate_apikey(),
+        lambda api: api.delete_apikey(),
+    ],
+    ids=["configuration", "status", "webhook", "set-key", "validate-key", "delete-key"],
+)
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_calls_needing_serial_id_raise_configuration_error(mock_request, call):
+    """Test that a call needing the serial fails before reaching the system without one."""
+    mock_request.return_value = ({"access_token": FAKE_TOKEN}, 200)
+    async with DiagralAPI(
+        USERNAME, PASSWORD, apikey=API_KEY, secret_key=SECRET_KEY, pincode=PIN_CODE
+    ) as diagral:
+        with pytest.raises(ConfigurationError, match="serial_id is required"):
+            await call(diagral)
+
+    for request in mock_request.call_args_list:
+        assert request.args[1] == "users/authenticate/login?vendor=DIAGRAL"
+
+
+@pytest.mark.parametrize("serial_id", ["", 123], ids=["empty", "not-a-string"])
+def test_invalid_serial_id_is_rejected(serial_id):
+    """Test that a serial_id that is neither None nor a non-empty string is rejected."""
+    with pytest.raises(ConfigurationError, match="serial_id must be"):
+        DiagralAPI(username=USERNAME, password=PASSWORD, serial_id=serial_id)
+
+
 #######################################
 # DiagralAPI Configuration Test Cases #
 #######################################
