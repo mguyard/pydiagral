@@ -223,8 +223,9 @@ Some parts of pydiagral are built from the Diagral API documentation only, becau
 
 > [!IMPORTANT]
 >
-> **You own the matching equipment or use these calls? Your help is welcome!** Please [open an issue](https://github.com/mguyard/pydiagral/issues) describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:
+> **You own the matching equipment or use these calls? Your help is welcome!** Please [open a *Diagnostics report* issue](https://github.com/mguyard/pydiagral/issues/new?template=diagnostics_report.yml) describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:
 >
+> - **In a few minutes, with nothing to install:** open a GitHub Codespace as the guide to `try_pydiagral.py` explains ([stable](https://mguyard.github.io/pydiagral/stable/try-pydiagral/#in-github-codespaces-nothing-to-install) · [beta](https://mguyard.github.io/pydiagral/beta/try-pydiagral/#in-github-codespaces-nothing-to-install)), run `python try_pydiagral.py`, which only reads, and attach the diagnostics report its output ends with.
 > - With [hass-diagral](https://github.com/mguyard/hass-diagral), attach the integration's diagnostics: they include both lists below.
 > - From Python, attach the output of `pydiagral.models.unexpected_data()`, and of `response_shapes()` called on the client after the calls in question.
 

@@ -59,8 +59,9 @@ Some parts of pydiagral are built from the Diagral API documentation only, becau
 - **Anomaly deletion**: `delete_anomalies()` deletes an anomaly. Which identifier it expects is unknown: the anomalies `get_anomalies()` returns have none of their own.
 - **Product enabling and disabling**: `enable_product()` and `disable_product()` follow the specification. What disabling does, and which identifier designates a device, are unknown.
 
-If you own the matching equipment or use these calls, please [open an issue](https://github.com/mguyard/pydiagral/issues) describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:
+If you own the matching equipment or use these calls, please [open a *Diagnostics report* issue](https://github.com/mguyard/pydiagral/issues/new?template=diagnostics_report.yml) describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:
 
+- **In a few minutes, with nothing to install:** open a GitHub Codespace as [Try it on your alarm](try-pydiagral.md#in-github-codespaces-nothing-to-install) explains, run `python try_pydiagral.py`, which only reads, and attach the diagnostics report its output ends with.
 - With [hass-diagral](https://github.com/mguyard/hass-diagral), attach the integration's diagnostics: they include both lists below.
 - From Python, attach the output of `pydiagral.models.unexpected_data()`, and of `response_shapes()` called on the client after the calls in question.
 

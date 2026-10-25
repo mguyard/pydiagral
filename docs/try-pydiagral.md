@@ -2,6 +2,17 @@
 
 [`try_pydiagral.py`](https://github.com/mguyard/pydiagral/blob/main/try_pydiagral.py) runs ready-made scenarios against your own Diagral alarm: check that everything answers, read the configuration and the status, arm and disarm, test a webhook. It is the quickest way to see what pydiagral does with your installation, and to collect what an issue needs when something looks wrong.
 
+!!! tip "Help improve pydiagral in a few minutes"
+
+    pydiagral's models do not cover yet everything Diagral can answer, and some calls were built from the Diagral documentation alone. The [diagnostics report](#diagnostics-report) the script ends with describes the structure of Diagral's answers on your installation, without any value you typed and without any identifier: shared in a [*Diagnostics report* issue](https://github.com/mguyard/pydiagral/issues/new?template=diagnostics_report.yml), it lets pydiagral cover what it has not seen yet.
+
+    In a [codespace](#in-github-codespaces-nothing-to-install), it takes a few minutes and nothing to install: run `python try_pydiagral.py`, which only reads, and share the report. What helps most:
+
+    - `configuration`, when your alarm has cameras;
+    - `automatisms`, when it has automatisms;
+    - `anomalies`, while an anomaly is in progress;
+    - `webhook-listen`, to receive alert and anomaly notifications: only state changes have been observed so far.
+
 !!! warning
 
     The script talks to your real alarm. Read what a scenario does before naming it: some arm the alarm, so make sure nobody moves in a protected area meanwhile.
@@ -244,7 +255,7 @@ Every run that completes ends with a `== diagnostics ==` section, in JSON:
 - `unexpected_data`: what Diagral sent that pydiagral's models did not expect, such as a missing field or an unknown value;
 - `response_shapes`: the structure of the last answer of each read, keys kept and values replaced.
 
-Neither holds a value you typed nor an identifier: it is made to be attached to an [issue](https://github.com/mguyard/pydiagral/issues) as is. When the output of a scenario looks wrong, or a warning asks you to report something, run that scenario and attach the report.
+Neither holds a value you typed nor an identifier: it is made to be shared as is, in a [*Diagnostics report* issue](https://github.com/mguyard/pydiagral/issues/new?template=diagnostics_report.yml). The report also gives `pydiagral_version`, and `webhook_shapes` after [`webhook-listen`](#testing-webhooks). When the output of a scenario looks wrong, or a warning asks you to report something, run that scenario and attach the report.
 
 ## Debug log
 
