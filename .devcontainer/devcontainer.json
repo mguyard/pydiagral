@@ -11,6 +11,7 @@
   },
   // A virtual environment outside the workspace, so it never lands in the host checkout.
   "postCreateCommand": "python -m venv /home/vscode/.venv && /home/vscode/.venv/bin/pip install --upgrade pip && /home/vscode/.venv/bin/pip install -e '.[dev]' mkdocs 'mkdocstrings[python]' mkdocs-material mike uv",
+  "postAttachCommand": "sh .devcontainer/welcome.sh",
   "remoteEnv": {
     "PATH": "/home/vscode/.venv/bin:${containerEnv:PATH}"
   },
@@ -29,19 +30,19 @@
   // Offered by Codespaces as environment variables, which try_pydiagral.py reads like .env.
   "secrets": {
     "DIAGRAL_USERNAME": {
-      "description": "E-mail address of your Diagral account, for try_pydiagral.py",
+      "description": "Required by try_pydiagral.py: the e-mail address of your Diagral account",
       "documentationUrl": "https://mguyard.github.io/pydiagral/stable/try-pydiagral/"
     },
     "DIAGRAL_PASSWORD": {
-      "description": "Password of your Diagral account, for try_pydiagral.py",
+      "description": "Required by try_pydiagral.py: the password of your Diagral account",
       "documentationUrl": "https://mguyard.github.io/pydiagral/stable/try-pydiagral/"
     },
     "DIAGRAL_SERIAL_ID": {
-      "description": "Serial ID of your Diagral box, for try_pydiagral.py",
+      "description": "Needed by every try_pydiagral.py scenario but ping and systems: the serial ID of your Diagral box. Leave it empty if unknown, and run the systems scenario to find it",
       "documentationUrl": "https://mguyard.github.io/pydiagral/stable/try-pydiagral/"
     },
     "DIAGRAL_PIN_CODE": {
-      "description": "PIN code of your alarm, for try_pydiagral.py",
+      "description": "Needed by try_pydiagral.py to read the status and details, and to arm or disarm: the PIN code of your alarm",
       "documentationUrl": "https://mguyard.github.io/pydiagral/stable/try-pydiagral/"
     }
   },
