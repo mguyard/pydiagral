@@ -84,7 +84,12 @@ Some parts of pydiagral are built from the Diagral API documentation only, becau
 - **Anomaly deletion**: `delete_anomalies()` deletes an anomaly. Which identifier it expects is unknown: the anomalies `get_anomalies()` returns have none of their own.
 - **Product enabling and disabling**: `enable_product()` and `disable_product()` follow the specification. What disabling does, and which identifier designates a device, are unknown.
 
-If you own the matching equipment or use these calls, please [open an issue](https://github.com/mguyard/pydiagral/issues) describing what you observe. For cameras, include the `cameras` part of the configuration Diagral sends: pydiagral logs that configuration at debug level, on the line starting with `Parsing AlarmConfiguration from`. To get it, enable the `pydiagral` logger at debug level, with `logging.getLogger("pydiagral").setLevel(logging.DEBUG)`, or in Home Assistant with `pydiagral: debug` under `logger: logs:`. Keys, tokens, PIN codes and serial numbers are redacted, but the line still shows the names of your devices: read it before posting.
+If you own the matching equipment or use these calls, please [open an issue](https://github.com/mguyard/pydiagral/issues) describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:
+
+- With [hass-diagral](https://github.com/mguyard/hass-diagral), attach the integration's diagnostics: they include both lists below.
+- From Python, attach the output of `pydiagral.models.unexpected_data()`, and of `response_shapes()` called on the client after the calls in question.
+
+The debug log shows the full answers instead: enable the `pydiagral` logger at debug level, with `logging.getLogger("pydiagral").setLevel(logging.DEBUG)`, or in Home Assistant with `pydiagral: debug` under `logger: logs:`. Keys, tokens, PIN codes and serial numbers are redacted, but the log still shows the names of your devices: read it before posting.
 
 ## 🚀 Quick Start
 
