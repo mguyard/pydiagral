@@ -26,6 +26,9 @@
   color: b1fc6f
 
 # Other labels
+- name: API
+  description: Changes in the Diagral API and how pydiagral follows them
+  color: 5319e7
 - name: breaking
   description: Breaking Changes
   color: bfd4f2
