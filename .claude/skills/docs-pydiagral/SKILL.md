@@ -12,7 +12,7 @@ Use this skill for any change to docstrings, `docs/`, `mkdocs.yml` or `README.md
 ## 1. How the Site Is Built
 
 - [MkDocs](https://www.mkdocs.org/) with the Material theme and [mkdocstrings](https://mkdocstrings.github.io/) (`default_handler: python`), configured in `mkdocs.yml`.
-- Published to GitHub Pages ([mguyard.github.io/pydiagral](https://mguyard.github.io/pydiagral/)) by `release_and_doc.yaml`, on a push to `main` or `beta`, when a release was published or `docs/` / `mkdocs.yml` changed.
+- Published to GitHub Pages by `release_and_doc.yaml` with `mike`, on a push to `main` or `beta`, when a release was published or `docs/`, `mkdocs.yml` or `overrides/` changed. Two fixed versions: [`/stable/`](https://mguyard.github.io/pydiagral/stable/), from `main` and the default the site root redirects to, and [`/beta/`](https://mguyard.github.io/pydiagral/beta/), from `beta`, which shows a banner pointing to stable (`overrides/main.html`). `gh-pages` also holds redirects from the pre-versioning paths (`/api/`, `/models/`, `/exceptions/`) to `/stable/`: never deploy with a tool that replaces the whole branch.
 - Built with `mkdocs build --strict`: any warning fails the deployment.
 
 Check mkdocs-material and mkdocstrings options with Context7 before using one; do not rely on memory.

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{# Shown on every version but the default, `stable`: in practice, the beta. #}
+{% block outdated %}
+  You're reading the documentation of the beta.
+  <a href="{{ '../' ~ base_url }}">
+    <strong>Read the stable version.</strong>
+  </a>
+{% endblock %}
