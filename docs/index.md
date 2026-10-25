@@ -8,11 +8,11 @@ Welcome to the documentation for pydiagral, a Python library for interacting wit
 
 pydiagral is an asynchronous Python interface for the Diagral alarm system. This library allows users to control and monitor their Diagral alarm system through the official API.
 
-> [!CAUTION]
->
-> Please note that the Diagral alarm system is a security system, and it may be preferable not to connect it to any automation platform for security reasons.
-> In no event shall the developer of [`pydiagral`](https://github.com/mguyard/pydiagral) library be held liable for any issues arising from the use of this [`pydiagral`](https://github.com/mguyard/pydiagral) library.
-> The user installs and uses this integration at their own risk and with full knowledge of the potential implications.
+!!! danger "Caution"
+
+    Please note that the Diagral alarm system is a security system, and it may be preferable not to connect it to any automation platform for security reasons.
+    In no event shall the developer of [`pydiagral`](https://github.com/mguyard/pydiagral) library be held liable for any issues arising from the use of this [`pydiagral`](https://github.com/mguyard/pydiagral) library.
+    The user installs and uses this integration at their own risk and with full knowledge of the potential implications.
 
 ## Requirement
 
@@ -28,6 +28,7 @@ The `DiagralAPI` class offers the following functionalities:
   - Connect to the Diagral API with username and password
   - Log in to obtain an access token
   - Create, validate, and delete API keys
+  - List the systems of the account and their API keys, to discover the serial IDs
 
 - **System Configuration**:
 
@@ -37,12 +38,33 @@ The `DiagralAPI` class offers the following functionalities:
 
   - Obtain system details
   - Retrieve the current system status
+  - Check that the Diagral cloud answers (health check, no credential needed)
   - Manage webhooks
   - Manage anomalies
 
 - **System Interraction**:
   - Activate or Desactivate system (partially or globally)
-  - List automatism rules (running their actions is not implemented yet)
+  - List automatism rules and run their actions
+
+- **Diagnostics**:
+  - List what Diagral sent that the models did not expect, without any value the user entered (`pydiagral.models.unexpected_data()`)
+  - Describe the structure of the last response of each read, without any value the user entered (`DiagralAPI.response_shapes()`)
+
+## Untested features
+
+Some parts of pydiagral are built from the Diagral API documentation only, because they could not be checked on a real installation. pydiagral logs a warning the first time each of them is used:
+
+- **Cameras**: `AlarmConfiguration.cameras` follows the `CameraModel` of the Diagral OpenAPI specification. The warning appears when a configuration includes cameras.
+- **Automatisms**: `get_automatism_rudes()` lists the automatisms and `set_automatism_action()` runs one. Only an empty list has been seen; what `TIMER` does, and whether an action must match the automatism's mode, are unknown.
+- **Anomaly deletion**: `delete_anomalies()` deletes an anomaly. Which identifier it expects is unknown: the anomalies `get_anomalies()` returns have none of their own.
+- **Product enabling and disabling**: `enable_product()` and `disable_product()` follow the specification. What disabling does, and which identifier designates a device, are unknown.
+
+If you own the matching equipment or use these calls, please [open an issue](https://github.com/mguyard/pydiagral/issues) describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:
+
+- With [hass-diagral](https://github.com/mguyard/hass-diagral), attach the integration's diagnostics: they include both lists below.
+- From Python, attach the output of `pydiagral.models.unexpected_data()`, and of `response_shapes()` called on the client after the calls in question.
+
+The debug log shows the full answers instead: enable the `pydiagral` logger at debug level, with `logging.getLogger("pydiagral").setLevel(logging.DEBUG)`, or in Home Assistant with `pydiagral: debug` under `logger: logs:`. Keys, tokens, PIN codes and serial numbers are redacted, but the log still shows the names of your devices: read it before posting.
 
 ## Quick Start
 
@@ -106,6 +128,30 @@ async with aiohttp.ClientSession() as session:
 ```
 
 Without `session`, the client opens its own on `async with` and closes it on exit.
+
+5. Brand
+
+Diagral shares its cloud with sister brands. For an account of another brand, set `vendor` when creating the client, to one of `DIAGRAL` (the default), `DAITEM`, `EDAITEM`, `LOGISTYALMA` or `DISTRIBUTION`, in any case:
+
+```python
+async with DiagralAPI(
+    username=username,
+    password=password,
+    serial_id=serial_id,
+    vendor="DAITEM",
+) as diagral:
+    ...
+```
+
+6. Discover the serial IDs
+
+Without a serial ID, the client can still log in and list the systems of the account. Create it with the serial ID you pick to use every other call:
+
+```python
+async with DiagralAPI(username=username, password=password) as diagral:
+    systems = await diagral.get_systems()
+serial_id = systems[0].serial_id
+```
 
 ## API Structure
 

@@ -7,15 +7,26 @@ retrieving system status, and controlling various aspects of the alarm system.
 
 from __future__ import annotations
 
+import copy
 import logging
 import math
 import re
 import time
-from typing import Any, Self
+from typing import Any, Literal, Self, overload
 
 import aiohttp
 
-from .constants import API_VERSION, BASE_URL, DEFAULT_REQUEST_TIMEOUT, REDACTED
+from .constants import (
+    API_VERSION,
+    AUTOMATISM_ACTIONS,
+    AUTOMATISM_CANALS,
+    BASE_URL,
+    DEFAULT_REQUEST_TIMEOUT,
+    DEFAULT_VENDOR,
+    ISSUES_URL,
+    REDACTED,
+    VENDORS,
+)
 from .exceptions import (
     APIKeyCreationError,
     APIValidationError,
@@ -24,6 +35,7 @@ from .exceptions import (
     ConfigurationError,
     DiagralAPIError,
     ModelValidationError,
+    PinCodeError,
     ServerError,
     SessionError,
     ValidationError,
@@ -35,15 +47,35 @@ from .models import (
     ApiKeyWithSecret,
     DeviceList,
     LoginResponse,
+    Ping,
     Rudes,
+    SystemApiKeys,
     SystemDetails,
     SystemStatus,
     TryConnectResult,
     Webhook,
 )
-from .utils import Redacted, generate_hmac_signature
+from .utils import Redacted, generate_hmac_signature, shape
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
+
+# Features built from the API documentation alone, each announced only once.
+_ANNOUNCED_UNTESTED: set[str] = set()
+
+
+def _announce_untested(feature: str) -> None:
+    """Warn once that a feature has never been checked on a real installation."""
+    if feature in _ANNOUNCED_UNTESTED:
+        return
+    _ANNOUNCED_UNTESTED.add(feature)
+    _LOGGER.warning(
+        "%s relies on the Diagral API documentation only: it has never been tested "
+        "on a real installation. Please share what you observe at %s so it can be "
+        "fully supported",
+        feature,
+        ISSUES_URL,
+    )
+
 
 # Minimum Python version: 3.11
 
@@ -60,20 +92,23 @@ class DiagralAPI:
         self,
         username: str,
         password: str,
-        serial_id: str,
+        serial_id: str | None = None,
         apikey: str | None = None,
         secret_key: str | None = None,
         pincode: str | None = None,
         *,
         request_timeout: float = DEFAULT_REQUEST_TIMEOUT,
         session: aiohttp.ClientSession | None = None,
+        vendor: str = DEFAULT_VENDOR,
     ) -> None:
         """Initialize the DiagralAPI instance.
 
         Args:
             username (str): The email address for Diagral API authentication.
             password (str): The password for Diagral API authentication.
-            serial_id (str): The serial ID of the Diagral system.
+            serial_id (str | None, optional): The serial ID of the Diagral system. Defaults to
+                None, which only `login()`, `get_systems()` and `ping()` accept: list the
+                account's serials with `get_systems()`, then create the client with one.
             apikey (str | None, optional): The API key for additional authentication. Defaults to None.
             secret_key (str | None, optional): The secret key for additional authentication. Defaults to None.
             pincode (str | None, optional): The PIN code for the Diagral system. Defaults to None.
@@ -84,6 +119,9 @@ class DiagralAPI:
                 with, keyword-only. The caller keeps ownership: it is neither replaced nor
                 closed. Defaults to None, where the client opens its own session on enter
                 and closes it on exit.
+            vendor (str, optional): The brand the account belongs to, keyword-only: one of
+                `DIAGRAL`, `DAITEM`, `EDAITEM`, `LOGISTYALMA` or `DISTRIBUTION`, in any case.
+                Defaults to `DIAGRAL`.
 
         Raises:
             ConfigurationError: If any required field is empty or invalid.
@@ -104,9 +142,9 @@ class DiagralAPI:
         self.__password: str = password
 
         # Validate serial_id
-        if not serial_id or not isinstance(serial_id, str):
-            raise ConfigurationError("serial_id must be a non-empty string")
-        self.serial_id: str = serial_id
+        if serial_id is not None and (not serial_id or not isinstance(serial_id, str)):
+            raise ConfigurationError("serial_id must be a non-empty string or None")
+        self.serial_id: str | None = serial_id
 
         # Set apikey and secret_key
         self.__apikey: str | None = apikey
@@ -130,6 +168,10 @@ class DiagralAPI:
             raise ConfigurationError("request_timeout must be a positive number")
         self.__request_timeout: float = request_timeout
 
+        if not isinstance(vendor, str) or vendor.upper() not in VENDORS:
+            raise ConfigurationError(f"vendor must be one of {', '.join(VENDORS)}")
+        self.vendor: str = vendor.upper()
+
         # Initialize session and access_token
         self.session: aiohttp.ClientSession | None = session
         self.__owns_session: bool = session is None
@@ -137,11 +179,26 @@ class DiagralAPI:
 
         # Set default values for other attributes
         self.alarm_configuration: AlarmConfiguration | None = None
+        self.__response_shapes: dict[str, Any] = {}
 
     @property
     def request_timeout(self) -> float:
         """Seconds allowed for each request to the Diagral cloud."""
         return self.__request_timeout
+
+    @property
+    def __serial(self) -> str:
+        """The serial ID, for the calls that address the system.
+
+        Raises:
+            ConfigurationError: If the client was created without one.
+
+        """
+        if self.serial_id is None:
+            raise ConfigurationError(
+                "serial_id is required for this call; create the client with one"
+            )
+        return self.serial_id
 
     async def __aenter__(self) -> Self:
         """Open the aiohttp ClientSession, unless the caller provided one."""
@@ -157,6 +214,7 @@ class DiagralAPI:
             await self.session.close()
             self.session = None
 
+    @overload
     async def _request(
         self,
         method: str,
@@ -164,8 +222,35 @@ class DiagralAPI:
         timeout: float | None = None,
         *,
         log_endpoint: str | None = None,
-        **kwargs,
-    ) -> tuple[dict[str, Any], int]:
+        versioned: bool = True,
+        list_body: Literal[False] = False,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any], int]: ...
+
+    @overload
+    async def _request(
+        self,
+        method: str,
+        endpoint: str,
+        timeout: float | None = None,
+        *,
+        log_endpoint: str | None = None,
+        versioned: bool = True,
+        list_body: Literal[True],
+        **kwargs: Any,
+    ) -> tuple[list[Any], int]: ...
+
+    async def _request(
+        self,
+        method: str,
+        endpoint: str,
+        timeout: float | None = None,
+        *,
+        log_endpoint: str | None = None,
+        versioned: bool = True,
+        list_body: bool = False,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any] | list[Any], int]:
         """Make an asynchronous HTTP request to the specified endpoint.
 
         Args:
@@ -174,12 +259,18 @@ class DiagralAPI:
             timeout (float | None, optional): The timeout for this request in seconds.
                 Defaults to the client's `request_timeout`.
             log_endpoint (str | None, optional): The endpoint to show in the debug log instead of
-                `endpoint`, when the path itself carries a secret. Defaults to None.
+                `endpoint`, when the path itself carries a secret. The serial ID is
+                redacted from either one. Defaults to None.
+            versioned (bool, optional): Whether `endpoint` sits under the API version.
+                Defaults to True; False only for the unversioned root.
+            list_body (bool, optional): Whether the endpoint answers with a JSON list instead
+                of an object. Defaults to False.
             **kwargs (any): Additional keyword arguments to pass to the request.
 
         Returns:
-            tuple[dict[str, Any], int]: A tuple containing:
-                - dict[str, Any]: The JSON response from the API.
+            tuple[dict[str, Any] | list[Any], int]: A tuple containing:
+                - dict[str, Any] | list[Any]: The JSON response from the API, a list when
+                  `list_body` is True.
                 - int: The HTTP status code of the response.
 
         Raises:
@@ -197,12 +288,17 @@ class DiagralAPI:
             _LOGGER.error(error_msg)
             raise SessionError(error_msg)
 
-        url: str = f"{BASE_URL}/{API_VERSION}/{endpoint}"
+        prefix: str = f"{BASE_URL}/{API_VERSION}" if versioned else BASE_URL
+        url: str = f"{prefix}/{endpoint}"
         headers: Any = kwargs.pop("headers", {})
+        logged_endpoint = log_endpoint or endpoint
+        if self.serial_id:
+            # Most paths name the central; users attach debug logs to public issues.
+            logged_endpoint = logged_endpoint.replace(self.serial_id, REDACTED)
         _LOGGER.debug(
             "Sending %s request to %s with headers %s and data %s",
             method,
-            f"{BASE_URL}/{API_VERSION}/{log_endpoint or endpoint}",
+            f"{prefix}/{logged_endpoint}",
             Redacted(headers),
             Redacted(kwargs.get("json", {})),
         )
@@ -265,7 +361,7 @@ class DiagralAPI:
                         error_message = f"{error_message}: {known_detail}"
                     raise DiagralAPIError(error_message, status_code=status)
                 if status in (204, 205):
-                    return {}, status
+                    return ([] if list_body else {}), status
                 try:
                     response_data = await response.json()
                 except (aiohttp.ContentTypeError, ValueError):
@@ -273,9 +369,10 @@ class DiagralAPI:
                         f"Invalid JSON response from Diagral (HTTP {status})",
                         status_code=status,
                     ) from None
-                if not isinstance(response_data, dict):
+                expected, name = (list, "list") if list_body else (dict, "object")
+                if not isinstance(response_data, expected):
                     raise ValidationError(
-                        f"Expected a JSON object from Diagral (HTTP {status})",
+                        f"Expected a JSON {name} from Diagral (HTTP {status})",
                         status_code=status,
                     )
                 return response_data, status
@@ -304,7 +401,7 @@ class DiagralAPI:
         _DATA: dict[str, str] = {"username": self.username, "password": self.__password}
         try:
             response_data, *_ = await self._request(
-                "POST", "users/authenticate/login?vendor=DIAGRAL", json=_DATA
+                "POST", f"users/authenticate/login?vendor={self.vendor}", json=_DATA
             )
         except AuthenticationError:
             _LOGGER.warning("Diagral authentication rejected")
@@ -333,13 +430,14 @@ class DiagralAPI:
             APIKeyCreationError: If the API key creation fails.
             APIValidationError: If the API key validation fails.
             DiagralAPIError: If authentication, transport or the Diagral service fails.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
         if not self.__access_token:
             await self.login()
 
-        _DATA: dict[str, str] = {"serial_id": self.serial_id}
+        _DATA: dict[str, str] = {"serial_id": self.__serial}
         _HEADERS: dict[str, str] = {
             "Authorization": f"Bearer {self.__access_token}",
         }
@@ -395,7 +493,7 @@ class DiagralAPI:
             apikey (str | None, optional): The API key to validate. If not provided, the instance's API key is used. Defaults to None.
 
         Raises:
-            ConfigurationError: If no API key is provided or if the API key is invalid.
+            ConfigurationError: If no API key is provided or if the API key is invalid, or if the client was created without a serial ID.
             APIValidationError: If the API key is invalid or not found in the list of valid keys.
 
         """
@@ -414,7 +512,7 @@ class DiagralAPI:
         }
         response_data, *_ = await self._request(
             "GET",
-            f"users/systems/{self.serial_id}/api_keys",
+            f"users/systems/{self.__serial}/api_keys",
             headers=_HEADERS,
         )
         validate_apikey_response: ApiKeys = ApiKeys.from_dict(response_data)
@@ -443,6 +541,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key is not available.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -459,15 +558,44 @@ class DiagralAPI:
         }
         await self._request(
             "DELETE",
-            f"users/systems/{self.serial_id}/api_keys/{apikey_to_delete}",
+            f"users/systems/{self.__serial}/api_keys/{apikey_to_delete}",
             headers=_HEADERS,
-            log_endpoint=f"users/systems/{self.serial_id}/api_keys/{REDACTED}",
+            log_endpoint=f"users/systems/{self.__serial}/api_keys/{REDACTED}",
         )
         _LOGGER.info("Successfully deleted API key: ...%s", apikey_to_delete[-4:])
 
         if apikey is None:
             self.__apikey = None
             self.__secret_key = None
+
+    async def get_systems(self) -> list[SystemApiKeys]:
+        """List the systems of the account, with the API keys created for each.
+
+        Only the username and password are needed, so the client may be created without
+        a serial ID: this is how to discover the serial IDs of an account.
+
+        Returns:
+            list[SystemApiKeys]: One entry per system of the account.
+
+        Raises:
+            AuthenticationError: If the login fails.
+            ModelValidationError: If a system in the response is not an object.
+            DiagralAPIError: If transport or the Diagral service fails.
+
+        """
+
+        if not self.__access_token:
+            await self.login()
+
+        _HEADERS: dict[str, str] = {
+            "Authorization": f"Bearer {self.__access_token}",
+        }
+        response_data, *_ = await self._request(
+            "GET", "users/systems", headers=_HEADERS, list_body=True
+        )
+        systems = [SystemApiKeys.from_dict(system) for system in response_data]
+        _LOGGER.debug("Retrieved %d systems for the account", len(systems))
+        return systems
 
     async def try_connection(self, ephemeral: bool = True) -> TryConnectResult:
         """Test connection with the Diagral system.
@@ -489,9 +617,13 @@ class DiagralAPI:
             SessionError: If the session is not initialized or is closed.
             DiagralAPIError: If the request results in a 400 status code or other API errors.
             AuthenticationError: If authentication fails or request results in a 401 or 403 status code.
+            PinCodeError: If the client was created without API keys and Diagral refuses
+                the PIN code. With API keys given, a wrong PIN raises AuthenticationError,
+                as a wrong key does.
             ValidationError: If the request results in a 422 status code.
             ServerError: If the request results in a 500 or 503 status code.
             ClientError: If there is a network error.
+            ConfigurationError: If the client was created without a serial ID.
 
         Note:
             If API credentials are not provided during client initialization, temporary
@@ -511,7 +643,7 @@ class DiagralAPI:
         # Retrieve system status to validate connection
         try:
             await self.get_system_status()
-        except DiagralAPIError:
+        except DiagralAPIError as err:
             # If connection fails, clean up keys
             if not api_keys_provided:
                 try:
@@ -520,6 +652,12 @@ class DiagralAPI:
                     _LOGGER.warning(
                         "Unable to clean up temporary API key after connection failure"
                     )
+                # The key was just created and validated: the PIN is the only
+                # credential this call adds.
+                if isinstance(err, AuthenticationError) and err.status_code == 401:
+                    raise PinCodeError(
+                        "Diagral rejected the PIN code (HTTP 401)", status_code=401
+                    ) from err
             raise
 
         # If connection is successful, clean up temporary keys if requested (ephemeral)
@@ -530,6 +668,42 @@ class DiagralAPI:
 
         result.result = True
         return result
+
+    def response_shapes(self) -> dict[str, Any]:
+        """Return the shape of the last response each read received, for diagnostics.
+
+        The reads are `get_configuration()`, `get_system_details()`,
+        `get_system_status()`, `get_anomalies()`, `get_automatism_rudes()` and
+        `get_webhook()`; a read not called yet is absent. A shape keeps the keys and
+        replaces any text a user could have typed, as `pydiagral.utils.shape()`
+        describes, so it can be shared in a bug report. It is kept before the
+        response is parsed, so it is there even when parsing fails.
+
+        Returns:
+            dict[str, Any]: A copy of the shapes, keyed by method name.
+
+        """
+        return copy.deepcopy(self.__response_shapes)
+
+    def __keep_shape(self, read: str, response_data: Any) -> None:
+        """Keep the shape of a read's response, never the response itself."""
+        self.__response_shapes[read] = shape(response_data)
+
+    async def ping(self) -> Ping:
+        """Check that the Diagral cloud answers. No credential is needed.
+
+        Returns:
+            Ping: The status the cloud reports.
+
+        Raises:
+            SessionError: If the session is not initialized or is closed.
+            ServerError: If the Diagral service is unavailable.
+            ClientError: If there is a network error or timeout.
+            ValidationError: If the answer is not a JSON object.
+
+        """
+        response_data, *_ = await self._request("GET", "", versioned=False)
+        return Ping.from_dict(response_data)
 
     def __credentials(
         self, purpose: str, *, with_pin: bool = False
@@ -559,7 +733,7 @@ class DiagralAPI:
         headers |= {
             "X-HMAC": generate_hmac_signature(
                 timestamp=timestamp,
-                serial_id=self.serial_id,
+                serial_id=self.__serial,
                 api_key=apikey,
                 secret_key=secret_key,
             ),
@@ -582,14 +756,18 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key or the secret key is missing.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
         _HEADERS = self.__hmac_headers("get configuration")
         response_data, *_ = await self._request(
-            "GET", f"systems/{self.serial_id}/configurations", headers=_HEADERS
+            "GET", f"systems/{self.__serial}/configurations", headers=_HEADERS
         )
+        self.__keep_shape("get_configuration", response_data)
         self.alarm_configuration = AlarmConfiguration.from_dict(response_data)
+        if self.alarm_configuration.cameras:
+            _announce_untested("Reading cameras from the configuration")
         # The redacted payload is already logged by from_dict().
         _LOGGER.debug("Successfully retrieved configuration")
         return self.alarm_configuration
@@ -602,7 +780,7 @@ class DiagralAPI:
                 configuration does not name it.
 
         Raises:
-            ConfigurationError: If unable to retrieve the alarm configuration.
+            ConfigurationError: If unable to retrieve the alarm configuration, or if the client was created without a serial ID.
 
         Note:
             This method will attempt to fetch the configuration if it hasn't been loaded yet.
@@ -628,7 +806,7 @@ class DiagralAPI:
             DeviceList: One list of `DeviceInfos` per device type.
 
         Raises:
-            ConfigurationError: If the alarm configuration cannot be retrieved.
+            ConfigurationError: If the alarm configuration cannot be retrieved, or if the client was created without a serial ID.
 
         """
 
@@ -670,13 +848,15 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
         _HEADERS = self.__hmac_headers("get system details", with_pin=True)
         response_data, *_ = await self._request(
-            "GET", f"systems/{self.serial_id}", headers=_HEADERS
+            "GET", f"systems/{self.__serial}", headers=_HEADERS
         )
+        self.__keep_shape("get_system_details", response_data)
         _LOGGER.debug(
             "Successfully retrieved system details: %s", Redacted(response_data)
         )
@@ -694,13 +874,15 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
         _HEADERS = self.__hmac_headers("get system status", with_pin=True)
         response_data, *_ = await self._request(
-            "GET", f"systems/{self.serial_id}/status", headers=_HEADERS
+            "GET", f"systems/{self.__serial}/status", headers=_HEADERS
         )
+        self.__keep_shape("get_system_status", response_data)
         _LOGGER.debug(
             "Successfully retrieved system status: %s", Redacted(response_data)
         )
@@ -734,7 +916,7 @@ class DiagralAPI:
 
         _HEADERS = self.__hmac_headers(f"do system action {action}", with_pin=True)
         response_data, *_ = await self._request(
-            "POST", f"systems/{self.serial_id}/{action}", headers=_HEADERS
+            "POST", f"systems/{self.__serial}/{action}", headers=_HEADERS
         )
         _LOGGER.debug(
             "Successfully performed action %s: %s",
@@ -752,7 +934,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after starting the system.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is missing.
 
         """
@@ -768,7 +950,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after stopping the system.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is missing.
 
         """
@@ -782,7 +964,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after starting the system in presence mode.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is missing.
 
         """
@@ -799,7 +981,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after performing the partial start.
 
         Raises:
-            ConfigurationError: If the provided ID is not 1 or 2.
+            ConfigurationError: If the provided ID is not 1 or 2, or if the client was created without a serial ID.
 
         """
 
@@ -852,7 +1034,7 @@ class DiagralAPI:
         data: dict[str, list[int]] = {"groups": groups}
         response_data, *_ = await self._request(
             "POST",
-            f"systems/{self.serial_id}/{action}",
+            f"systems/{self.__serial}/{action}",
             headers=_HEADERS,
             json=data,
         )
@@ -874,7 +1056,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after activating the groups.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
@@ -896,7 +1078,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after disabling the groups.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
@@ -910,7 +1092,7 @@ class DiagralAPI:
 
     async def __action_product(
         self, action: str, type: str, product_id: int
-    ) -> SystemStatus:  # NOT-TESTED
+    ) -> SystemStatus:
         """Perform an action on a product in the Diagral system.
 
         This method enables or disables a product based on the provided action.
@@ -937,18 +1119,31 @@ class DiagralAPI:
                 "Product type must be one of 'CENTRAL', 'SENSOR', 'COMMAND', 'ALARM', 'BOX', or 'PLUG'"
             )
 
+        _announce_untested(f"{action}_product()")
         _HEADERS = self.__hmac_headers(f"{action} product", with_pin=True)
         response_data, *_ = await self._request(
             "POST",
-            f"systems/{self.serial_id}/{type}/{product_id}/{action}",
+            f"systems/{self.__serial}/{type}/{product_id}/{action}",
             headers=_HEADERS,
         )
         return SystemStatus.from_dict(response_data)
 
-    async def enable_product(
-        self, type: str, product_id: int
-    ) -> SystemStatus:  # NOT-TESTED
+    async def enable_product(self, type: str, product_id: int) -> SystemStatus:
         """Asynchronously enables a product in the system.
+
+        Warning:
+            Untested. This call follows the Diagral OpenAPI specification only: it has
+            never been run on a real installation. pydiagral logs a warning the first
+            time it is used. Open questions:
+
+            - What disabling does: the specification does not say, it presumably
+              inhibits the product, as `SensorModel.inhibited` reports.
+            - Which `product_id` designates a device: presumably its `index` in the
+              configuration.
+
+            If you can try it, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
 
         Args:
             type (str): The type of the product to enable.
@@ -958,7 +1153,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after enabling the product.
 
         Raises:
-            ConfigurationError: If the action is not 'enable'
+            ConfigurationError: If the action is not 'enable', or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
@@ -966,10 +1161,22 @@ class DiagralAPI:
             action="enable", type=type, product_id=product_id
         )
 
-    async def disable_product(
-        self, type: str, product_id: int
-    ) -> SystemStatus:  # NOT-TESTED
+    async def disable_product(self, type: str, product_id: int) -> SystemStatus:
         """Asynchronously disables a product in the system.
+
+        Warning:
+            Untested. This call follows the Diagral OpenAPI specification only: it has
+            never been run on a real installation. pydiagral logs a warning the first
+            time it is used. Open questions:
+
+            - What disabling does: the specification does not say, it presumably
+              inhibits the product, as `SensorModel.inhibited` reports.
+            - Which `product_id` designates a device: presumably its `index` in the
+              configuration.
+
+            If you can try it, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
 
         Args:
             type (str): The type of the product to disable.
@@ -979,7 +1186,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after disabling the product.
 
         Raises:
-            ConfigurationError: If the action is not 'disable'
+            ConfigurationError: If the action is not 'disable', or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
@@ -997,6 +1204,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key or secret key is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -1004,7 +1212,7 @@ class DiagralAPI:
         try:
             response_data, *_ = await self._request(
                 "GET",
-                f"systems/{self.serial_id}/anomalies",
+                f"systems/{self.__serial}/anomalies",
                 headers=_HEADERS,
             )
         except DiagralAPIError as e:
@@ -1012,57 +1220,127 @@ class DiagralAPI:
                 _LOGGER.info("No anomalies found for the system")
                 return {}
             raise
+        self.__keep_shape("get_anomalies", response_data)
         return Anomalies.from_dict(response_data)
 
-    async def delete_anomalies(self, anomaly_id: int) -> None:  # NOT-IMPLEMENTED
-        """Asynchronously delete the list of anomalies.
+    async def delete_anomalies(self, anomaly_id: int) -> None:
+        """Delete an anomaly of the system.
 
-        This method is currently not implemented.
+        Warning:
+            Untested. This call follows the Diagral OpenAPI specification only: it has
+            never been run on a real installation. pydiagral logs a warning the first
+            time it is used. Open questions:
+
+            - Which identifier to pass: the anomalies `get_anomalies()` returns carry
+              no identifier of their own, only `AnomalyName.id`, which looks like the
+              kind of anomaly rather than one occurrence of it.
+            - Whether it clears the anomaly on every device that reports it.
+            - What happens while the fault is still present.
+
+            If you can try it, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
+
+        Args:
+            anomaly_id (int): The identifier of the anomaly to delete.
 
         Raises:
-            NotImplementedError: This method is not yet implemented.
+            ConfigurationError: If `anomaly_id` is not an integer, or if the client was
+                created without a serial ID.
+            AuthenticationError: If the API key or secret key is missing.
 
         """
-        raise NotImplementedError("Method not yet implemented")
+        if isinstance(anomaly_id, bool) or not isinstance(anomaly_id, int):
+            raise ConfigurationError("anomaly_id must be an integer")
+        _announce_untested("delete_anomalies()")
+        _HEADERS = self.__hmac_headers("delete anomalies")
+        await self._request(
+            "DELETE",
+            f"systems/{self.__serial}/anomalies/{anomaly_id}",
+            headers=_HEADERS,
+        )
 
-    async def get_automatism_rudes(self) -> Rudes:  # NOT-TESTED
+    async def get_automatism_rudes(self) -> Rudes:
         """Asynchronously retrieves the automatism Rudes for the system.
 
         This method fetches the Rudes data for the system identified by the serial ID.
         It requires valid API and secret keys for authentication.
+
+        Warning:
+            Partly tested. The call answers on a real installation, but only with an
+            empty list: the `Rude` fields follow the Diagral OpenAPI specification.
+            pydiagral logs a warning the first time it returns automatisms. If you use
+            automatisms, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
 
         Returns:
             Rudes: An instance of the Rudes class populated with the data from the response.
 
         Raises:
             AuthenticationError: If the API key or secret key is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
         _HEADERS = self.__hmac_headers("get automatism rudes")
         response_data, *_ = await self._request(
             "GET",
-            f"systems/{self.serial_id}/rudes",
+            f"systems/{self.__serial}/rudes",
             headers=_HEADERS,
         )
-        return Rudes.from_dict(response_data)
+        self.__keep_shape("get_automatism_rudes", response_data)
+        rudes = Rudes.from_dict(response_data)
+        if rudes.rudes:
+            _announce_untested("Reading automatisms")
+        return rudes
 
-    async def set_automatism_action(
-        self, canal: str, action: str
-    ) -> None:  # NOT-IMPLEMENTED
-        """Set the automatism action.
+    async def set_automatism_action(self, canal: str, action: str) -> None:
+        """Run an action on an automatism of the system.
 
-        This method is currently not implemented.
+        Warning:
+            Untested. This call follows the Diagral OpenAPI specification only: it has
+            never been run on a real installation, and it drives real equipment such
+            as a gate or a garage door. pydiagral logs a warning the first time it is
+            used. Open questions:
+
+            - `TIMER` takes no duration in the specification: the box probably uses
+              the one configured for the automatism.
+            - Whether `action` must match the automatism's `mode`.
+            - Whether `Rude.canal` holds one of the canals below: the specification
+              types it as any string.
+
+            If you use automatisms, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
 
         Args:
-            canal (str): The canal for the automatism action.
-            action (str): The action to be set for the automatism.
+            canal (str): LUMIERE_1, RELAIS_1, RELAIS_2, RELAIS_3, RELAIS_4,
+                RELAIS_1_CENTRALE or RELAIS_2_CENTRALE, in any case.
+            action (str): PULSE, OFF, ON, SWITCH or TIMER, in any case.
 
         Raises:
-            NotImplementedError: Always, as this method is not yet implemented.
+            ConfigurationError: If `canal` or `action` is not one of the values above,
+                or if the client was created without a serial ID.
+            AuthenticationError: If the API key, secret key, or PIN code is missing.
 
         """
-        raise NotImplementedError("Method not yet implemented")
+        if not isinstance(canal, str) or canal.upper() not in AUTOMATISM_CANALS:
+            raise ConfigurationError(
+                f"canal must be one of {', '.join(AUTOMATISM_CANALS)}"
+            )
+        if not isinstance(action, str) or action.upper() not in AUTOMATISM_ACTIONS:
+            raise ConfigurationError(
+                f"action must be one of {', '.join(AUTOMATISM_ACTIONS)}"
+            )
+        _announce_untested("set_automatism_action()")
+        _HEADERS = self.__hmac_headers("set automatism action", with_pin=True)
+        await self._request(
+            "POST",
+            f"systems/{self.__serial}/rudes/{canal.upper()}",
+            headers=_HEADERS,
+            params={"action": action.upper()},
+        )
 
     async def get_webhook(self) -> Webhook:
         """Retrieve the webhook subscription details for the system.
@@ -1072,15 +1350,17 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key or secret key is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
         _HEADERS = self.__hmac_headers("get webhook")
         response_data, *_ = await self._request(
             "GET",
-            f"webhooks/{self.serial_id}/subscription",
+            f"webhooks/{self.__serial}/subscription",
             headers=_HEADERS,
         )
+        self.__keep_shape("get_webhook", response_data)
         return Webhook.from_dict(response_data)
 
     async def __webhook_action_create_update(
@@ -1134,7 +1414,7 @@ class DiagralAPI:
         try:
             response_data, *_ = await self._request(
                 method,
-                f"webhooks/{self.serial_id}/subscription",
+                f"webhooks/{self.__serial}/subscription",
                 headers=_HEADERS,
                 json=data,
             )
@@ -1170,6 +1450,12 @@ class DiagralAPI:
         Returns:
             Webhook | None: The registered Webhook object if successful, otherwise None.
 
+        Raises:
+            AuthenticationError: If the API key or secret key is missing.
+            ConfigurationError: If the client was created without a serial ID.
+            ValidationError: If the webhook URL does not start with http:// or https://.
+            DiagralAPIError: If a subscription already exists; use `update_webhook()`.
+
         """
         return await self.__webhook_action_create_update(
             "register",
@@ -1197,6 +1483,12 @@ class DiagralAPI:
         Returns:
             Webhook | None: The registered Webhook object if successful, otherwise None.
 
+        Raises:
+            AuthenticationError: If the API key or secret key is missing.
+            ConfigurationError: If the client was created without a serial ID.
+            ValidationError: If the webhook URL does not start with http:// or https://.
+            DiagralAPIError: If no subscription exists yet; use `register_webhook()`.
+
         """
         return await self.__webhook_action_create_update(
             "update",
@@ -1211,6 +1503,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key or secret key is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         Returns:
             None
@@ -1220,7 +1513,7 @@ class DiagralAPI:
         _HEADERS = self.__hmac_headers("delete webhook")
         await self._request(
             "DELETE",
-            f"webhooks/{self.serial_id}/subscription",
+            f"webhooks/{self.__serial}/subscription",
             headers=_HEADERS,
         )
 

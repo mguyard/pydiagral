@@ -66,12 +66,13 @@ example_code.py     # Manual end-to-end script, reads .env
 
 These are relied on by the integration. Changing any of them is a breaking change and needs a `BREAKING CHANGE:` footer and a coordinated update of hass-diagral.
 
-- **Import paths**, not only `__all__`: hass-diagral imports from `pydiagral`, `pydiagral.api`, `pydiagral.exceptions` and `pydiagral.models` (`AlarmConfiguration`, `Anomalies`, `AnomalyDetail`, `ApiKeyWithSecret`, `DeviceInfos`, `DeviceList`, `Group`, `SystemStatus`, `TryConnectResult`, `Webhook`, `WebHookNotification`, `WebHookNotificationUser`).
+- **Import paths**, not only `__all__`: hass-diagral imports from `pydiagral`, `pydiagral.api` (`DiagralAPI`), `pydiagral.constants` (`AUTOMATISM_CANALS`, which its diagnostics use to show only known canals), `pydiagral.exceptions` (`AuthenticationError`, `ClientError`, `ConfigurationError`, `DiagralAPIError`, `ModelValidationError`, `PinCodeError`, `ServerError`, `SessionError`, `ValidationError`) and `pydiagral.models` (`AlarmConfiguration`, `Anomalies`, `AnomalyDetail`, `ApiKeyWithSecret`, `DeviceInfos`, `DeviceList`, `Group`, `SystemStatus`, `TryConnectResult`, `Webhook`, `WebHookNotification`, `WebHookNotificationUser`, and the `unexpected_data` function; its tests also import `AnomalyName` and `WebHookNotificationDetail`).
 - **`pydiagral.api.BASE_URL` is read at call time.** `_request()` looks the name up in the `api` module on every request, and hass-diagral's fake Diagral cloud reassigns `pydiagral.api.BASE_URL` to redirect traffic. Do not move the lookup to `constants.BASE_URL`, cache it in `__init__`, or bind it as a default argument.
 - **Error strings.** hass-diagral matches `"No subscription found for"` in the `DiagralAPIError` raised by `get_webhook()` when no subscription exists — so that 404's message must keep Diagral's detail — and by the webhook register/update actions. `get_anomalies()` returns `{}` when the API answers 404 with `"No anomalies found"`, and hass-diagral relies on that empty result.
 - **Every exception the library raises derives from `DiagralAPIError`**, so a single `except DiagralAPIError` covers it. aiohttp errors are wrapped by `_request()`.
 - **`request_timeout`** is set by hass-diagral as a ceiling (≥ 60 s); it drives each attempt's deadline below it with `asyncio.timeout()`. Keep it keyword-only and applied to every request.
-- **Return values.** hass-diagral uses the `AlarmConfiguration` that `get_configuration()` returns, and the `str | None` from `get_alarm_name()`, `None` when the configuration names no alarm.
+- **Return values.** hass-diagral uses the `AlarmConfiguration` that `get_configuration()` returns, and the `str | None` from `get_alarm_name()`, `None` when the configuration names no alarm. `Anomalies.created_at` is None when Diagral sends no readable date, and hass-diagral guards it.
+- **Diagnostics.** hass-diagral writes `models.unexpected_data()` and `DiagralAPI.response_shapes()` into the diagnostics file users attach to public issues. Neither may ever carry a value a user typed or an identifier: a new value made visible in `utils.shape()` needs the same review as a log line. `unexpected_data()` entries keep their `model`, `field`, `problem` and `value` keys, which hass-diagral copies one by one, so a new key stays out until it is added there. `response_shapes()` stays keyed by read method name.
 
 ## Secrets
 
@@ -113,7 +114,7 @@ There is no Makefile and no `requirements*.txt`.
 | `release_and_doc.yaml` | push on `main`, `beta`; manual | semantic-release (toolchain pinned in `.github/release/`) with GPG-signed release commits, PyPI upload through the Trusted Publisher (OIDC, no token), then MkDocs `build --strict` to GitHub Pages when a release was published or `docs/` / `mkdocs.yml` changed |
 | `semantic-prs.yml` | PR opened / edited / synchronized | validates the PR title against Conventional Commits |
 | `labeler.yml` | push on `main`, manual | syncs labels from `.github/labels.yml` |
-| `lock.yml` | daily | locks issues and PRs inactive for 30 days |
+| `lock-stale.yml` | daily | `lock`: locks issues and PRs inactive for 30 days. `stale`: marks `stale` an issue labelled `waiting-for-response` after 30 days without activity, and closes it 7 days later; `no-stale`, `bug` and `documentation` exempt it. Pull requests are never marked stale |
 
 Dependabot (`.github/dependabot.yml`) checks monthly, targets `dev`, and waits 7 days after a release before proposing it (30 for a pip major). GitHub Actions updates arrive as one grouped PR titled `chore(deps): 🔧 …`. For pip, runtime dependencies use `fix(deps): 🐛` — widening the `aiohttp` range changes published metadata and must release — and the `dev` extra uses `chore(deps-dev): 🔧`. Only constrained requirements get PRs: today `ruff`, `mypy` and `aiohttp`. The semantic-release toolchain (`.github/release/package-lock.json`) arrives as one grouped `chore(deps): 🔧 …` PR; dry-run it before merging, since a release only runs on `beta` and `main`.
 
@@ -160,6 +161,7 @@ Tests: ✅ N passed, ❌ 0 failed, ⚠️ 0 errors
 - The body explains **why**. Never restate what the diff already shows.
 - A breaking change to a contract listed above takes a `BREAKING CHANGE:` footer, after the `Tests:` line. The commit parser appends every following line to the note, so a `Tests:` line placed after it ends up in the release notes.
 - Keep issue and PR references (`#N`, `owner/repo#N`) out of a `BREAKING CHANGE:` paragraph. The commit parser ends the note at the first line that holds one and drops that line from the release notes. Put the reference in the body instead.
+- Never write a closing keyword (`close`, `fix`, `resolve` and their forms) before an issue number in a commit message or PR body, even in quotes, unless that pydiagral issue should close. GitHub closes it when the commit reaches `main`, and at release time the semantic-release GitHub plugin looks up every such number and fails the release when one does not exist. To quote one, put it in backticks, which its parser skips.
 
 `release.config.cjs` uses semantic-release's default (Angular) presets: only `feat`, `fix` and `perf` — plus reverts and breaking changes — trigger a release and appear in `CHANGELOG.md`. A `docs`, `refactor` or `chore` commit is invisible to users and to PyPI.
 
@@ -190,7 +192,9 @@ The patterns are in the `testing-pydiagral` skill.
 
 The reference pages (`docs/api.md`, `models.md`, `exceptions.md`) are generated by mkdocstrings from the docstrings. **A docstring change is a documentation change.** Hand-written content is `docs/index.md` and `README.md`; update them when a feature or requirement changes. See the `docs-pydiagral` skill.
 
-Docstrings follow the Google style (`Args:`, `Returns:`, `Raises:`), which mkdocstrings renders. Ruff's `D` rules require a docstring on every public object but set no `convention`, so they do not check the sections. `exceptions.py` still uses `:param:`; do not spread it.
+Docstrings follow the Google style (`Args:`, `Returns:`, `Raises:`), which mkdocstrings renders. Ruff's `D` rules require a docstring on every public object but set no `convention`, so they do not check the sections. The Sphinx style (`:param:`) is not parsed: it shows as raw text.
+
+Examples go under an `Examples:` section, plural: griffe renders its `>>>` lines as code, while an `Example:` section becomes a box of plain Markdown, where `>>>` reads as nested quotes and the lines run together. Any other unknown section (`Warning:`, `Note:`) also becomes a box of that kind. The `Examples:` blocks of `models.py` and `utils.py` run as doctests with the suite (`testpaths` and `--doctest-modules` in `pyproject.toml`): an example that no longer matches the code fails `pytest`. A module added to the docs with examples goes into `testpaths` too.
 
 ## Comments
 
