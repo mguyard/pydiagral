@@ -31,6 +31,7 @@ import asyncio
 from collections.abc import Awaitable, Callable, Coroutine
 import contextlib
 from dataclasses import dataclass
+from importlib.metadata import version
 import json
 import logging
 import os
@@ -87,6 +88,9 @@ PORT_PUBLIC_DELAY = 2
 PROBE_TIMEOUT = 10
 MAX_NOTIFICATION_SIZE = 64 * 1024
 PROBE_KEY = "try_pydiagral_probe"
+REPORT_ISSUE_URL = (
+    "https://github.com/mguyard/pydiagral/issues/new?template=diagnostics_report.yml"
+)
 # Shapes of the notifications webhook-listen receives, for the diagnostics report.
 WEBHOOK_SHAPES: list[Any] = []
 
@@ -589,13 +593,15 @@ async def webhook_listen(api: DiagralAPI, options: Options) -> None:
 def print_diagnostics(api: DiagralAPI) -> None:
     """Print what an issue about an unexpected answer needs."""
     report: dict[str, Any] = {
+        "pydiagral_version": version("pydiagral"),
         "unexpected_data": unexpected_data(),
         "response_shapes": api.response_shapes(),
     }
     if WEBHOOK_SHAPES:
         report["webhook_shapes"] = WEBHOOK_SHAPES
     print("\n== diagnostics ==")
-    print("Attach this to an issue: it holds no value you typed and no identifier.")
+    print("It holds no value you typed and no identifier. Share it, and only it, at")
+    print(REPORT_ISSUE_URL)
     print(json.dumps(report, indent=2, default=str))
 
 
