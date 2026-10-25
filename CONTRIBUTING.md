@@ -20,6 +20,21 @@ PYPROJECT_VERSION=0.1.0-dev pip install -e ".[dev]"
 
 The `dev` extra holds pytest and the pinned versions of ruff and mypy that CI uses.
 
+Or skip all this with the dev container below.
+
+## 📦 Dev container
+
+The repository ships a [dev container](https://containers.dev/): open it in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension (*Reopen in Container*), or in [GitHub Codespaces](https://github.com/features/codespaces) without installing anything. It provides:
+
+- Python 3.14, the version CI tests on;
+- a virtual environment with the project in editable mode and the `dev` extra: `ruff`, `mypy` and `pytest` at the pinned versions;
+- the documentation tools: `mkdocs serve` previews the site on the forwarded port 8000;
+- `uv`, to run `try_pydiagral.py` against the latest release, and the GitHub CLI.
+
+**Signing commits.** When GPG is installed on your machine, VS Code forwards its agent into the container and copies your Git configuration, so commits are signed as on your machine. In Codespaces, enable [GPG verification](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-gpg-verification-for-github-codespaces): GitHub then signs the commits you make there.
+
+**Trying your changes on your alarm.** `python try_pydiagral.py` runs the script against the code of the container. It reads `.env` in the workspace, or, in Codespaces, the `DIAGRAL_*` [secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces) the dev container suggests. See the [guide to try_pydiagral.py](https://mguyard.github.io/pydiagral/stable/try-pydiagral/).
+
 ## 🔀 Workflow
 
 1. **Fork** the repository and clone your fork.
