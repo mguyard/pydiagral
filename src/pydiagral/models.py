@@ -64,11 +64,9 @@ class CamelCaseModel:
         ...     last_name: str
         ...
         >>> example = ExampleModel(first_name="Luke", last_name="Skywalker")
-        >>> example_dict = example.to_dict()
-        >>> print(example_dict)
+        >>> example.to_dict()
         {'firstName': 'Luke', 'lastName': 'Skywalker'}
-        >>> new_example = ExampleModel.from_dict(example_dict)
-        >>> print(new_example)
+        >>> ExampleModel.from_dict({"first_name": "Luke", "last_name": "Skywalker"})
         ExampleModel(first_name='Luke', last_name='Skywalker')
 
     """
@@ -78,35 +76,41 @@ class CamelCaseModel:
         __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
 
     def to_dict(self) -> dict:
-        """Convert the instance attributes to a dictionary, transforming attribute names.
+        """Convert the instance to a dictionary with camelCase keys.
 
-        from snake_case to camelCase and handling nested CamelCaseModel instances.
+        A field's `alias` is used as its key when it has one. Nested models, including
+        those in lists, are converted too, and None values are left out.
 
         Returns:
             dict: A dictionary representation of the instance with camelCase keys.
 
         Example:
-            >>> class ExampleModel(CamelCaseModel):
+            >>> @dataclass
+            ... class ExampleModel(CamelCaseModel):
             ...     first_name: str
             ...     last_name: str
             ...
-            >>> example = ExampleModel(first_name="Luke", last_name="Skywalker")
-            >>> example.to_dict()
+            >>> ExampleModel(first_name="Luke", last_name="Skywalker").to_dict()
             {'firstName': 'Luke', 'lastName': 'Skywalker'}
 
         """
 
         result = {}
-        for k, v in self.__dict__.items():
-            if v is not None:
-                if isinstance(v, CamelCaseModel):
-                    v = v.to_dict()
-                elif isinstance(v, list) and v and isinstance(v[0], CamelCaseModel):
-                    v = [item.to_dict() for item in v]
-                key = getattr(self.__class__, k).metadata.get(
-                    "alias", self.snake_to_camel(k)
-                )
-                result[key] = v
+        for model_field in fields(self):
+            value = getattr(self, model_field.name)
+            if value is None:
+                continue
+            if isinstance(value, CamelCaseModel):
+                value = value.to_dict()
+            elif isinstance(value, list):
+                value = [
+                    item.to_dict() if isinstance(item, CamelCaseModel) else item
+                    for item in value
+                ]
+            key = model_field.metadata.get(
+                "alias", self.snake_to_camel(model_field.name)
+            )
+            result[key] = value
         return result
 
     @classmethod

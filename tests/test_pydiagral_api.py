@@ -31,12 +31,15 @@ import json
 from pydiagral import AuthenticationError, DiagralAPI, ValidationError
 from pydiagral.constants import REDACTED
 from pydiagral.models import (
+    AlarmConfiguration,
     Anomalies,
     AnomalyDetail,
     AnomalyName,
     ApiKeys,
     ApiKeyWithSecret,
     DeviceList,
+    Group,
+    LoginResponse,
     Rude,
     SystemDetails,
     SystemStatus,
@@ -3327,3 +3330,19 @@ def test_model_validation_error_does_not_quote_the_payload():
     with pytest.raises(ModelValidationError) as caught:
         Anomalies.from_dict(payload)
     assert "private-value" not in "".join(traceback.format_exception(caught.value))
+
+
+#########################
+# Generic model parsing #
+#########################
+
+
+def test_to_dict_uses_aliases_and_nested_models():
+    """Test that `to_dict()` converts names, aliases and nested models."""
+    assert LoginResponse(access_token="token").to_dict() == {"accessToken": "token"}
+    configuration = AlarmConfiguration(
+        groups=[Group(name="Day", index=1, input_delay=30)]
+    )
+    assert configuration.to_dict() == {
+        "groups": [{"name": "Day", "index": 1, "inputDelay": 30}]
+    }
