@@ -538,6 +538,43 @@ class DiagralAPI:
         result.result = True
         return result
 
+    def __credentials(
+        self, purpose: str, *, with_pin: bool = False
+    ) -> tuple[str, str, str | None]:
+        """Return the API key, secret key and PIN code an operation needs.
+
+        Raises:
+            AuthenticationError: Naming `purpose`, if one of them is missing.
+
+        """
+        if not self.__apikey or not self.__secret_key:
+            raise AuthenticationError(f"API key and secret key required to {purpose}")
+        if with_pin and not self.__pincode:
+            raise AuthenticationError(f"PIN code required to {purpose}")
+        return self.__apikey, self.__secret_key, self.__pincode if with_pin else None
+
+    def __hmac_headers(self, purpose: str, *, with_pin: bool = False) -> dict[str, str]:
+        """Build the signed headers of an HMAC-authenticated request.
+
+        Raises:
+            AuthenticationError: Naming `purpose`, if a credential is missing.
+
+        """
+        apikey, secret_key, pincode = self.__credentials(purpose, with_pin=with_pin)
+        timestamp = str(int(time.time()))
+        headers: dict[str, str] = {"X-PIN-CODE": pincode} if pincode else {}
+        headers |= {
+            "X-HMAC": generate_hmac_signature(
+                timestamp=timestamp,
+                serial_id=self.serial_id,
+                api_key=apikey,
+                secret_key=secret_key,
+            ),
+            "X-TIMESTAMP": timestamp,
+            "X-APIKEY": apikey,
+        }
+        return headers
+
     async def get_configuration(self) -> AlarmConfiguration:
         """Asynchronously retrieve the configuration of the Diagral system.
 
@@ -556,24 +593,7 @@ class DiagralAPI:
 
         """
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get configuration"
-            )
-
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers("get configuration")
         response_data, *_ = await self._request(
             "GET", f"systems/{self.serial_id}/configurations", headers=_HEADERS
         )
@@ -658,28 +678,7 @@ class DiagralAPI:
 
         """
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get system details"
-            )
-
-        if not self.__pincode:
-            raise AuthenticationError("PIN code required to get system details")
-
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": self.__pincode,
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers("get system details", with_pin=True)
         response_data, *_ = await self._request(
             "GET", f"systems/{self.serial_id}", headers=_HEADERS
         )
@@ -699,32 +698,11 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the retrieved system status.
 
         Raises:
-            ConfigurationError: If the API key, secret key, or PIN code is not provided.
+            AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
 
-        if not self.__apikey or not self.__secret_key:
-            raise ConfigurationError(
-                "API key and secret key required to get system details"
-            )
-
-        if not self.__pincode:
-            raise ConfigurationError("PIN code required to get system details")
-
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": self.__pincode,
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers("get system status", with_pin=True)
         response_data, *_ = await self._request(
             "GET", f"systems/{self.serial_id}/status", headers=_HEADERS
         )
@@ -759,28 +737,7 @@ class DiagralAPI:
                 "Action must be one of 'start', 'stop', 'presence', 'partial_start_1', or 'partial_start_2'"
             )
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get system details"
-            )
-
-        if not self.__pincode:
-            raise AuthenticationError(f"PIN code required to do system action {action}")
-
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": self.__pincode,
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers(f"do system action {action}", with_pin=True)
         response_data, *_ = await self._request(
             "POST", f"systems/{self.serial_id}/{action}", headers=_HEADERS
         )
@@ -881,13 +838,8 @@ class DiagralAPI:
                 "Action must be either 'activate_group' or 'disable_group'"
             )
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get system details"
-            )
-
-        if not self.__pincode:
-            raise AuthenticationError("PIN code required to get system details")
+        # Checked before fetching the configuration; the headers are signed after it.
+        self.__credentials(f"{action.replace('_', ' ')} {groups}", with_pin=True)
 
         configuration = self.alarm_configuration or await self.get_configuration()
         existing_groups = [g.index for g in configuration.groups or []]
@@ -899,20 +851,9 @@ class DiagralAPI:
                 f"The following groups do not exist in your system: {invalid_groups}"
             )
 
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
+        _HEADERS = self.__hmac_headers(
+            f"{action.replace('_', ' ')} {groups}", with_pin=True
         )
-
-        _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": self.__pincode,
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
         data: dict[str, list[int]] = {"groups": groups}
         response_data, *_ = await self._request(
             "POST",
@@ -1001,28 +942,7 @@ class DiagralAPI:
                 "Product type must be one of 'CENTRAL', 'SENSOR', 'COMMAND', 'ALARM', 'BOX', or 'PLUG'"
             )
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get system details"
-            )
-
-        if not self.__pincode:
-            raise AuthenticationError("PIN code required to get system details")
-
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-PIN-CODE": self.__pincode,
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers(f"{action} product", with_pin=True)
         response_data, *_ = await self._request(
             "POST",
             f"systems/{self.serial_id}/{type}/{product_id}/{action}",
@@ -1085,24 +1005,7 @@ class DiagralAPI:
 
         """
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get system details"
-            )
-
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers("get anomalies")
         try:
             response_data, *_ = await self._request(
                 "GET",
@@ -1141,24 +1044,7 @@ class DiagralAPI:
 
         """
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get system details"
-            )
-
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers("get automatism rudes")
         response_data, *_ = await self._request(
             "GET",
             f"systems/{self.serial_id}/rudes",
@@ -1194,24 +1080,7 @@ class DiagralAPI:
 
         """
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get system details"
-            )
-
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers("get webhook")
         response_data, *_ = await self._request(
             "GET",
             f"webhooks/{self.serial_id}/subscription",
@@ -1248,11 +1117,6 @@ class DiagralAPI:
         if action not in ["register", "update"]:
             raise ConfigurationError("Action must be either 'register' or 'update'")
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get system details"
-            )
-
         if action == "register" and not any(
             [subscribe_to_anomaly, subscribe_to_alert, subscribe_to_state]
         ):
@@ -1264,19 +1128,7 @@ class DiagralAPI:
                 "Invalid webhook URL. Must start with http:// or https://"
             )
 
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers(f"{action} webhook")
         data = {
             "webhook_url": webhook_url,
             "subscribe_to_anomaly": subscribe_to_anomaly,
@@ -1370,24 +1222,7 @@ class DiagralAPI:
 
         """
 
-        if not self.__apikey or not self.__secret_key:
-            raise AuthenticationError(
-                "API key and secret key required to get system details"
-            )
-
-        _TIMESTAMP = str(int(time.time()))
-        _HMAC: str = generate_hmac_signature(
-            timestamp=_TIMESTAMP,
-            serial_id=self.serial_id,
-            api_key=self.__apikey,
-            secret_key=self.__secret_key,
-        )
-
-        _HEADERS: dict[str, str] = {
-            "X-HMAC": _HMAC,
-            "X-TIMESTAMP": _TIMESTAMP,
-            "X-APIKEY": self.__apikey,
-        }
+        _HEADERS = self.__hmac_headers("delete webhook")
         response_data, *_ = await self._request(
             "DELETE",
             f"webhooks/{self.serial_id}/subscription",

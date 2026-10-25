@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import logging
 import os
+import re
 import sys
 import traceback
 from types import SimpleNamespace, TracebackType
@@ -844,10 +845,10 @@ async def test_get_system_status_without_apikey(mock_request):
     1. Set up the mock responses for the login and get_system_status API calls.
     2. Create an instance of `DiagralAPI` with the provided credentials.
     3. Perform the login operation.
-    4. Attempt to get the system status and expect an `ConfigurationError` to be raised.
+    4. Attempt to get the system status and expect an `AuthenticationError` to be raised.
 
     Raises:
-        ConfigurationError: If the API key is not provided or invalid.
+        AuthenticationError: If the API key is not provided or invalid.
 
     """
     mock_request.side_effect = [
@@ -860,7 +861,7 @@ async def test_get_system_status_without_apikey(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(ConfigurationError):
+        with pytest.raises(AuthenticationError):
             await diagral.get_system_status()
 
 
@@ -885,10 +886,10 @@ async def test_get_system_status_without_pincode(mock_request):
         1. Create an instance of `DiagralAPI` with the provided credentials.
         2. Call the `login` method to authenticate and obtain an access token.
         3. Attempt to call the `get_system_status` method without providing a pincode.
-        4. Verify that an `ConfigurationError` is raised, indicating that a pincode is required.
+        4. Verify that an `AuthenticationError` is raised, indicating that a pincode is required.
 
     Expected Result:
-        - An `ConfigurationError` is raised when attempting to get the system status without a pincode.
+        - An `AuthenticationError` is raised when attempting to get the system status without a pincode.
 
     """
     mock_request.side_effect = [
@@ -902,7 +903,7 @@ async def test_get_system_status_without_pincode(mock_request):
         secret_key=SECRET_KEY,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(ConfigurationError):
+        with pytest.raises(AuthenticationError):
             await diagral.get_system_status()
 
 
@@ -2740,6 +2741,54 @@ def test_request_timeout_is_keyword_only():
     """Test that adding request_timeout did not change the positional signature."""
     with pytest.raises(TypeError):
         DiagralAPI(USERNAME, PASSWORD, SERIAL_ID, None, None, None, 60)
+
+
+@pytest.mark.parametrize(
+    ("call", "purpose"),
+    [
+        (lambda api: api.get_configuration(), "get configuration"),
+        (lambda api: api.get_system_details(), "get system details"),
+        (lambda api: api.start_system(), "do system action start"),
+        (lambda api: api.activate_group([1]), "activate group [1]"),
+        (lambda api: api.get_anomalies(), "get anomalies"),
+        (lambda api: api.get_webhook(), "get webhook"),
+        (lambda api: api.delete_webhook(), "delete webhook"),
+    ],
+    ids=[
+        "configuration",
+        "details",
+        "action",
+        "group",
+        "anomalies",
+        "webhook",
+        "delete",
+    ],
+)
+async def test_missing_keys_error_names_the_operation(call, purpose):
+    """Test that a missing API key is reported for the operation that needs it."""
+    api = DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, pincode=PIN_CODE
+    )
+    with pytest.raises(
+        AuthenticationError,
+        match=f"^API key and secret key required to {re.escape(purpose)}$",
+    ):
+        await call(api)
+
+
+async def test_missing_pin_error_names_the_operation():
+    """Test that a missing PIN code is reported for the operation that needs it."""
+    api = DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    )
+    with pytest.raises(
+        AuthenticationError, match="^PIN code required to do system action stop$"
+    ):
+        await api.stop_system()
 
 
 #####################

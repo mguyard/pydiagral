@@ -37,9 +37,9 @@ feat(models): ✨ Rename `Webhook.webhook_url` to `Webhook.url`
 
 - Aligns the field with the name the API returns
 
-BREAKING CHANGE: `Webhook.webhook_url` no longer exists; use `Webhook.url`.
-
 Tests: ✅ 58 passed, ❌ 0 failed, ⚠️ 0 errors
+
+BREAKING CHANGE: `Webhook.webhook_url` no longer exists; use `Webhook.url`.
 ```
 
 ```
@@ -92,14 +92,14 @@ Read the failing output, find the root cause, fix the code or the test, rerun. R
 
 ### 2.4 Embed the result
 
-Last line of the commit body:
+Last line of the commit body, unless a `BREAKING CHANGE:` footer follows it (§2.5):
 
 - `Tests: ✅ N passed, ❌ M failed, ⚠️ E errors` — when the gate ran
 - `Tests: N/A (no src or tests change)` — when it was skipped
 
 ### 2.5 Breaking changes
 
-If the change touches anything in `AGENTS.md` → Contracts, add a `BREAKING CHANGE:` footer before the `Tests:` line. semantic-release turns it into a major version.
+If the change touches anything in `AGENTS.md` → Contracts, add a `BREAKING CHANGE:` footer after the `Tests:` line, as the last paragraph: the parser appends every following line to the note. semantic-release turns it into a major version.
 
 ---
 
