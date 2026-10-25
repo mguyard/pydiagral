@@ -28,6 +28,7 @@ The `DiagralAPI` class offers the following functionalities:
   - Connect to the Diagral API with username and password
   - Log in to obtain an access token
   - Create, validate, and delete API keys
+  - List the systems of the account and their API keys, to discover the serial IDs
 
 - **System Configuration**:
 

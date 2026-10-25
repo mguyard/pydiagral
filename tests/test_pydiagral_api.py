@@ -43,6 +43,7 @@ from pydiagral.models import (
     Group,
     LoginResponse,
     Rude,
+    SystemApiKeys,
     SystemDetails,
     SystemStatus,
     Webhook,
@@ -535,6 +536,73 @@ async def test_delete_apikey_with_validation_error(mock_request):
         await diagral.login()
         with pytest.raises(ValidationError):
             await diagral.delete_apikey()
+
+
+#################################
+# DiagralAPI Systems Test Cases #
+#################################
+
+OTHER_SERIAL_ID = "OTHERSERIAL"
+SYSTEMS_SAMPLE = [
+    {"serial_id": SERIAL_ID, "api_keys": [API_KEY, "other_api_key"]},
+    {"serial_id": OTHER_SERIAL_ID, "api_keys": []},
+]
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_systems(mock_request):
+    """Test that get_systems logs in, then lists the account's systems and their keys."""
+    mock_request.side_effect = [
+        ({"access_token": FAKE_TOKEN}, 200),
+        (SYSTEMS_SAMPLE, 200),
+    ]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        systems = await diagral.get_systems()
+
+    assert systems == [
+        SystemApiKeys(serial_id=SERIAL_ID, api_keys=[API_KEY, "other_api_key"]),
+        SystemApiKeys(serial_id=OTHER_SERIAL_ID, api_keys=[]),
+    ]
+    method, endpoint = mock_request.call_args.args
+    assert (method, endpoint) == ("GET", "users/systems")
+    assert mock_request.call_args.kwargs["headers"] == {
+        "Authorization": f"Bearer {FAKE_TOKEN}"
+    }
+    assert mock_request.call_args.kwargs["list_body"] is True
+
+
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_systems_debug_log_redacts_keys_and_serials(mock_request, caplog):
+    """Test that the debug log of get_systems shows neither API keys nor serials."""
+    mock_request.side_effect = [
+        ({"access_token": FAKE_TOKEN}, 200),
+        (SYSTEMS_SAMPLE, 200),
+    ]
+    with caplog.at_level(logging.DEBUG, logger="pydiagral"):
+        async with DiagralAPI(
+            username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+        ) as diagral:
+            await diagral.get_systems()
+
+    assert "2 systems" in caplog.text
+    for secret in (API_KEY, "other_api_key", SERIAL_ID, OTHER_SERIAL_ID):
+        assert secret not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "body", [{"serial_id": SERIAL_ID}, ["not-an-object"]], ids=["object", "string-item"]
+)
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_systems_with_malformed_response(mock_request, body):
+    """Test that a systems item that is not an object raises ModelValidationError."""
+    mock_request.side_effect = [({"access_token": FAKE_TOKEN}, 200), (body, 200)]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with pytest.raises(ModelValidationError):
+            await diagral.get_systems()
 
 
 #######################################
@@ -2646,14 +2714,20 @@ def test_redact_walks_nested_data():
     """Test that redaction matches keys case-insensitively, recursively, without mutating the input."""
     data = {
         "X-APIKEY": API_KEY,
-        "api_keys": [{"api_key": API_KEY, "label": "kept"}],
-        "nested": {"Password": PASSWORD, "serial_id": SERIAL_ID},
+        "keys": [{"api_key": API_KEY, "label": "kept"}],
+        "api_keys": [API_KEY],
+        "nested": {"Password": PASSWORD, "Serial_ID": SERIAL_ID, "label": "kept"},
     }
 
     assert redact(data) == {
         "X-APIKEY": "**REDACTED**",
-        "api_keys": [{"api_key": "**REDACTED**", "label": "kept"}],
-        "nested": {"Password": "**REDACTED**", "serial_id": SERIAL_ID},
+        "keys": [{"api_key": "**REDACTED**", "label": "kept"}],
+        "api_keys": "**REDACTED**",
+        "nested": {
+            "Password": "**REDACTED**",
+            "Serial_ID": "**REDACTED**",
+            "label": "kept",
+        },
     }
     assert data["X-APIKEY"] == API_KEY
 
@@ -3049,6 +3123,25 @@ async def test_success_rejects_malformed_json(api: DiagralAPI) -> None:
     assert caught.value.status_code == 200
     assert "Diagral" in str(caught.value)
     assert "(HTTP 200)" in str(caught.value)
+
+
+async def test_list_body_accepts_a_json_list(api: DiagralAPI) -> None:
+    """Test that a request expecting a list returns the list Diagral sent."""
+    install_response(api, 200, [{"serial_id": "fake-serial"}])
+    assert await api._request("GET", "users/systems", list_body=True) == (  # noqa: SLF001
+        [{"serial_id": "fake-serial"}],
+        200,
+    )
+
+
+@pytest.mark.parametrize("payload", [{}, None, "text"], ids=["object", "null", "text"])
+async def test_list_body_rejects_anything_but_a_list(
+    api: DiagralAPI, payload: Any
+) -> None:
+    """Test that a request expecting a list rejects any other JSON value."""
+    install_response(api, 200, payload)
+    with pytest.raises(ValidationError, match=r"Expected a JSON list from Diagral"):
+        await api._request("GET", "users/systems", list_body=True)  # noqa: SLF001
 
 
 async def test_ping_calls_the_unversioned_root_without_credentials(

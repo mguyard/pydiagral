@@ -19,10 +19,12 @@ SENSITIVE_KEYS = frozenset(
     {
         "access_token",
         "api_key",
+        "api_keys",
         "authorization",
         "password",
         "pincode",
         "secret_key",
+        "serial_id",
         "x-apikey",
         "x-hmac",
         "x-pin-code",

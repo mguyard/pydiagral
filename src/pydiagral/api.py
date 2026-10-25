@@ -11,7 +11,7 @@ import logging
 import math
 import re
 import time
-from typing import Any, Self
+from typing import Any, Literal, Self, overload
 
 import aiohttp
 
@@ -44,6 +44,7 @@ from .models import (
     LoginResponse,
     Ping,
     Rudes,
+    SystemApiKeys,
     SystemDetails,
     SystemStatus,
     TryConnectResult,
@@ -173,6 +174,7 @@ class DiagralAPI:
             await self.session.close()
             self.session = None
 
+    @overload
     async def _request(
         self,
         method: str,
@@ -181,8 +183,34 @@ class DiagralAPI:
         *,
         log_endpoint: str | None = None,
         versioned: bool = True,
-        **kwargs,
-    ) -> tuple[dict[str, Any], int]:
+        list_body: Literal[False] = False,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any], int]: ...
+
+    @overload
+    async def _request(
+        self,
+        method: str,
+        endpoint: str,
+        timeout: float | None = None,
+        *,
+        log_endpoint: str | None = None,
+        versioned: bool = True,
+        list_body: Literal[True],
+        **kwargs: Any,
+    ) -> tuple[list[Any], int]: ...
+
+    async def _request(
+        self,
+        method: str,
+        endpoint: str,
+        timeout: float | None = None,
+        *,
+        log_endpoint: str | None = None,
+        versioned: bool = True,
+        list_body: bool = False,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any] | list[Any], int]:
         """Make an asynchronous HTTP request to the specified endpoint.
 
         Args:
@@ -194,11 +222,14 @@ class DiagralAPI:
                 `endpoint`, when the path itself carries a secret. Defaults to None.
             versioned (bool, optional): Whether `endpoint` sits under the API version.
                 Defaults to True; False only for the unversioned root.
+            list_body (bool, optional): Whether the endpoint answers with a JSON list instead
+                of an object. Defaults to False.
             **kwargs (any): Additional keyword arguments to pass to the request.
 
         Returns:
-            tuple[dict[str, Any], int]: A tuple containing:
-                - dict[str, Any]: The JSON response from the API.
+            tuple[dict[str, Any] | list[Any], int]: A tuple containing:
+                - dict[str, Any] | list[Any]: The JSON response from the API, a list when
+                  `list_body` is True.
                 - int: The HTTP status code of the response.
 
         Raises:
@@ -285,7 +316,7 @@ class DiagralAPI:
                         error_message = f"{error_message}: {known_detail}"
                     raise DiagralAPIError(error_message, status_code=status)
                 if status in (204, 205):
-                    return {}, status
+                    return ([] if list_body else {}), status
                 try:
                     response_data = await response.json()
                 except (aiohttp.ContentTypeError, ValueError):
@@ -293,9 +324,10 @@ class DiagralAPI:
                         f"Invalid JSON response from Diagral (HTTP {status})",
                         status_code=status,
                     ) from None
-                if not isinstance(response_data, dict):
+                expected, name = (list, "list") if list_body else (dict, "object")
+                if not isinstance(response_data, expected):
                     raise ValidationError(
-                        f"Expected a JSON object from Diagral (HTTP {status})",
+                        f"Expected a JSON {name} from Diagral (HTTP {status})",
                         status_code=status,
                     )
                 return response_data, status
@@ -488,6 +520,35 @@ class DiagralAPI:
         if apikey is None:
             self.__apikey = None
             self.__secret_key = None
+
+    async def get_systems(self) -> list[SystemApiKeys]:
+        """List the systems of the account, with the API keys created for each.
+
+        Only the username and password are needed: this is how to discover the serial
+        IDs of an account.
+
+        Returns:
+            list[SystemApiKeys]: One entry per system of the account.
+
+        Raises:
+            AuthenticationError: If the login fails.
+            ModelValidationError: If a system in the response is not an object.
+            DiagralAPIError: If transport or the Diagral service fails.
+
+        """
+
+        if not self.__access_token:
+            await self.login()
+
+        _HEADERS: dict[str, str] = {
+            "Authorization": f"Bearer {self.__access_token}",
+        }
+        response_data, *_ = await self._request(
+            "GET", "users/systems", headers=_HEADERS, list_body=True
+        )
+        systems = [SystemApiKeys.from_dict(system) for system in response_data]
+        _LOGGER.debug("Retrieved %d systems for the account", len(systems))
+        return systems
 
     async def try_connection(self, ephemeral: bool = True) -> TryConnectResult:
         """Test connection with the Diagral system.

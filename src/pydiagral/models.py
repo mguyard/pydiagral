@@ -431,6 +431,25 @@ class ApiKeys(CamelCaseModel):
 
 
 @dataclass
+class SystemApiKeys(CamelCaseModel):
+    """A system of the account, with the API keys created for it.
+
+    Attributes:
+        serial_id (str): The serial ID of the system.
+        api_keys (list[str]): The API keys created for the system. They are secrets.
+
+    Example:
+        >>> system = SystemApiKeys.from_dict({"serial_id": "123456", "api_keys": ["key1"]})
+        >>> print(system.serial_id)
+        123456
+
+    """
+
+    serial_id: str
+    api_keys: list[str]
+
+
+@dataclass
 class TryConnectResult(CamelCaseModel):
     """A class representing the result of an API connection attempt.
 
