@@ -2575,7 +2575,16 @@ async def test_request_debug_log_redacts_secrets(caplog):
         ):
             await diagral._request("POST", "users/me", headers=headers, json=body)  # noqa: SLF001
 
-    for secret in (FAKE_TOKEN, API_KEY, PIN_CODE, PASSWORD, "test_hmac_signature"):
+    secrets = (
+        FAKE_TOKEN,
+        API_KEY,
+        PIN_CODE,
+        PASSWORD,
+        USERNAME,
+        SERIAL_ID,
+        "test_hmac_signature",
+    )
+    for secret in secrets:
         assert secret not in caplog.text
     assert "users/me" in caplog.text
     assert "1700000000" in caplog.text
@@ -3324,7 +3333,7 @@ async def test_secrets_do_not_appear_in_debug_logs_or_error_messages(
         "1234",
     ):
         assert secret not in output
-    assert "audit@example.com" in caplog.text
+    assert "audit@example.com" not in caplog.text
     assert "**REDACTED**" in caplog.text
 
 

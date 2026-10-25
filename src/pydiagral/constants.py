@@ -25,6 +25,7 @@ SENSITIVE_KEYS = frozenset(
         "pincode",
         "secret_key",
         "serial_id",
+        "username",
         "x-apikey",
         "x-hmac",
         "x-pin-code",
