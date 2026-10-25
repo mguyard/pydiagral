@@ -28,7 +28,7 @@ from pydiagral.exceptions import (
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 import json
 
-from pydiagral import AuthenticationError, DiagralAPI, ValidationError
+from pydiagral import AuthenticationError, DiagralAPI, ValidationError, models
 from pydiagral.constants import REDACTED
 from pydiagral.models import (
     AlarmConfiguration,
@@ -3337,6 +3337,12 @@ def test_model_validation_error_does_not_quote_the_payload():
 #########################
 
 
+@pytest.fixture
+def unreported_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Forget which fields were already reported, so each test sees its warning."""
+    monkeypatch.setattr(models, "_REPORTED_FIELDS", set())
+
+
 def test_to_dict_uses_aliases_and_nested_models():
     """Test that `to_dict()` converts names, aliases and nested models."""
     assert LoginResponse(access_token="token").to_dict() == {"accessToken": "token"}
@@ -3361,3 +3367,32 @@ def test_parsing_logs_one_redacted_debug_line(caplog):
         AlarmConfiguration.from_dict(configuration)
     assert len(caplog.records) == 1
     assert caplog.records[0].getMessage().startswith("Parsing AlarmConfiguration")
+
+
+@pytest.mark.usefixtures("unreported_fields")
+@pytest.mark.parametrize(
+    "payload",
+    [{"activated_groups": [1]}, {"status": None, "activated_groups": [1]}],
+    ids=["missing", "null"],
+)
+def test_missing_required_field_is_reported_once(caplog, payload):
+    """Test that a required field without a value warns once and still parses."""
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        first = SystemStatus.from_dict(payload)
+        SystemStatus.from_dict(payload)
+    assert first == SystemStatus(status=None, activated_groups=[1])
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    message = warnings[0].getMessage()
+    assert "SystemStatus" in message
+    assert "status field is missing" in message
+    assert "github.com/mguyard/pydiagral/issues" in message
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_optional_fields_are_not_reported(caplog):
+    """Test that absent optional or defaulted fields stay silent."""
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        AlarmConfiguration.from_dict({})
+        Group.from_dict({})
+    assert not caplog.records

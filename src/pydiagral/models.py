@@ -8,7 +8,7 @@ and other related data structures.
 
 from __future__ import annotations
 
-from dataclasses import Field, dataclass, field, fields
+from dataclasses import MISSING, Field, dataclass, field, fields
 from datetime import UTC, datetime
 import logging
 import re
@@ -26,6 +26,7 @@ from typing import (
     get_type_hints,
 )
 
+from .constants import ISSUES_URL
 from .exceptions import ModelValidationError
 from .utils import Redacted
 
@@ -42,6 +43,9 @@ _ModelT = TypeVar("_ModelT", bound="CamelCaseModel")
 # What a payload of the wrong shape makes the parsers raise.
 _PARSE_ERRORS = (AttributeError, KeyError, TypeError, ValueError)
 
+# Model fields a payload broke expectations on, so each is reported only once.
+_REPORTED_FIELDS: set[tuple[str, str]] = set()
+
 
 class _FieldSpec(NamedTuple):
     """How `_from_dict_recursive` reads one model field."""
@@ -49,6 +53,7 @@ class _FieldSpec(NamedTuple):
     name: str
     alias: str
     type: Any
+    required: bool
 
 
 # Resolved once per model: evaluating annotations dominated parsing time.
@@ -65,17 +70,39 @@ def _field_specs(model: type) -> tuple[_FieldSpec, ...]:
         model_field = model_fields.get(name)
         if model_field is None:
             continue
-        if get_origin(hint) in (Union, types.UnionType):
-            hint = next(t for t in get_args(hint) if t is not type(None))
+        args = get_args(hint)
+        optional = get_origin(hint) in (Union, types.UnionType) and type(None) in args
+        if optional:
+            hint = next(t for t in args if t is not type(None))
+        has_default = (
+            model_field.default is not MISSING
+            or model_field.default_factory is not MISSING
+        )
         specs.append(
             _FieldSpec(
                 name=name,
                 alias=model_field.metadata.get("alias", name).lower(),
                 type=hint,
+                required=not (optional or has_default),
             )
         )
     _FIELD_SPECS[model] = tuple(specs)
     return _FIELD_SPECS[model]
+
+
+def _report_unexpected_field(model: type, name: str, problem: str) -> None:
+    """Warn once that a payload does not fit a model, without quoting the payload."""
+    if (model.__name__, name) in _REPORTED_FIELDS:
+        return
+    _REPORTED_FIELDS.add((model.__name__, name))
+    logger.warning(
+        "Diagral sent %s data whose %s field %s. Please report it at %s, with your "
+        "pydiagral version, so the model can be fixed",
+        model.__name__,
+        name,
+        problem,
+        ISSUES_URL,
+    )
 
 
 class CamelCaseModel:
@@ -155,7 +182,8 @@ class CamelCaseModel:
 
         Each field is matched, case-insensitively, against its `alias` or its name; keys
         are not converted from camelCase. Nested dictionaries and lists of dictionaries
-        become the annotated models. A missing field is set to None.
+        become the annotated models. A missing field is set to None, and a warning
+        asks to report it when the model requires it.
 
         Args:
             cls (type[Self]): The class that this method is a part of.
@@ -182,6 +210,8 @@ class CamelCaseModel:
             key = keys.get(spec.alias)
             value = data[key] if key is not None else None
             if value is None:
+                if spec.required:
+                    _report_unexpected_field(target_cls, spec.name, "is missing")
                 init_values[spec.name] = None
             elif (
                 isinstance(value, dict)
