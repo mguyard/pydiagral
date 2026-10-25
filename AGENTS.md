@@ -153,6 +153,7 @@ Tests: ✅ N passed, ❌ 0 failed, ⚠️ 0 errors
 - The `Tests:` line is required whenever `src/` or `tests/` changed. Use `Tests: N/A (no src or tests change)` otherwise.
 - The body explains **why**. Never restate what the diff already shows.
 - A breaking change to a contract listed above takes a `BREAKING CHANGE:` footer.
+- Keep issue and PR references (`#N`, `owner/repo#N`) out of a `BREAKING CHANGE:` paragraph. The commit parser ends the note at the first line that holds one and drops that line from the release notes. Put the reference in the body instead.
 
 `release.config.cjs` uses semantic-release's default (Angular) presets: only `feat`, `fix` and `perf` — plus reverts and breaking changes — trigger a release and appear in `CHANGELOG.md`. A `docs`, `refactor` or `chore` commit is invisible to users and to PyPI.
 
