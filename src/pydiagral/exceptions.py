@@ -7,8 +7,10 @@ class DiagralAPIError(Exception):
     def __init__(self, message: str, status_code: int | None = None) -> None:
         """Initialize the DiagralAPIError.
 
-        :param message: The error message.
-        :param status_code: The status code of the error, if any.
+        Args:
+            message (str): The error message.
+            status_code (int | None): The status code of the error, if any.
+
         """
         self.message: str = message
         self.status_code: int | None = status_code
