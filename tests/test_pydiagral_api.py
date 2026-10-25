@@ -22,6 +22,7 @@ from pydiagral.exceptions import (
     DiagralAPIError,
     ModelValidationError,
     ServerError,
+    SessionError,
 )
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
@@ -33,6 +34,7 @@ from pydiagral.models import (
     Anomalies,
     AnomalyDetail,
     AnomalyName,
+    ApiKeys,
     ApiKeyWithSecret,
     DeviceList,
     Rude,
@@ -2104,7 +2106,7 @@ async def test_register_webhook_subscription_already_exist(mock_request):
     mock_request.side_effect = [
         ({"access_token": FAKE_TOKEN}, 200),  # Response for login
         DiagralAPIError(
-            "Subscription already exists"
+            "Subscription already exists", status_code=409
         ),  # Response for __webhook_action_create_update
     ]
     async with DiagralAPI(
@@ -2116,13 +2118,15 @@ async def test_register_webhook_subscription_already_exist(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(DiagralAPIError):
+        with pytest.raises(DiagralAPIError) as caught:
             await diagral.register_webhook(
                 webhook_url=WEBHOOK_URL,
                 subscribe_to_anomaly=True,
                 subscribe_to_alert=True,
                 subscribe_to_state=True,
             )
+    assert str(caught.value).startswith("Webhook subscription already exists")
+    assert caught.value.status_code == 409
 
 
 @pytest.mark.asyncio
@@ -2145,7 +2149,7 @@ async def test_register_webhook_no_subscription_exist(mock_request):
     mock_request.side_effect = [
         ({"access_token": FAKE_TOKEN}, 200),  # Response for login
         DiagralAPIError(
-            "There is no subscription for XXXX"
+            "There is no subscription for XXXX", status_code=404
         ),  # Response for __webhook_action_create_update
     ]
     async with DiagralAPI(
@@ -2157,13 +2161,15 @@ async def test_register_webhook_no_subscription_exist(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(DiagralAPIError):
+        with pytest.raises(DiagralAPIError) as caught:
             await diagral.register_webhook(
                 webhook_url=WEBHOOK_URL,
                 subscribe_to_anomaly=True,
                 subscribe_to_alert=True,
                 subscribe_to_state=True,
             )
+    assert str(caught.value).startswith("No subscription found for")
+    assert caught.value.status_code == 404
 
 
 @pytest.mark.asyncio
@@ -2427,6 +2433,41 @@ async def test_set_apikey_with_incomplete_response(mock_request):
     ) as diagral:
         with pytest.raises(APIKeyCreationError):
             await diagral.set_apikey()
+
+
+@pytest.mark.parametrize(
+    ("validation_error", "delete_result"),
+    [
+        (ClientError("timeout"), ({}, 200)),
+        (ServerError("offline", 503), ({}, 200)),
+        (APIValidationError("not listed"), ServerError("offline", 503)),
+    ],
+    ids=["transport-deleted", "server-deleted", "rejected-delete-fails"],
+)
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_set_apikey_deletes_the_key_when_validation_fails(
+    mock_request, validation_error, delete_result
+):
+    """Test that a created key that fails validation is deleted and forgotten."""
+    mock_request.side_effect = [
+        ({"access_token": FAKE_TOKEN}, 200),
+        ({"api_key": API_KEY, "secret_key": SECRET_KEY}, 200),
+        validation_error,
+        delete_result,
+    ]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with pytest.raises(type(validation_error)) as caught:
+            await diagral.set_apikey()
+    assert caught.value is validation_error
+    method, endpoint = mock_request.call_args.args[:2]
+    assert (method, endpoint) == (
+        "DELETE",
+        f"users/systems/{SERIAL_ID}/api_keys/{API_KEY}",
+    )
+    assert diagral._DiagralAPI__apikey is None  # noqa: SLF001
+    assert diagral._DiagralAPI__secret_key is None  # noqa: SLF001
 
 
 @patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
@@ -2698,6 +2739,69 @@ def test_request_timeout_is_keyword_only():
         DiagralAPI(USERNAME, PASSWORD, SERIAL_ID, None, None, None, 60)
 
 
+#####################
+# Session lifecycle #
+#####################
+
+
+async def test_request_after_exit_raises_session_error():
+    """Test that a request on a closed client raises SessionError, not RuntimeError."""
+    diagral = DiagralAPI(username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID)
+    async with diagral:
+        pass
+    assert diagral.session is None
+    with pytest.raises(SessionError):
+        await diagral._request("GET", "users/me")  # noqa: SLF001
+
+
+async def test_entering_twice_keeps_the_open_session():
+    """Test that a second enter reuses the session instead of orphaning it."""
+    diagral = DiagralAPI(username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID)
+    async with diagral:
+        first = diagral.session
+        await diagral.__aenter__()
+        assert diagral.session is first
+    assert first.closed
+
+
+async def test_client_reopens_its_session_after_exit():
+    """Test that an owned session is recreated when the client is entered again."""
+    diagral = DiagralAPI(username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID)
+    async with diagral:
+        pass
+    async with diagral:
+        assert diagral.session is not None
+        assert not diagral.session.closed
+
+
+async def test_injected_session_is_used_and_left_open():
+    """Test that a caller's session carries the requests and is not closed on exit."""
+    async with aiohttp.ClientSession() as session:
+        async with DiagralAPI(
+            username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, session=session
+        ) as diagral:
+            assert diagral.session is session
+            with patch.object(
+                session, "request", return_value=_FakeResponse(200, {})
+            ) as mock_session_request:
+                await diagral._request("GET", "users/me")  # noqa: SLF001
+        mock_session_request.assert_called_once()
+        assert diagral.session is session
+        assert not session.closed
+
+
+async def test_closed_injected_session_raises_session_error():
+    """Test that a caller's closed session is reported, not replaced."""
+    session = aiohttp.ClientSession()
+    await session.close()
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, session=session
+    ) as diagral:
+        assert diagral.session is session
+        with pytest.raises(SessionError):
+            await diagral._request("GET", "users/me")  # noqa: SLF001
+
+
 class Response:
     """Supply the asynchronous response context consumed by ``_request``."""
 
@@ -2743,7 +2847,7 @@ def install_response(
 ) -> Response:
     """Provide a response without constructing a real HTTP connection."""
     response = Response(status, payload, error)
-    api.session = SimpleNamespace(request=Mock(return_value=response))
+    api.session = SimpleNamespace(closed=False, request=Mock(return_value=response))
     return response
 
 
@@ -2822,7 +2926,7 @@ async def test_network_and_timeout_are_not_authentication_errors_or_retried(
 ) -> None:
     """Classify transport failure without repeating a command."""
     request = Mock(side_effect=error)
-    api.session = SimpleNamespace(request=request)
+    api.session = SimpleNamespace(closed=False, request=request)
     with pytest.raises(ClientError):
         await api._request("POST", "fake-command")  # noqa: SLF001
     request.assert_called_once()
@@ -2834,7 +2938,7 @@ async def test_login_preserves_transient_error_category(
     api: DiagralAPI, error: DiagralAPIError
 ) -> None:
     """Do not turn a cloud outage into an invalid-credentials error."""
-    api.session = SimpleNamespace()
+    api.session = SimpleNamespace(closed=False)
     with (
         patch.object(api, "_request", new=AsyncMock(side_effect=error)),
         pytest.raises(type(error)) as caught,
@@ -2941,7 +3045,7 @@ async def test_webhook_callback_url_is_redacted(
 async def test_ephemeral_keys_are_cleared_after_success() -> None:
     """Remove deleted temporary keys from both the result and client memory."""
     api = DiagralAPI("audit@example.com", "password", "serial", pincode="1234")
-    api.session = SimpleNamespace()
+    api.session = SimpleNamespace(closed=False)
     with patch.object(
         api,
         "_request",
@@ -2969,7 +3073,7 @@ async def test_ephemeral_cleanup_preserves_original_connection_failure(
 ) -> None:
     """Attempt temporary-key deletion without masking the failed status read."""
     api = DiagralAPI("audit@example.com", "password", "serial", pincode="1234")
-    api.session = SimpleNamespace()
+    api.session = SimpleNamespace(closed=False)
     original_error = ServerError("status unavailable", 503)
     with (
         patch.object(
@@ -3002,7 +3106,7 @@ async def test_key_creation_preserves_transient_error_category(
     api: DiagralAPI, error: DiagralAPIError
 ) -> None:
     """Keep cloud/transport failures distinguishable from a rejected API key."""
-    api.session = SimpleNamespace()
+    api.session = SimpleNamespace(closed=False)
     with (
         patch.object(
             api,
@@ -3026,7 +3130,8 @@ async def test_transport_exception_traceback_does_not_expose_private_url(
 ) -> None:
     """Suppress transport exception context which can contain secret URLs."""
     api.session = SimpleNamespace(
-        request=Mock(side_effect=aiohttp.ClientConnectionError("private-url-key"))
+        closed=False,
+        request=Mock(side_effect=aiohttp.ClientConnectionError("private-url-key")),
     )
     with pytest.raises(ClientError) as caught:
         await api._request("DELETE", "fake")  # noqa: SLF001
@@ -3126,4 +3231,99 @@ def test_invalid_notification_date_does_not_expose_payload(
     payload = {**notification, "date_time": "private-value"}
     with pytest.raises(ModelValidationError) as caught:
         WebHookNotification.from_dict(payload)
+    assert "private-value" not in "".join(traceback.format_exception(caught.value))
+
+
+############################
+# Model payload validation #
+############################
+
+_ANOMALY_DEVICE = {"serial": "SN1", "anomaly_names": [{"id": 1, "name": "Low Battery"}]}
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [],
+        {},
+        {"created_at": "not-a-date"},
+        {"created_at": 1739700912},
+        {"created_at": "2025-02-16T10:15:12", "sensors": [None]},
+        {"created_at": "2025-02-16T10:15:12", "sensors": [{"anomaly_names": [1]}]},
+    ],
+    ids=[
+        "not-an-object",
+        "no-created-at",
+        "bad-date",
+        "numeric-date",
+        "null-device",
+        "bad-anomaly-name",
+    ],
+)
+def test_malformed_anomalies_raise_model_validation_error(payload):
+    """Test that a malformed anomalies payload raises ModelValidationError only."""
+    with pytest.raises(ModelValidationError, match=r"Invalid Anomal\w+ payload"):
+        Anomalies.from_dict(payload)
+
+
+def test_anomalies_accept_null_device_lists_and_names():
+    """Test that null device lists and anomaly names read as empty."""
+    anomalies = Anomalies.from_dict(
+        {
+            "created_at": "2025-02-16T10:15:12",
+            "sensors": None,
+            "sirens": [{"serial": "SN2", "anomaly_names": None}],
+        }
+    )
+    assert anomalies.sensors == []
+    assert anomalies.sirens[0].anomaly_names == []
+
+
+def test_anomaly_names_ignore_unknown_keys():
+    """Test that an extra key in an anomaly name does not break parsing."""
+    device = {**_ANOMALY_DEVICE, "anomaly_names": [{"id": 1, "name": "x", "new": 2}]}
+    anomalies = Anomalies.from_dict(
+        {"created_at": "2025-02-16T10:15:12", "sensors": [device]}
+    )
+    assert anomalies.sensors[0].anomaly_names == [AnomalyName(id=1, name="x")]
+
+
+@pytest.mark.parametrize(
+    ("created_at", "expected"),
+    [
+        ("2025-02-16T10:15:12", datetime(2025, 2, 16, 10, 15, 12, tzinfo=UTC)),
+        ("2025-02-16T10:15:12+02:00", datetime(2025, 2, 16, 8, 15, 12, tzinfo=UTC)),
+    ],
+    ids=["naive-is-utc", "offset-converted"],
+)
+def test_anomalies_created_at_is_utc(created_at, expected):
+    """Test that `created_at` is UTC, converting an explicit offset."""
+    anomalies = Anomalies.from_dict({"created_at": created_at})
+    assert anomalies.created_at == expected
+    assert anomalies.created_at.utcoffset().total_seconds() == 0
+
+
+def test_api_keys_ignore_unknown_keys_and_missing_list():
+    """Test that API key entries may carry extra keys and the list may be absent."""
+    keys = ApiKeys.from_dict({"api_keys": [{"api_key": "k", "created_at": "x"}]})
+    assert [key.api_key for key in keys.api_keys] == ["k"]
+    assert ApiKeys.from_dict({}).api_keys == []
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [None, [], {"status": "START", "activated_groups": [{"index": 1}]}],
+    ids=["null", "list", "object-in-int-list"],
+)
+def test_generic_models_raise_model_validation_error(payload):
+    """Test that the generic parser reports a payload of the wrong shape."""
+    with pytest.raises(ModelValidationError, match="Invalid SystemStatus payload"):
+        SystemStatus.from_dict(payload)
+
+
+def test_model_validation_error_does_not_quote_the_payload():
+    """Keep payload values out of the parser error and its traceback."""
+    payload = {"created_at": "private-value"}
+    with pytest.raises(ModelValidationError) as caught:
+        Anomalies.from_dict(payload)
     assert "private-value" not in "".join(traceback.format_exception(caught.value))

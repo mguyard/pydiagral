@@ -38,6 +38,9 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 _ModelT = TypeVar("_ModelT", bound="CamelCaseModel")
 
+# What a payload of the wrong shape makes the parsers raise.
+_PARSE_ERRORS = (AttributeError, KeyError, TypeError, ValueError)
+
 
 class CamelCaseModel:
     """CamelCaseModel is a base class for models that need to convert between snake_case and camelCase keys.
@@ -215,6 +218,9 @@ class CamelCaseModel:
         Returns:
             An instance of the class populated with the data from the dictionary.
 
+        Raises:
+            ModelValidationError: If the data is not an object or does not fit the model.
+
         Example:
             >>> data = {"diagral_id": 123, "user_id": 456, "access_token": "abc123"}
             >>> login_response = LoginResponse.from_dict(data)
@@ -227,7 +233,15 @@ class CamelCaseModel:
 
         """
 
-        return cls._from_dict_recursive(data, cls)
+        if not isinstance(data, dict):
+            raise ModelValidationError(f"Invalid {cls.__name__} payload")
+        try:
+            return cls._from_dict_recursive(data, cls)
+        except ModelValidationError:
+            raise
+        except _PARSE_ERRORS:
+            # Unchained: the parser's message can quote payload values.
+            raise ModelValidationError(f"Invalid {cls.__name__} payload") from None
 
     @staticmethod
     def snake_to_camel(string: str) -> str:
@@ -371,11 +385,23 @@ class ApiKeys(CamelCaseModel):
 
     @classmethod
     def from_dict(cls, data: dict) -> ApiKeys:
-        """Create an instance of ApiKeys from a dictionary."""
+        """Create an instance of ApiKeys from a dictionary.
 
-        return cls(
-            api_keys=[ApiKey(**key_info) for key_info in data.get("api_keys", [])]
-        )
+        Raises:
+            ModelValidationError: If the data is not an object or a key is malformed.
+
+        """
+
+        if not isinstance(data, dict):
+            raise ModelValidationError(f"Invalid {cls.__name__} payload")
+        try:
+            return cls(
+                api_keys=[ApiKey.from_dict(key) for key in data.get("api_keys") or []]
+            )
+        except ModelValidationError:
+            raise
+        except _PARSE_ERRORS:
+            raise ModelValidationError(f"Invalid {cls.__name__} payload") from None
 
 
 @dataclass
@@ -1163,34 +1189,56 @@ class Anomalies(CamelCaseModel):
 
     @classmethod
     def from_dict(cls, data: dict) -> Anomalies:
-        """Create an instance of Anomalies from a dictionary."""
+        """Create an instance of Anomalies from a dictionary.
 
-        def create_devices(device_data):
+        A `created_at` without an offset is taken as UTC; one with an offset is
+        converted to UTC.
+
+        Raises:
+            ModelValidationError: If the data is not an object, `created_at` is missing
+                or not an ISO date, or a device entry is malformed.
+
+        """
+
+        def create_devices(device_data: list[dict] | None) -> list[AnomalyDetail]:
             return [
                 AnomalyDetail(
-                    serial=data.get("serial"),
-                    index=data.get("index"),
-                    group=data.get("group"),
-                    label=data.get("label"),
-                    anomaly_names=[AnomalyName(**a) for a in data.get("anomaly_names")],
+                    serial=device.get("serial"),
+                    index=device.get("index"),
+                    group=device.get("group"),
+                    label=device.get("label"),
+                    anomaly_names=[
+                        AnomalyName.from_dict(name)
+                        for name in device.get("anomaly_names") or []
+                    ],
                 )
-                for data in device_data
+                for device in device_data or []
             ]
 
-        # Convert the created_at field to a datetime object with UTC timezone
-        created_at = datetime.fromisoformat(data["created_at"]).replace(tzinfo=UTC)
-
-        return cls(
-            created_at=created_at,
-            sensors=create_devices(data.get("sensors", [])),
-            badges=create_devices(data.get("badges", [])),
-            sirens=create_devices(data.get("sirens", [])),
-            cameras=create_devices(data.get("cameras", [])),
-            commands=create_devices(data.get("commands", [])),
-            transceivers=create_devices(data.get("transceivers", [])),
-            transmitters=create_devices(data.get("transmitters", [])),
-            central=create_devices(data.get("central", [])),
-        )
+        if not isinstance(data, dict):
+            raise ModelValidationError(f"Invalid {cls.__name__} payload")
+        try:
+            created_at = datetime.fromisoformat(data["created_at"])
+            created_at = (
+                created_at.replace(tzinfo=UTC)
+                if created_at.tzinfo is None
+                else created_at.astimezone(UTC)
+            )
+            return cls(
+                created_at=created_at,
+                sensors=create_devices(data.get("sensors")),
+                badges=create_devices(data.get("badges")),
+                sirens=create_devices(data.get("sirens")),
+                cameras=create_devices(data.get("cameras")),
+                commands=create_devices(data.get("commands")),
+                transceivers=create_devices(data.get("transceivers")),
+                transmitters=create_devices(data.get("transmitters")),
+                central=create_devices(data.get("central")),
+            )
+        except ModelValidationError:
+            raise
+        except _PARSE_ERRORS:
+            raise ModelValidationError(f"Invalid {cls.__name__} payload") from None
 
 
 ############################

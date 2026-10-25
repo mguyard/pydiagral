@@ -66,6 +66,7 @@ class DiagralAPI:
         pincode: str | None = None,
         *,
         request_timeout: float = DEFAULT_REQUEST_TIMEOUT,
+        session: aiohttp.ClientSession | None = None,
     ) -> None:
         """Initialize the DiagralAPI instance.
 
@@ -79,6 +80,10 @@ class DiagralAPI:
             request_timeout (float, optional): Seconds allowed for each request to the Diagral
                 cloud, keyword-only. Defaults to 30. To give one call a shorter deadline, wrap it
                 in `asyncio.timeout()`; that deadline cannot exceed this value.
+            session (aiohttp.ClientSession | None, optional): A session to send requests
+                with, keyword-only. The caller keeps ownership: it is neither replaced nor
+                closed. Defaults to None, where the client opens its own session on enter
+                and closes it on exit.
 
         Raises:
             ConfigurationError: If any required field is empty or invalid.
@@ -126,7 +131,8 @@ class DiagralAPI:
         self.__request_timeout: float = request_timeout
 
         # Initialize session and access_token
-        self.session: aiohttp.ClientSession | None = None
+        self.session: aiohttp.ClientSession | None = session
+        self.__owns_session: bool = session is None
         self.__access_token: str | None = None
 
         # Set default values for other attributes
@@ -138,15 +144,18 @@ class DiagralAPI:
         return self.__request_timeout
 
     async def __aenter__(self) -> Self:
-        """Initialize the aiohttp ClientSession."""
-        self.session = aiohttp.ClientSession()
-        _LOGGER.info("Successfully initialized DiagralAPI session")
+        """Open the aiohttp ClientSession, unless the caller provided one."""
+        # Entering twice must not orphan the first session.
+        if self.__owns_session and (self.session is None or self.session.closed):
+            self.session = aiohttp.ClientSession()
+            _LOGGER.info("Successfully initialized DiagralAPI session")
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
-        """Close the aiohttp ClientSession."""
-        if self.session:
+        """Close the aiohttp ClientSession, unless the caller provided it."""
+        if self.__owns_session and self.session:
             await self.session.close()
+            self.session = None
 
     async def _request(
         self,
@@ -174,7 +183,7 @@ class DiagralAPI:
                 - int: The HTTP status code of the response.
 
         Raises:
-            SessionError: If the session is not initialized.
+            SessionError: If the session is not initialized or is closed.
             DiagralAPIError: If the request results in a 400 status code or other API errors.
             AuthenticationError: If the request results in a 401 or 403 status code.
             ValidationError: If the request results in a 422 status code or a successful
@@ -183,8 +192,8 @@ class DiagralAPI:
             ClientError: If there is a network error or timeout.
 
         """
-        if not self.session:
-            error_msg = "Session not initialized from __aenter__."
+        if self.session is None or self.session.closed:
+            error_msg = "Session not initialized from __aenter__, or already closed."
             _LOGGER.error(error_msg)
             raise SessionError(error_msg)
 
@@ -291,11 +300,6 @@ class DiagralAPI:
 
         """
 
-        if not self.session:
-            error_msg = "Session not initialized from __aenter__."
-            _LOGGER.error(error_msg)
-            raise SessionError(error_msg)
-
         _LOGGER.debug("Attempting to login to Diagral API")
         _DATA: dict[str, str] = {"username": self.username, "password": self.__password}
         try:
@@ -359,13 +363,12 @@ class DiagralAPI:
                 raise APIKeyCreationError(error_msg)
 
             _LOGGER.info("Successfully created new API key")
-            # Verify if the API key is valid
             try:
                 await self.validate_apikey()
                 _LOGGER.info("Successfully verified new API key")
-            except APIValidationError:
+            except DiagralAPIError:
                 _LOGGER.error("Created API key failed validation")
-                self.__apikey = None
+                await self.__discard_created_apikey()
                 raise
         except ModelValidationError as err:
             raise APIKeyCreationError("Invalid API key response") from err
@@ -374,6 +377,16 @@ class DiagralAPI:
             raise
 
         return ApiKeyWithSecret(api_key=self.__apikey, secret_key=self.__secret_key)
+
+    async def __discard_created_apikey(self) -> None:
+        """Delete a key `set_apikey()` created but cannot hand over, best effort."""
+        try:
+            await self.delete_apikey()
+        except DiagralAPIError:
+            _LOGGER.warning("Unable to delete the API key that could not be used")
+        finally:
+            self.__apikey = None
+            self.__secret_key = None
 
     async def validate_apikey(self, apikey: str | None = None) -> None:
         """Validate the current or provided API key by checking it against the list of valid keys.
@@ -480,7 +493,7 @@ class DiagralAPI:
         Raises:
             APIKeyCreationError: If creation of temporary API keys fails
             APIValidationError: If API key validation fails
-            SessionError: If the session is not initialized.
+            SessionError: If the session is not initialized or is closed.
             DiagralAPIError: If the request results in a 400 status code or other API errors.
             AuthenticationError: If authentication fails or request results in a 401 or 403 status code.
             ValidationError: If the request results in a 422 status code.
@@ -1273,11 +1286,13 @@ class DiagralAPI:
         except DiagralAPIError as e:
             if "Subscription already exists" in str(e):
                 raise DiagralAPIError(
-                    "Webhook subscription already exists. Please use the 'update' action to modify it."
+                    "Webhook subscription already exists. Please use the 'update' action to modify it.",
+                    status_code=e.status_code,
                 ) from e
             if "There is no subscription for" in str(e):
                 raise DiagralAPIError(
-                    "No subscription found for the specified serial ID"
+                    "No subscription found for the specified serial ID",
+                    status_code=e.status_code,
                 ) from e
             raise
         return Webhook.from_dict(response_data)

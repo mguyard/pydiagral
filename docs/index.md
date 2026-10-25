@@ -90,6 +90,23 @@ async with DiagralAPI(
 
 To give a single call a shorter deadline, wrap it in `asyncio.timeout()`. That deadline cannot exceed `request_timeout`.
 
+4. Shared session
+
+To send requests through an `aiohttp.ClientSession` you already manage, pass it as `session`. The client uses it as is and never closes it:
+
+```python
+async with aiohttp.ClientSession() as session:
+    async with DiagralAPI(
+        username=username,
+        password=password,
+        serial_id=serial_id,
+        session=session,
+    ) as diagral:
+        ...
+```
+
+Without `session`, the client opens its own on `async with` and closes it on exit.
+
 ## API Structure
 
 For detailed API documentation, please refer to the following sections:
