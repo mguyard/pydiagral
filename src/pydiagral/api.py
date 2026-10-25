@@ -1172,16 +1172,42 @@ class DiagralAPI:
             raise
         return Anomalies.from_dict(response_data)
 
-    async def delete_anomalies(self, anomaly_id: int) -> None:  # NOT-IMPLEMENTED
-        """Asynchronously delete the list of anomalies.
+    async def delete_anomalies(self, anomaly_id: int) -> None:
+        """Delete an anomaly of the system.
 
-        This method is currently not implemented.
+        Warning:
+            Untested. This call follows the Diagral OpenAPI specification only: it has
+            never been run on a real installation. pydiagral logs a warning the first
+            time it is used. Open questions:
+
+            - Which identifier to pass: the anomalies `get_anomalies()` returns carry
+              no identifier of their own, only `AnomalyName.id`, which looks like the
+              kind of anomaly rather than one occurrence of it.
+            - Whether it clears the anomaly on every device that reports it.
+            - What happens while the fault is still present.
+
+            If you can try it, please open an issue at
+            https://github.com/mguyard/pydiagral/issues with what you observe, so this
+            part can be fully supported.
+
+        Args:
+            anomaly_id (int): The identifier of the anomaly to delete.
 
         Raises:
-            NotImplementedError: This method is not yet implemented.
+            ConfigurationError: If `anomaly_id` is not an integer, or if the client was
+                created without a serial ID.
+            AuthenticationError: If the API key or secret key is missing.
 
         """
-        raise NotImplementedError("Method not yet implemented")
+        if isinstance(anomaly_id, bool) or not isinstance(anomaly_id, int):
+            raise ConfigurationError("anomaly_id must be an integer")
+        _announce_untested("delete_anomalies()")
+        _HEADERS = self.__hmac_headers("delete anomalies")
+        await self._request(
+            "DELETE",
+            f"systems/{self.__serial}/anomalies/{anomaly_id}",
+            headers=_HEADERS,
+        )
 
     async def get_automatism_rudes(self) -> Rudes:  # NOT-TESTED
         """Asynchronously retrieves the automatism Rudes for the system.

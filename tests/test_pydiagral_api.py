@@ -2153,9 +2153,9 @@ async def test_get_anomalies(mock_request):
         assert anomalies.central[0].anomaly_names[0].name == "mainPowerSupplyAlert"
 
 
-####################################
-# DiagralAPI Automatism Test Cases #
-####################################
+#############################################
+# DiagralAPI calls built from the spec only #
+#############################################
 
 
 def _signed_client() -> DiagralAPI:
@@ -2170,6 +2170,51 @@ def _signed_client() -> DiagralAPI:
     )
     diagral.session = SimpleNamespace(closed=False)
     return diagral
+
+
+async def test_delete_anomalies(unannounced_features: None) -> None:
+    """Test that the anomaly is deleted with a signed request, without the PIN code."""
+    diagral = _signed_client()
+    with patch.object(
+        diagral, "_request", new=AsyncMock(return_value=({}, 204))
+    ) as request:
+        assert await diagral.delete_anomalies(42) is None
+
+    method, endpoint = request.call_args.args
+    assert (method, endpoint) == ("DELETE", f"systems/{SERIAL_ID}/anomalies/42")
+    headers = request.call_args.kwargs["headers"]
+    assert headers["X-APIKEY"] == API_KEY
+    assert "X-PIN-CODE" not in headers
+
+
+@pytest.mark.parametrize("anomaly_id", ["42", True, None], ids=["text", "bool", "none"])
+async def test_delete_anomalies_rejects_a_non_integer_id(anomaly_id: object) -> None:
+    """Test that an identifier that is not an integer is refused before sending."""
+    diagral = _signed_client()
+    with (
+        patch.object(diagral, "_request", new=AsyncMock()) as request,
+        pytest.raises(ConfigurationError),
+    ):
+        await diagral.delete_anomalies(anomaly_id)
+
+    request.assert_not_awaited()
+
+
+async def test_delete_anomalies_is_announced_as_untested_once(
+    unannounced_features: None, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test that the first call logs one warning asking for feedback."""
+    diagral = _signed_client()
+    with (
+        patch.object(diagral, "_request", new=AsyncMock(return_value=({}, 204))),
+        caplog.at_level(logging.WARNING, logger="pydiagral.api"),
+    ):
+        await diagral.delete_anomalies(1)
+        await diagral.delete_anomalies(2)
+
+    notices = [r for r in caplog.records if "delete_anomalies()" in r.getMessage()]
+    assert len(notices) == 1
+    assert ISSUES_URL in notices[0].getMessage()
 
 
 @pytest.mark.parametrize("action", ["PULSE", "off", "Timer"])
