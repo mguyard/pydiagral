@@ -193,6 +193,8 @@ The reference pages (`docs/api.md`, `models.md`, `exceptions.md`) are generated 
 
 Docstrings follow the Google style (`Args:`, `Returns:`, `Raises:`), which mkdocstrings renders. Ruff's `D` rules require a docstring on every public object but set no `convention`, so they do not check the sections. `exceptions.py` still uses `:param:`; do not spread it.
 
+Examples go under an `Examples:` section, plural: griffe renders its `>>>` lines as code, while an `Example:` section becomes a box of plain Markdown, where `>>>` reads as nested quotes and the lines run together. Any other unknown section (`Warning:`, `Note:`) also becomes a box of that kind.
+
 ## Comments
 
 Explain why, never what. One short line stating a non-obvious constraint, or no comment at all. Do not restate the following line, do not justify a change by describing what the code looked like before, and do not add section dividers.

@@ -165,7 +165,7 @@ class CamelCaseModel:
         Returns:
             dict: A dictionary representation of the instance with camelCase keys.
 
-        Example:
+        Examples:
             >>> @dataclass
             ... class ExampleModel(CamelCaseModel):
             ...     first_name: str
@@ -268,13 +268,8 @@ class CamelCaseModel:
         Raises:
             ModelValidationError: If the data is not an object or does not fit the model.
 
-        Example:
-            >>> data = {"diagral_id": 123, "user_id": 456, "access_token": "abc123"}
-            >>> login_response = LoginResponse.from_dict(data)
-            >>> login_response.diagral_id
-            123
-            >>> login_response.user_id
-            456
+        Examples:
+            >>> login_response = LoginResponse.from_dict({"access_token": "abc123"})
             >>> login_response.access_token
             'abc123'
 
@@ -301,8 +296,8 @@ class CamelCaseModel:
         Returns:
             str: The converted camelCase string.
 
-        Example:
-            >>> snake_to_camel("example_string")
+        Examples:
+            >>> CamelCaseModel.snake_to_camel("example_string")
             'exampleString'
 
         """
@@ -323,7 +318,7 @@ class LoginResponse(CamelCaseModel):
     Attributes:
         access_token (str): The access token provided for authentication.
 
-    Example:
+    Examples:
         >>> response = LoginResponse(
         ...     access_token="abc123",
         ... )
@@ -346,7 +341,7 @@ class ApiKeyWithSecret(CamelCaseModel):
     Methods:
         __post_init__(): Post-initialization processing to validate the API key and secret key.
 
-    Example:
+    Examples:
         >>> api_key_with_secret = ApiKeyWithSecret(api_key="your_api_key", secret_key="your_secret_key")
         >>> print(api_key_with_secret.api_key)
         your_api_key
@@ -378,7 +373,7 @@ class ApiKey(CamelCaseModel):
     Attributes:
         api_key (str): The API key as a string.
 
-    Example:
+    Examples:
         >>> api_key = ApiKey(api_key="your_api_key")
         >>> print(api_key.api_key)
         your_api_key
@@ -399,7 +394,7 @@ class ApiKeys(CamelCaseModel):
         from_dict(data: dict) -> ApiKeys:
             Class method to create an instance of ApiKeys from a dictionary.
 
-    Example:
+    Examples:
         >>> data = {"api_keys": [{"api_key": "key1"}, {"api_key": "key2"}]}
         >>> api_keys = ApiKeys.from_dict(data)
         >>> print(api_keys.api_keys)
@@ -438,7 +433,7 @@ class SystemApiKeys(CamelCaseModel):
         serial_id (str): The serial ID of the system.
         api_keys (list[str]): The API keys created for the system. They are secrets.
 
-    Example:
+    Examples:
         >>> system = SystemApiKeys.from_dict({"serial_id": "123456", "api_keys": ["key1"]})
         >>> print(system.serial_id)
         123456
@@ -460,8 +455,9 @@ class TryConnectResult(CamelCaseModel):
         result (bool | None): Whether the connection attempt was successful. Defaults to False.
         keys (ApiKeyWithSecret | None): The API keys associated with the successful connection. Defaults to None.
 
-    Example:
-        >>> result = TryConnectResult(result=True, keys=api_key_obj)
+    Examples:
+        >>> keys = ApiKeyWithSecret(api_key="abc123", secret_key="xyz789")
+        >>> result = TryConnectResult(result=True, keys=keys)
         >>> print(result.result)
         True
         >>> print(result.keys)
@@ -480,7 +476,7 @@ class Ping(CamelCaseModel):
     Attributes:
         status (str): The status the cloud reports, such as "we're alive".
 
-    Example:
+    Examples:
         >>> ping = Ping(status="we're alive")
         >>> print(ping.status)
         we're alive
@@ -507,14 +503,14 @@ class FirmwareModel(CamelCaseModel):
         boxradio (str | None): The firmware version of the box radio unit, aliased as "BOXRADIO".
         plug (str | None): The firmware version of the plug, aliased as "PLUG".
 
-    Example:
+    Examples:
         >>> firmware = FirmwareModel(box="1.0.0", central="2.0.0", centralradio="3.0.0")
         >>> print(firmware.box)
-        '1.0.0'
+        1.0.0
         >>> print(firmware.central)
-        '2.0.0'
+        2.0.0
         >>> print(firmware.centralradio)
-        '3.0.0'
+        3.0.0
 
     """
 
@@ -536,7 +532,7 @@ class CentralPlugModel(CamelCaseModel):
         vendor (str | None): The vendor of the central plug device.
         firmwares (FirmwareModel | None): The firmware information of the central plug device.
 
-    Example:
+    Examples:
         >>> firmware = FirmwareModel(box="1.0.0", central="2.0.0", centralradio="3.0.0")
         >>> central_plug = CentralPlugModel(
         ...     name="Central Plug 1",
@@ -571,7 +567,7 @@ class Group(CamelCaseModel):
         input_delay (int | None): The input delay of the group, aliased as 'inputDelay'. Defaults to None.
         output_delay (int | None): The output delay of the group, aliased as 'outputDelay'. Defaults to None.
 
-    Example:
+    Examples:
         >>> group = Group(name="Group A", index=1, input_delay=10, output_delay=20)
         >>> print(group.name)
         Group A
@@ -610,7 +606,7 @@ class ConfAnomaliesModel(CamelCaseModel):
         default_media_alert (bool | None): Indicates if there is a default media alert. Alias: "defaultMediaAlert".
         autoprotection_wired_alert (bool | None): Indicates if there is an autoprotection wired alert. Alias: "autoprotectionWiredAlert".
 
-    Example:
+    Examples:
         >>> anomalies = ConfAnomaliesModel(
         ...     radio_alert=True,
         ...     power_supply_alert=False,
@@ -689,7 +685,7 @@ class SensorModel(CamelCaseModel):
         inhibited (bool | None): Indicates if the sensor is inhibited.
         can_inhibit (bool | None): Indicates if the sensor can be inhibited (alias: canInhibit).
 
-    Example:
+    Examples:
         >>> anomalies = ConfAnomaliesModel(radio_alert=True)
         >>> sensor = SensorModel(
         ...     uid="12345",
@@ -734,7 +730,7 @@ class Cameras(SensorModel):
         installation_date (datetime | None): The date when the camera was installed.
             Defaults to None. This attribute is aliased as 'installationDate' in metadata.
 
-    Example:
+    Examples:
         >>> camera = Cameras(
         ...     uid="12345",
         ...     type=1,
@@ -768,7 +764,7 @@ class TransceiverModel(SensorModel):
     Attributes:
         firmwares (FirmwareModel | None): An optional attribute that holds the firmware information associated with the transceiver.
 
-    Example:
+    Examples:
         >>> firmware = FirmwareModel(box="1.0.0", central="2.0.0", centralradio="3.0.0")
         >>> transceiver = TransceiverModel(
         ...     uid="12345",
@@ -802,7 +798,7 @@ class TransmitterModel(SensorModel):
         firmwares (FirmwareModel | None): The firmware associated with the transmitter, if any.
         is_plug (bool | None): Indicates whether the transmitter is a plug, with metadata alias "isPlug".
 
-    Example:
+    Examples:
         >>> firmware = FirmwareModel(box="1.0.0", central="2.0.0", centralradio="3.0.0")
         >>> transmitter = TransmitterModel(
         ...     uid="12345",
@@ -845,7 +841,7 @@ class CentralInformation(CamelCaseModel):
         can_inhibit (bool | None): Indicates if the central unit can be inhibited. Alias: "canInhibit".
         parameter_gsm_saved (bool | None): Indicates if the GSM parameters are saved. Alias: "parameterGsmSaved".
 
-    Example:
+    Examples:
         >>> anomalies = ConfAnomaliesModel(radio_alert=True)
         >>> firmware = FirmwareModel(box="1.0.0", central="2.0.0", centralradio="3.0.0")
         >>> central_info = CentralInformation(
@@ -887,7 +883,7 @@ class BoxModel(CamelCaseModel):
         vendor (str | None): The vendor of the box. Defaults to None.
         firmwares (FirmwareModel | None): The firmware model associated with the box. Defaults to None.
 
-    Example:
+    Examples:
         >>> firmware = FirmwareModel(box="1.0.0", central="2.0.0", centralradio="3.0.0")
         >>> box = BoxModel(name="Box 1", serial="123456789", vendor="VendorName", firmwares=firmware)
         >>> print(box.name)
@@ -914,7 +910,7 @@ class AlarmModel(CamelCaseModel):
         force_push_config (bool | None): Indicates if the configuration should be forcefully pushed.
                                          This attribute is aliased as "forcePushConfig".
 
-    Example:
+    Examples:
         >>> box = BoxModel(name="Box 1", serial="123456789", vendor="VendorName")
         >>> plug = CentralPlugModel(name="Central Plug 1", serial="987654321", vendor="VendorName")
         >>> alarm = AlarmModel(box=box, plug=plug, tls=True, name="Home Alarm", central=plug, force_push_config=True)
@@ -953,7 +949,7 @@ class AlarmConfiguration(CamelCaseModel):
         partial_group1 (list[int] | None): A list of group marche partielle 1, aliased as "partialGroup1".
         partial_group2 (list[int] | None): A list of group marche partielle 2, aliased as "partialGroup2".
 
-    Example:
+    Examples:
         >>> alarm_config = AlarmConfiguration(
         ...     alarm=AlarmModel(name="Home Alarm"),
         ...     groups=[Group(name="Group A", index=1)],
@@ -1017,7 +1013,7 @@ class DeviceInfos(CamelCaseModel):
         index (int): The index of the device.
         label (str): The label or name of the device.
 
-    Example:
+    Examples:
         >>> device_info = DeviceInfos(index=1, label="Sensor 1")
         >>> print(device_info.index)
         1
@@ -1041,7 +1037,7 @@ class DeviceList(CamelCaseModel):
         sirens (list[DeviceInfos] | None): A list of siren devices or None if not available.
         transmitters (list[DeviceInfos] | None): A list of transmitter devices or None if not available.
 
-    Example:
+    Examples:
         >>> device_list = DeviceList(
         ...     cameras=[DeviceInfos(index=1, label="Camera 1")],
         ...     commands=[DeviceInfos(index=2, label="Command 1")],
@@ -1086,13 +1082,13 @@ class SystemDetails(CamelCaseModel):
     The API sends the five `Is*` fields as "True" / "False" strings; they are parsed
     into booleans.
 
-    Example:
+    Examples:
         >>> system_details = SystemDetails(
-        ...     device_type="Camera",
+        ...     device_type="PLUG_IP~DIAGRAL",
         ...     firmware_version="1.0.0",
         ...     ip_address="192.168.1.1",
         ...     ipoda_version="2.0.0",
-        ...     mode="Active",
+        ...     mode="900",
         ...     first_vocal_contact="2023-10-01T12:00:00Z",
         ...     is_alarm_file_present=True,
         ...     is_mjpeg_archive_video_supported=True,
@@ -1101,7 +1097,7 @@ class SystemDetails(CamelCaseModel):
         ...     is_video_password_protected=True
         ... )
         >>> print(system_details.device_type)
-        Camera
+        PLUG_IP~DIAGRAL
 
     """
 
@@ -1137,7 +1133,7 @@ class SystemStatus(CamelCaseModel):
         status (str): The current status of the system.
         activated_groups (list[int]): A list of IDs representing the activated groups within the system.
 
-    Example:
+    Examples:
         >>> system_status = SystemStatus(status="Active", activated_groups=[1, 2, 3])
         >>> print(system_status.status)
         Active
@@ -1163,7 +1159,7 @@ class AnomalyName(CamelCaseModel):
         id (int): The unique identifier for the anomaly.
         name (str): The name of the anomaly.
 
-    Example:
+    Examples:
         >>> anomaly = AnomalyName(id=1, name="Low Battery")
         >>> print(anomaly.id)
         1
@@ -1187,7 +1183,7 @@ class AnomalyDetail(CamelCaseModel):
         group (int | None): An optional group identifier for the anomaly.
         label (str | None): An optional label describing the anomaly.
 
-    Example:
+    Examples:
         >>> anomaly_names = [AnomalyName(id=1, name="Low Battery")]
         >>> anomaly_detail = AnomalyDetail(
         ...     anomaly_names=anomaly_names,
@@ -1227,7 +1223,7 @@ class Anomalies(CamelCaseModel):
         from_dict(data: dict) -> Anomalies:
             Create an instance of Anomalies from a dictionary.
 
-    Example:
+    Examples:
         >>> data = {
         ...     "created_at": "2025-02-16T10:15:12.625165",
         ...     "sensors": [
@@ -1326,7 +1322,7 @@ class WebhookSubscription(CamelCaseModel):
         alert (bool): Indicates whether alert notifications are enabled.
         state (bool): Indicates whether state notifications are enabled.
 
-    Example:
+    Examples:
         >>> subscription = WebhookSubscription(anomaly=True, alert=False, state=True)
         >>> print(subscription.anomaly)
         True
@@ -1347,7 +1343,7 @@ class Webhook(CamelCaseModel):
         webhook_url (str): The URL to which the webhook will send data.
         subscriptions (WebhookSubscription): The subscription details for the webhook.
 
-    Example:
+    Examples:
         >>> subscription = WebhookSubscription(anomaly=True, alert=False, state=True)
         >>> webhook = Webhook(transmitter_id="12345", webhook_url="https://example.com/webhook", subscriptions=subscription)
         >>> print(webhook.transmitter_id)
@@ -1369,7 +1365,7 @@ class WebHookNotificationDetail(CamelCaseModel):
         device_index (str | None): The index of the device, when provided.
         device_label (str | None): The label of the device, which is optional.
 
-    Example:
+    Examples:
         >>> detail = WebHookNotificationDetail(device_type="Sensor", device_index="1", device_label="Front Door Sensor")
         >>> print(detail.device_type)
         Sensor
@@ -1393,11 +1389,11 @@ class WebHookNotificationUser(CamelCaseModel):
         username (str | None): The username of the user.
         user_type (str | None): The type of the user.
 
-    Example:
+    Examples:
         >>> user = WebHookNotificationUser(username="Dark Vador", user_type="owner")
         >>> print(user.username)
         Dark Vador
-        >>> print(detail.user_type)
+        >>> print(user.user_type)
         owner
 
     """
@@ -1426,7 +1422,7 @@ class WebHookNotification(CamelCaseModel):
         from_dict(data: dict) -> WebHookNotification:
             Create an instance of WebHookNotification from a dictionary.
 
-    Example:
+    Examples:
         >>> data = {
         ...     "transmitter_id": "12345",
         ...     "alarm_code": "1130",
@@ -1623,7 +1619,7 @@ class Rude(CamelCaseModel):
     Methods:
         __post_init__(): Post-initialization processing to validate the mode attribute.
 
-    Example:
+    Examples:
         >>> rude = Rude(name="Device1", canal="Canal1", mode="ON")
         >>> print(rude.name)
         Device1
@@ -1653,7 +1649,7 @@ class Rudes(CamelCaseModel):
     Attributes:
         rudes (list[Rude]): A list of Rude objects.
 
-    Example:
+    Examples:
         >>> rude1 = Rude(name="Device1", canal="Canal1", mode="ON")
         >>> rude2 = Rude(name="Device2", canal="Canal2", mode="PULSE")
         >>> rudes = Rudes(rudes=[rude1, rude2])
