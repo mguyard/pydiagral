@@ -20,7 +20,7 @@
         - `DIAGRAL_SERIAL_ID`: for every scenario but `ping` and `systems`. If you do not know it, leave it empty, run `systems` to find it, then add it as described in the note below;
         - `DIAGRAL_PIN_CODE`: to read the status and details, and to arm or disarm.
 
-        A secret you already saved, for an earlier codespace, shows *Associated with repository* instead of a field: the codespace uses its saved value. Change it as described in the note below.
+        This page saves the values you enter in your account's Codespaces secrets. So when you create another codespace, a secret entered the first time shows *Associated with repository* instead of a field: the codespace uses the saved value. Change it as described in the note below.
 
     3. Click *Create codespace*. It starts the repository's [dev container](https://github.com/mguyard/pydiagral/blob/main/CONTRIBUTING.md#-dev-container), with pydiagral and every tool installed. On first start, it opens this guide in a browser tab; its terminal shows the guide's address on every start.
 
