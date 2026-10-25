@@ -845,10 +845,10 @@ async def test_get_system_status_without_apikey(mock_request):
     1. Set up the mock responses for the login and get_system_status API calls.
     2. Create an instance of `DiagralAPI` with the provided credentials.
     3. Perform the login operation.
-    4. Attempt to get the system status and expect an `ConfigurationError` to be raised.
+    4. Attempt to get the system status and expect an `AuthenticationError` to be raised.
 
     Raises:
-        ConfigurationError: If the API key is not provided or invalid.
+        AuthenticationError: If the API key is not provided or invalid.
 
     """
     mock_request.side_effect = [
@@ -861,7 +861,7 @@ async def test_get_system_status_without_apikey(mock_request):
         pincode=PIN_CODE,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(ConfigurationError):
+        with pytest.raises(AuthenticationError):
             await diagral.get_system_status()
 
 
@@ -886,10 +886,10 @@ async def test_get_system_status_without_pincode(mock_request):
         1. Create an instance of `DiagralAPI` with the provided credentials.
         2. Call the `login` method to authenticate and obtain an access token.
         3. Attempt to call the `get_system_status` method without providing a pincode.
-        4. Verify that an `ConfigurationError` is raised, indicating that a pincode is required.
+        4. Verify that an `AuthenticationError` is raised, indicating that a pincode is required.
 
     Expected Result:
-        - An `ConfigurationError` is raised when attempting to get the system status without a pincode.
+        - An `AuthenticationError` is raised when attempting to get the system status without a pincode.
 
     """
     mock_request.side_effect = [
@@ -903,7 +903,7 @@ async def test_get_system_status_without_pincode(mock_request):
         secret_key=SECRET_KEY,
     ) as diagral:
         await diagral.login()
-        with pytest.raises(ConfigurationError):
+        with pytest.raises(AuthenticationError):
             await diagral.get_system_status()
 
 

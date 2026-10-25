@@ -539,40 +539,28 @@ class DiagralAPI:
         return result
 
     def __credentials(
-        self,
-        purpose: str,
-        *,
-        with_pin: bool = False,
-        error: type[DiagralAPIError] = AuthenticationError,
+        self, purpose: str, *, with_pin: bool = False
     ) -> tuple[str, str, str | None]:
         """Return the API key, secret key and PIN code an operation needs.
 
         Raises:
-            DiagralAPIError: `error`, naming `purpose`, if one of them is missing.
+            AuthenticationError: Naming `purpose`, if one of them is missing.
 
         """
         if not self.__apikey or not self.__secret_key:
-            raise error(f"API key and secret key required to {purpose}")
+            raise AuthenticationError(f"API key and secret key required to {purpose}")
         if with_pin and not self.__pincode:
-            raise error(f"PIN code required to {purpose}")
+            raise AuthenticationError(f"PIN code required to {purpose}")
         return self.__apikey, self.__secret_key, self.__pincode if with_pin else None
 
-    def __hmac_headers(
-        self,
-        purpose: str,
-        *,
-        with_pin: bool = False,
-        error: type[DiagralAPIError] = AuthenticationError,
-    ) -> dict[str, str]:
+    def __hmac_headers(self, purpose: str, *, with_pin: bool = False) -> dict[str, str]:
         """Build the signed headers of an HMAC-authenticated request.
 
         Raises:
-            DiagralAPIError: `error`, naming `purpose`, if a credential is missing.
+            AuthenticationError: Naming `purpose`, if a credential is missing.
 
         """
-        apikey, secret_key, pincode = self.__credentials(
-            purpose, with_pin=with_pin, error=error
-        )
+        apikey, secret_key, pincode = self.__credentials(purpose, with_pin=with_pin)
         timestamp = str(int(time.time()))
         headers: dict[str, str] = {"X-PIN-CODE": pincode} if pincode else {}
         headers |= {
@@ -710,13 +698,11 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the retrieved system status.
 
         Raises:
-            ConfigurationError: If the API key, secret key, or PIN code is not provided.
+            AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
 
-        _HEADERS = self.__hmac_headers(
-            "get system status", with_pin=True, error=ConfigurationError
-        )
+        _HEADERS = self.__hmac_headers("get system status", with_pin=True)
         response_data, *_ = await self._request(
             "GET", f"systems/{self.serial_id}/status", headers=_HEADERS
         )
