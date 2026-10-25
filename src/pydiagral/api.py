@@ -568,11 +568,12 @@ class DiagralAPI:
         )
         return self.alarm_configuration
 
-    async def get_alarm_name(self) -> str:
+    async def get_alarm_name(self) -> str | None:
         """Get the name of the alarm from the configuration.
 
         Returns:
-            str: The name of the alarm from the configuration.
+            str | None: The name of the alarm from the configuration, or None when the
+                configuration does not name it.
 
         Raises:
             ConfigurationError: If unable to retrieve the alarm configuration.
@@ -588,7 +589,8 @@ class DiagralAPI:
         if not self.alarm_configuration:
             raise ConfigurationError("Failed to retrieve alarm configuration")
 
-        return self.alarm_configuration.alarm.name
+        alarm = self.alarm_configuration.alarm
+        return alarm.name if alarm else None
 
     async def get_devices_info(self) -> DeviceList:
         """Asynchronously retrieves information about various device types from the alarm configuration.
@@ -867,15 +869,10 @@ class DiagralAPI:
         if not self.__pincode:
             raise AuthenticationError("PIN code required to get system details")
 
-        # Get the configuration if it is not already available
-        if not self.alarm_configuration:
-            await self.get_configuration()
-
-        # Check if the groups are valid
+        configuration = self.alarm_configuration or await self.get_configuration()
+        existing_groups = [g.index for g in configuration.groups or []]
         invalid_groups: list[int] = [
-            group
-            for group in groups
-            if group not in [g.index for g in self.alarm_configuration.groups]
+            group for group in groups if group not in existing_groups
         ]
         if invalid_groups:
             raise ConfigurationError(
