@@ -2431,6 +2431,41 @@ async def test_set_apikey_with_incomplete_response(mock_request):
             await diagral.set_apikey()
 
 
+@pytest.mark.parametrize(
+    ("validation_error", "delete_result"),
+    [
+        (ClientError("timeout"), ({}, 200)),
+        (ServerError("offline", 503), ({}, 200)),
+        (APIValidationError("not listed"), ServerError("offline", 503)),
+    ],
+    ids=["transport-deleted", "server-deleted", "rejected-delete-fails"],
+)
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_set_apikey_deletes_the_key_when_validation_fails(
+    mock_request, validation_error, delete_result
+):
+    """Test that a created key that fails validation is deleted and forgotten."""
+    mock_request.side_effect = [
+        ({"access_token": FAKE_TOKEN}, 200),
+        ({"api_key": API_KEY, "secret_key": SECRET_KEY}, 200),
+        validation_error,
+        delete_result,
+    ]
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID
+    ) as diagral:
+        with pytest.raises(type(validation_error)) as caught:
+            await diagral.set_apikey()
+    assert caught.value is validation_error
+    method, endpoint = mock_request.call_args.args[:2]
+    assert (method, endpoint) == (
+        "DELETE",
+        f"users/systems/{SERIAL_ID}/api_keys/{API_KEY}",
+    )
+    assert diagral._DiagralAPI__apikey is None  # noqa: SLF001
+    assert diagral._DiagralAPI__secret_key is None  # noqa: SLF001
+
+
 @patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
 async def test_get_anomalies_when_none(mock_request):
     """Test that a 404 "No anomalies found" returns an empty dict (hass-diagral relies on it)."""

@@ -363,13 +363,12 @@ class DiagralAPI:
                 raise APIKeyCreationError(error_msg)
 
             _LOGGER.info("Successfully created new API key")
-            # Verify if the API key is valid
             try:
                 await self.validate_apikey()
                 _LOGGER.info("Successfully verified new API key")
-            except APIValidationError:
+            except DiagralAPIError:
                 _LOGGER.error("Created API key failed validation")
-                self.__apikey = None
+                await self.__discard_created_apikey()
                 raise
         except ModelValidationError as err:
             raise APIKeyCreationError("Invalid API key response") from err
@@ -378,6 +377,16 @@ class DiagralAPI:
             raise
 
         return ApiKeyWithSecret(api_key=self.__apikey, secret_key=self.__secret_key)
+
+    async def __discard_created_apikey(self) -> None:
+        """Delete a key `set_apikey()` created but cannot hand over, best effort."""
+        try:
+            await self.delete_apikey()
+        except DiagralAPIError:
+            _LOGGER.warning("Unable to delete the API key that could not be used")
+        finally:
+            self.__apikey = None
+            self.__secret_key = None
 
     async def validate_apikey(self, apikey: str | None = None) -> None:
         """Validate the current or provided API key by checking it against the list of valid keys.
