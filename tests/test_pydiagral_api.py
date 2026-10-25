@@ -34,6 +34,7 @@ from pydiagral.models import (
     Anomalies,
     AnomalyDetail,
     AnomalyName,
+    ApiKeys,
     ApiKeyWithSecret,
     DeviceList,
     Rude,
@@ -3191,4 +3192,99 @@ def test_invalid_notification_date_does_not_expose_payload(
     payload = {**notification, "date_time": "private-value"}
     with pytest.raises(ModelValidationError) as caught:
         WebHookNotification.from_dict(payload)
+    assert "private-value" not in "".join(traceback.format_exception(caught.value))
+
+
+############################
+# Model payload validation #
+############################
+
+_ANOMALY_DEVICE = {"serial": "SN1", "anomaly_names": [{"id": 1, "name": "Low Battery"}]}
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [],
+        {},
+        {"created_at": "not-a-date"},
+        {"created_at": 1739700912},
+        {"created_at": "2025-02-16T10:15:12", "sensors": [None]},
+        {"created_at": "2025-02-16T10:15:12", "sensors": [{"anomaly_names": [1]}]},
+    ],
+    ids=[
+        "not-an-object",
+        "no-created-at",
+        "bad-date",
+        "numeric-date",
+        "null-device",
+        "bad-anomaly-name",
+    ],
+)
+def test_malformed_anomalies_raise_model_validation_error(payload):
+    """Test that a malformed anomalies payload raises ModelValidationError only."""
+    with pytest.raises(ModelValidationError, match=r"Invalid Anomal\w+ payload"):
+        Anomalies.from_dict(payload)
+
+
+def test_anomalies_accept_null_device_lists_and_names():
+    """Test that null device lists and anomaly names read as empty."""
+    anomalies = Anomalies.from_dict(
+        {
+            "created_at": "2025-02-16T10:15:12",
+            "sensors": None,
+            "sirens": [{"serial": "SN2", "anomaly_names": None}],
+        }
+    )
+    assert anomalies.sensors == []
+    assert anomalies.sirens[0].anomaly_names == []
+
+
+def test_anomaly_names_ignore_unknown_keys():
+    """Test that an extra key in an anomaly name does not break parsing."""
+    device = {**_ANOMALY_DEVICE, "anomaly_names": [{"id": 1, "name": "x", "new": 2}]}
+    anomalies = Anomalies.from_dict(
+        {"created_at": "2025-02-16T10:15:12", "sensors": [device]}
+    )
+    assert anomalies.sensors[0].anomaly_names == [AnomalyName(id=1, name="x")]
+
+
+@pytest.mark.parametrize(
+    ("created_at", "expected"),
+    [
+        ("2025-02-16T10:15:12", datetime(2025, 2, 16, 10, 15, 12, tzinfo=UTC)),
+        ("2025-02-16T10:15:12+02:00", datetime(2025, 2, 16, 8, 15, 12, tzinfo=UTC)),
+    ],
+    ids=["naive-is-utc", "offset-converted"],
+)
+def test_anomalies_created_at_is_utc(created_at, expected):
+    """Test that `created_at` is UTC, converting an explicit offset."""
+    anomalies = Anomalies.from_dict({"created_at": created_at})
+    assert anomalies.created_at == expected
+    assert anomalies.created_at.utcoffset().total_seconds() == 0
+
+
+def test_api_keys_ignore_unknown_keys_and_missing_list():
+    """Test that API key entries may carry extra keys and the list may be absent."""
+    keys = ApiKeys.from_dict({"api_keys": [{"api_key": "k", "created_at": "x"}]})
+    assert [key.api_key for key in keys.api_keys] == ["k"]
+    assert ApiKeys.from_dict({}).api_keys == []
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [None, [], {"status": "START", "activated_groups": [{"index": 1}]}],
+    ids=["null", "list", "object-in-int-list"],
+)
+def test_generic_models_raise_model_validation_error(payload):
+    """Test that the generic parser reports a payload of the wrong shape."""
+    with pytest.raises(ModelValidationError, match="Invalid SystemStatus payload"):
+        SystemStatus.from_dict(payload)
+
+
+def test_model_validation_error_does_not_quote_the_payload():
+    """Keep payload values out of the parser error and its traceback."""
+    payload = {"created_at": "private-value"}
+    with pytest.raises(ModelValidationError) as caught:
+        Anomalies.from_dict(payload)
     assert "private-value" not in "".join(traceback.format_exception(caught.value))
