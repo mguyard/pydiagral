@@ -1,7 +1,7 @@
 {
     "alarm": {
         "box": {
-            "serial": "18139037029D91",
+            "serial": "SAMPLEBOXSERIAL",
             "vendor": "diagral",
             "firmwares": {
                 "BOX": "1.6.0",
