@@ -4,7 +4,9 @@
             "serial": "18139037029D91",
             "vendor": "diagral",
             "firmwares": {
-                "BOX": "1.6.0"
+                "BOX": "1.6.0",
+                "BOXRADIO": "2.1.0",
+                "PLUGKNX": "1.4.2"
             }
         },
         "tls": false,

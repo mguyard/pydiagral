@@ -453,6 +453,9 @@ class FirmwareModel(CamelCaseModel):
         box (str | None): The firmware version of the box, aliased as "BOX".
         central (str | None): The firmware version of the central unit, aliased as "CENTRAL".
         centralradio (str | None): The firmware version of the central radio unit, aliased as "CENTRALRADIO".
+        plugknx (str | None): The firmware version of the KNX plug, aliased as "PLUGKNX".
+        boxradio (str | None): The firmware version of the box radio unit, aliased as "BOXRADIO".
+        plug (str | None): The firmware version of the plug, aliased as "PLUG".
 
     Example:
         >>> firmware = FirmwareModel(box="1.0.0", central="2.0.0", centralradio="3.0.0")
@@ -468,6 +471,9 @@ class FirmwareModel(CamelCaseModel):
     box: str | None = field(default=None, metadata={"alias": "BOX"})
     central: str | None = field(default=None, metadata={"alias": "CENTRAL"})
     centralradio: str | None = field(default=None, metadata={"alias": "CENTRALRADIO"})
+    plugknx: str | None = field(default=None, metadata={"alias": "PLUGKNX"})
+    boxradio: str | None = field(default=None, metadata={"alias": "BOXRADIO"})
+    plug: str | None = field(default=None, metadata={"alias": "PLUG"})
 
 
 @dataclass

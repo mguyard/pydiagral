@@ -541,6 +541,32 @@ async def test_get_configuration(mock_request):
         assert not configuration.sensors[0].anomalies.loop_alert
 
 
+@patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
+async def test_get_configuration_box_firmwares(mock_request):
+    """Test that the box firmware versions the API sends are all kept."""
+    mock_request.return_value = (load_sample("configuration_sample.json"), 200)
+    async with DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    ) as diagral:
+        configuration = await diagral.get_configuration()
+
+    firmwares = configuration.alarm.box.firmwares
+    assert (firmwares.box, firmwares.boxradio, firmwares.plugknx) == (
+        "1.6.0",
+        "2.1.0",
+        "1.4.2",
+    )
+
+
+def test_firmware_model_plug():
+    """Test that the plug firmware version is read from its `PLUG` key."""
+    assert models.FirmwareModel.from_dict({"PLUG": "3.0.1"}).plug == "3.0.1"
+
+
 @pytest.mark.asyncio
 @patch("pydiagral.DiagralAPI._request", new_callable=AsyncMock)
 async def test_get_configuration_without_apikey(mock_request):
