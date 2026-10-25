@@ -315,6 +315,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#untested-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Untested features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -507,6 +518,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#untested-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Untested features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -575,12 +597,12 @@
 <p>Welcome to the documentation for pydiagral, a Python library for interacting with the Diagral API.</p>
 <h2 id="about-pydiagral">About pydiagral</h2>
 <p>pydiagral is an asynchronous Python interface for the Diagral alarm system. This library allows users to control and monitor their Diagral alarm system through the official API.</p>
-<blockquote>
-<p>[!CAUTION]</p>
+<div class="admonition danger">
+<p class="admonition-title">Caution</p>
 <p>Please note that the Diagral alarm system is a security system, and it may be preferable not to connect it to any automation platform for security reasons.
 In no event shall the developer of <a href="https://github.com/mguyard/pydiagral"><code>pydiagral</code></a> library be held liable for any issues arising from the use of this <a href="https://github.com/mguyard/pydiagral"><code>pydiagral</code></a> library.
 The user installs and uses this integration at their own risk and with full knowledge of the potential implications.</p>
-</blockquote>
+</div>
 <h2 id="requirement">Requirement</h2>
 <p>To use this library, which leverages the Diagral APIs, you must have a Diagral box (DIAG56AAX or DIAG59AAX). This box connects your Diagral alarm system to the internet, enabling interaction with the alarm system via the API.
 <strong>DIAG56AAX is End of Sales but you can find more information about the <a href="https://www.diagral.fr/2026/01/19/nouvelle-centrale-dalarme-ip-4g-diagral-diag99agx/">DIAG59AAX</a> available inside the DIAG99AGX.</strong></p>
@@ -594,8 +616,9 @@ The user installs and uses this integration at their own risk and with full know
 <p>Connect to the Diagral API with username and password</p>
 </li>
 <li>Log in to obtain an access token</li>
+<li>Create, validate, and delete API keys</li>
 <li>
-<p>Create, validate, and delete API keys</p>
+<p>List the systems of the account and their API keys, to discover the serial IDs</p>
 </li>
 <li>
 <p><strong>System Configuration</strong>:</p>
@@ -610,6 +633,7 @@ The user installs and uses this integration at their own risk and with full know
 <p>Obtain system details</p>
 </li>
 <li>Retrieve the current system status</li>
+<li>Check that the Diagral cloud answers (health check, no credential needed)</li>
 <li>Manage webhooks</li>
 <li>
 <p>Manage anomalies</p>
@@ -618,8 +642,29 @@ The user installs and uses this integration at their own risk and with full know
 <p><strong>System Interraction</strong>:</p>
 </li>
 <li>Activate or Desactivate system (partially or globally)</li>
-<li>List automatism rules (running their actions is not implemented yet)</li>
+<li>
+<p>List automatism rules and run their actions</p>
+</li>
+<li>
+<p><strong>Diagnostics</strong>:</p>
+</li>
+<li>List what Diagral sent that the models did not expect, without any value the user entered (<code>pydiagral.models.unexpected_data()</code>)</li>
+<li>Describe the structure of the last response of each read, without any value the user entered (<code>DiagralAPI.response_shapes()</code>)</li>
 </ul>
+<h2 id="untested-features">Untested features</h2>
+<p>Some parts of pydiagral are built from the Diagral API documentation only, because they could not be checked on a real installation. pydiagral logs a warning the first time each of them is used:</p>
+<ul>
+<li><strong>Cameras</strong>: <code>AlarmConfiguration.cameras</code> follows the <code>CameraModel</code> of the Diagral OpenAPI specification. The warning appears when a configuration includes cameras.</li>
+<li><strong>Automatisms</strong>: <code>get_automatism_rudes()</code> lists the automatisms and <code>set_automatism_action()</code> runs one. Only an empty list has been seen; what <code>TIMER</code> does, and whether an action must match the automatism's mode, are unknown.</li>
+<li><strong>Anomaly deletion</strong>: <code>delete_anomalies()</code> deletes an anomaly. Which identifier it expects is unknown: the anomalies <code>get_anomalies()</code> returns have none of their own.</li>
+<li><strong>Product enabling and disabling</strong>: <code>enable_product()</code> and <code>disable_product()</code> follow the specification. What disabling does, and which identifier designates a device, are unknown.</li>
+</ul>
+<p>If you own the matching equipment or use these calls, please <a href="https://github.com/mguyard/pydiagral/issues">open an issue</a> describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:</p>
+<ul>
+<li>With <a href="https://github.com/mguyard/hass-diagral">hass-diagral</a>, attach the integration's diagnostics: they include both lists below.</li>
+<li>From Python, attach the output of <code>pydiagral.models.unexpected_data()</code>, and of <code>response_shapes()</code> called on the client after the calls in question.</li>
+</ul>
+<p>The debug log shows the full answers instead: enable the <code>pydiagral</code> logger at debug level, with <code>logging.getLogger("pydiagral").setLevel(logging.DEBUG)</code>, or in Home Assistant with <code>pydiagral: debug</code> under <code>logger: logs:</code>. Keys, tokens, PIN codes and serial numbers are redacted, but the log still shows the names of your devices: read it before posting.</p>
 <h2 id="quick-start">Quick Start</h2>
 <p>To get started with pydiagral, follow these steps:</p>
 <ol>
@@ -670,6 +715,26 @@ LOG_LEVEL=DEBUG
         ...
 </code></pre>
 <p>Without <code>session</code>, the client opens its own on <code>async with</code> and closes it on exit.</p>
+<ol>
+<li>Brand</li>
+</ol>
+<p>Diagral shares its cloud with sister brands. For an account of another brand, set <code>vendor</code> when creating the client, to one of <code>DIAGRAL</code> (the default), <code>DAITEM</code>, <code>EDAITEM</code>, <code>LOGISTYALMA</code> or <code>DISTRIBUTION</code>, in any case:</p>
+<pre><code class="language-python">async with DiagralAPI(
+    username=username,
+    password=password,
+    serial_id=serial_id,
+    vendor=&quot;DAITEM&quot;,
+) as diagral:
+    ...
+</code></pre>
+<ol>
+<li>Discover the serial IDs</li>
+</ol>
+<p>Without a serial ID, the client can still log in and list the systems of the account. Create it with the serial ID you pick to use every other call:</p>
+<pre><code class="language-python">async with DiagralAPI(username=username, password=password) as diagral:
+    systems = await diagral.get_systems()
+serial_id = systems[0].serial_id
+</code></pre>
 <h2 id="api-structure">API Structure</h2>
 <p>For detailed API documentation, please refer to the following sections:</p>
 <ul>
