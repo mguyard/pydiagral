@@ -149,6 +149,8 @@ Because `main` is the default branch, a `Closes #N` keyword only fires when the 
 [optional body — bullet points]
 
 Tests: ✅ N passed, ❌ 0 failed, ⚠️ 0 errors
+
+[optional BREAKING CHANGE: footer, always last]
 ```
 
 - First line in English, 72 characters maximum. Use backticks for code references.
@@ -156,7 +158,7 @@ Tests: ✅ N passed, ❌ 0 failed, ⚠️ 0 errors
 - Scope is the module filename without extension (`api`, `models`, `exceptions`, `utils`), or the area: `tests`, `deps`, `workflow`, `devcontainer`, `readme`, `index`…
 - The `Tests:` line is required whenever `src/` or `tests/` changed. Use `Tests: N/A (no src or tests change)` otherwise.
 - The body explains **why**. Never restate what the diff already shows.
-- A breaking change to a contract listed above takes a `BREAKING CHANGE:` footer.
+- A breaking change to a contract listed above takes a `BREAKING CHANGE:` footer, after the `Tests:` line. The commit parser appends every following line to the note, so a `Tests:` line placed after it ends up in the release notes.
 - Keep issue and PR references (`#N`, `owner/repo#N`) out of a `BREAKING CHANGE:` paragraph. The commit parser ends the note at the first line that holds one and drops that line from the release notes. Put the reference in the body instead.
 
 `release.config.cjs` uses semantic-release's default (Angular) presets: only `feat`, `fix` and `perf` — plus reverts and breaking changes — trigger a release and appear in `CHANGELOG.md`. A `docs`, `refactor` or `chore` commit is invisible to users and to PyPI.
