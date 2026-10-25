@@ -19,6 +19,9 @@
         - `DIAGRAL_USERNAME` and `DIAGRAL_PASSWORD`: always;
         - `DIAGRAL_SERIAL_ID`: for every scenario but `ping` and `systems`. If you do not know it, leave it empty, run `systems` to find it, then add it as described in the note below;
         - `DIAGRAL_PIN_CODE`: to read the status and details, and to arm or disarm.
+
+        A secret you already saved, for an earlier codespace, shows *Associated with repository* instead of a field: the codespace uses its saved value. Change it as described in the note below.
+
     3. Click *Create codespace*. It starts the repository's [dev container](https://github.com/mguyard/pydiagral/blob/main/CONTRIBUTING.md#-dev-container), with pydiagral and every tool installed. On first start, it opens this guide in a browser tab; its terminal shows the guide's address on every start.
 
     GitHub keeps these secrets [encrypted in your account](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces), never in the repository, and gives them to the script as environment variables. It does not ask again for your next codespaces on this fork.
