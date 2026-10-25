@@ -578,9 +578,8 @@ class DiagralAPI:
             "GET", f"systems/{self.serial_id}/configurations", headers=_HEADERS
         )
         self.alarm_configuration = AlarmConfiguration.from_dict(response_data)
-        _LOGGER.debug(
-            "Successfully retrieved configuration: %s", self.alarm_configuration
-        )
+        # The redacted payload is already logged by from_dict().
+        _LOGGER.debug("Successfully retrieved configuration")
         return self.alarm_configuration
 
     async def get_alarm_name(self) -> str | None:
@@ -684,7 +683,9 @@ class DiagralAPI:
         response_data, *_ = await self._request(
             "GET", f"systems/{self.serial_id}", headers=_HEADERS
         )
-        _LOGGER.debug("Successfully retrieved system details: %s", response_data)
+        _LOGGER.debug(
+            "Successfully retrieved system details: %s", Redacted(response_data)
+        )
         return SystemDetails.from_dict(response_data)
 
     async def get_system_status(self) -> SystemStatus:
@@ -727,7 +728,9 @@ class DiagralAPI:
         response_data, *_ = await self._request(
             "GET", f"systems/{self.serial_id}/status", headers=_HEADERS
         )
-        _LOGGER.debug("Successfully retrieved system status: %s", response_data)
+        _LOGGER.debug(
+            "Successfully retrieved system status: %s", Redacted(response_data)
+        )
         return SystemStatus.from_dict(response_data)
 
     async def __system_action(self, action: str) -> SystemStatus:
@@ -782,7 +785,9 @@ class DiagralAPI:
             "POST", f"systems/{self.serial_id}/{action}", headers=_HEADERS
         )
         _LOGGER.debug(
-            "Successfully performed action %s: %s", action.upper(), response_data
+            "Successfully performed action %s: %s",
+            action.upper(),
+            Redacted(response_data),
         )
         return SystemStatus.from_dict(response_data)
 
@@ -916,7 +921,10 @@ class DiagralAPI:
             json=data,
         )
         _LOGGER.debug(
-            "Successfully %s %s: %s", action.replace("_", " "), groups, response_data
+            "Successfully %s %s: %s",
+            action.replace("_", " "),
+            groups,
+            Redacted(response_data),
         )
         return SystemStatus.from_dict(response_data)
 

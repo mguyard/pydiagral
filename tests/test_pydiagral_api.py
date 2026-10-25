@@ -3346,3 +3346,18 @@ def test_to_dict_uses_aliases_and_nested_models():
     assert configuration.to_dict() == {
         "groups": [{"name": "Day", "index": 1, "inputDelay": 30}]
     }
+
+
+def test_from_dict_matches_aliases_case_insensitively():
+    """Test that keys match a field's alias or name whatever their case."""
+    group = Group.from_dict({"NAME": "Night", "Index": 2, "INPUTDELAY": 15})
+    assert group == Group(name="Night", index=2, input_delay=15)
+
+
+def test_parsing_logs_one_redacted_debug_line(caplog):
+    """Test that a parse logs the payload once, redacted, not once per field."""
+    configuration = load_sample("configuration_sample.json")
+    with caplog.at_level(logging.DEBUG, logger="pydiagral.models"):
+        AlarmConfiguration.from_dict(configuration)
+    assert len(caplog.records) == 1
+    assert caplog.records[0].getMessage().startswith("Parsing AlarmConfiguration")
