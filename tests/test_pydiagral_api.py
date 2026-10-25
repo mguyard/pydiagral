@@ -3360,13 +3360,26 @@ def test_from_dict_matches_aliases_case_insensitively():
     assert group == Group(name="Night", index=2, input_delay=15)
 
 
-def test_parsing_logs_one_redacted_debug_line(caplog):
-    """Test that a parse logs the payload once, redacted, not once per field."""
-    configuration = load_sample("configuration_sample.json")
-    with caplog.at_level(logging.DEBUG, logger="pydiagral.models"):
-        AlarmConfiguration.from_dict(configuration)
-    assert len(caplog.records) == 1
-    assert caplog.records[0].getMessage().startswith("Parsing AlarmConfiguration")
+def test_iso_strings_become_datetimes():
+    """Test that a field annotated as datetime is parsed from its ISO string."""
+    configuration = AlarmConfiguration.from_dict(
+        {"readingDate": "2024-01-01T10:00:00Z"}
+    )
+    assert configuration.reading_date == datetime(2024, 1, 1, 10, tzinfo=UTC)
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unparsable_date_is_reported_once_and_read_as_none(caplog):
+    """Test that an unknown date format warns once instead of failing the parse."""
+    payload = {"readingDate": "private-date"}
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        first = AlarmConfiguration.from_dict(payload)
+        AlarmConfiguration.from_dict(payload)
+    assert first.reading_date is None
+    warnings = [r for r in caplog.records if "reading_date" in r.getMessage()]
+    assert len(warnings) == 1
+    assert "is not an ISO date" in warnings[0].getMessage()
+    assert "private-date" not in caplog.text
 
 
 @pytest.mark.usefixtures("unreported_fields")
@@ -3396,3 +3409,12 @@ def test_optional_fields_are_not_reported(caplog):
         AlarmConfiguration.from_dict({})
         Group.from_dict({})
     assert not caplog.records
+
+
+def test_parsing_logs_one_redacted_debug_line(caplog):
+    """Test that a parse logs the payload once, redacted, not once per field."""
+    configuration = load_sample("configuration_sample.json")
+    with caplog.at_level(logging.DEBUG, logger="pydiagral.models"):
+        AlarmConfiguration.from_dict(configuration)
+    assert len(caplog.records) == 1
+    assert caplog.records[0].getMessage().startswith("Parsing AlarmConfiguration")

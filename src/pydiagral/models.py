@@ -105,6 +105,15 @@ def _report_unexpected_field(model: type, name: str, problem: str) -> None:
     )
 
 
+def _parse_datetime(model: type, name: str, value: str) -> datetime | None:
+    """Parse an ISO date; an unknown format is reported and read as None."""
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        _report_unexpected_field(model, name, "is not an ISO date")
+        return None
+
+
 class CamelCaseModel:
     """CamelCaseModel is a base class for models that need to convert between snake_case and camelCase keys.
 
@@ -182,8 +191,8 @@ class CamelCaseModel:
 
         Each field is matched, case-insensitively, against its `alias` or its name; keys
         are not converted from camelCase. Nested dictionaries and lists of dictionaries
-        become the annotated models. A missing field is set to None, and a warning
-        asks to report it when the model requires it.
+        become the annotated models, and ISO strings become `datetime` objects. A missing
+        field is set to None.
 
         Args:
             cls (type[Self]): The class that this method is a part of.
@@ -227,6 +236,8 @@ class CamelCaseModel:
                     else item
                     for item in value
                 ]
+            elif spec.type is datetime and isinstance(value, str):
+                init_values[spec.name] = _parse_datetime(target_cls, spec.name, value)
             else:
                 init_values[spec.name] = value
 
