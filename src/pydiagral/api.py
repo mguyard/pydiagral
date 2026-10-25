@@ -20,6 +20,7 @@ from .constants import (
     BASE_URL,
     DEFAULT_REQUEST_TIMEOUT,
     DEFAULT_VENDOR,
+    ISSUES_URL,
     REDACTED,
     VENDORS,
 )
@@ -54,6 +55,24 @@ from .models import (
 from .utils import Redacted, generate_hmac_signature
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
+
+# Features built from the API documentation alone, each announced only once.
+_ANNOUNCED_UNTESTED: set[str] = set()
+
+
+def _announce_untested(feature: str) -> None:
+    """Warn once that a feature has never been checked on a real installation."""
+    if feature in _ANNOUNCED_UNTESTED:
+        return
+    _ANNOUNCED_UNTESTED.add(feature)
+    _LOGGER.warning(
+        "Your configuration includes %s. pydiagral reads them from the Diagral API "
+        "documentation only: this has never been tested on a real installation. "
+        "Please share what you observe at %s so it can be fully supported",
+        feature,
+        ISSUES_URL,
+    )
+
 
 # Minimum Python version: 3.11
 
@@ -722,6 +741,8 @@ class DiagralAPI:
             "GET", f"systems/{self.__serial}/configurations", headers=_HEADERS
         )
         self.alarm_configuration = AlarmConfiguration.from_dict(response_data)
+        if self.alarm_configuration.cameras:
+            _announce_untested("cameras")
         # The redacted payload is already logged by from_dict().
         _LOGGER.debug("Successfully retrieved configuration")
         return self.alarm_configuration

@@ -30,8 +30,14 @@ from pydiagral.exceptions import (
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 import json
 
-from pydiagral import AuthenticationError, DiagralAPI, ValidationError, models
-from pydiagral.constants import REDACTED
+from pydiagral import (
+    AuthenticationError,
+    DiagralAPI,
+    ValidationError,
+    api as api_module,
+    models,
+)
+from pydiagral.constants import ISSUES_URL, REDACTED
 from pydiagral.models import (
     AlarmConfiguration,
     Anomalies,
@@ -39,6 +45,7 @@ from pydiagral.models import (
     AnomalyName,
     ApiKeys,
     ApiKeyWithSecret,
+    Cameras,
     CentralInformation,
     DeviceList,
     Group,
@@ -859,6 +866,91 @@ async def test_get_device_infos(mock_request):
         assert devices_infos.commands[0].label == "COMMAND1"
         assert devices_infos.sensors[0].label == "SENSOR1"
         assert devices_infos.sirens[0].label == "SIREN1"
+
+
+# Built from the OpenAPI `CameraModel`: no camera answer has been seen yet.
+CAMERA = {
+    "uid": "camera-uid",
+    "name": "Garden",
+    "type": "OUTDOOR",
+    "group": 2,
+    "index": 0,
+    "installationDate": "2024-01-02T03:04:05+00:00",
+}
+
+
+@pytest.fixture
+def unannounced_features(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Forget which untested features were already announced."""
+    monkeypatch.setattr(api_module, "_ANNOUNCED_UNTESTED", set())
+
+
+async def _configuration_with(cameras: list | None) -> tuple[DiagralAPI, list]:
+    """Return a client whose configuration was read twice, and the patched mock."""
+    payload = load_sample("configuration_sample.json") | {"cameras": cameras}
+    diagral = DiagralAPI(
+        username=USERNAME,
+        password=PASSWORD,
+        serial_id=SERIAL_ID,
+        apikey=API_KEY,
+        secret_key=SECRET_KEY,
+    )
+    diagral.session = SimpleNamespace(closed=False)
+    with patch.object(
+        diagral, "_request", new=AsyncMock(return_value=(payload, 200))
+    ) as request:
+        await diagral.get_configuration()
+        await diagral.get_configuration()
+    return diagral, request
+
+
+async def test_get_configuration_parses_cameras_as_documented(
+    unreported_fields: None, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test that a camera is read with the fields the OpenAPI `CameraModel` lists."""
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        diagral, _ = await _configuration_with([CAMERA])
+
+    camera = diagral.alarm_configuration.cameras[0]
+    assert isinstance(camera, Cameras)
+    assert (camera.uid, camera.name, camera.type) == ("camera-uid", "Garden", "OUTDOOR")
+    assert (camera.group, camera.index) == (2, 0)
+    assert camera.installation_date == datetime(2024, 1, 2, 3, 4, 5, tzinfo=UTC)
+    assert camera.label == "Garden"
+    assert not [r for r in caplog.records if r.name == "pydiagral.models"]
+
+
+async def test_get_devices_info_labels_cameras_by_name() -> None:
+    """Test that `get_devices_info()` takes a camera's label from its name."""
+    diagral, _ = await _configuration_with([CAMERA, {"index": 1}])
+
+    devices_infos = await diagral.get_devices_info()
+
+    assert [(c.index, c.label) for c in devices_infos.cameras] == [
+        (0, "Garden"),
+        (1, None),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("cameras", "announced"),
+    [([CAMERA], True), ([], False), (None, False)],
+    ids=["cameras", "empty", "absent"],
+)
+async def test_cameras_are_announced_as_untested_once(
+    unannounced_features: None,
+    caplog: pytest.LogCaptureFixture,
+    cameras: list | None,
+    announced: bool,
+) -> None:
+    """Test that a configuration with cameras logs one warning asking for feedback."""
+    with caplog.at_level(logging.WARNING, logger="pydiagral.api"):
+        await _configuration_with(cameras)
+
+    notices = [r for r in caplog.records if "camera" in r.getMessage().lower()]
+    assert len(notices) == (1 if announced else 0)
+    if announced:
+        assert ISSUES_URL in notices[0].getMessage()
 
 
 ########################################

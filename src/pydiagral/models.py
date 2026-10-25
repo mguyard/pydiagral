@@ -723,38 +723,60 @@ class SensorModel(CamelCaseModel):
 
 
 @dataclass
-class Cameras(SensorModel):
-    """Cameras model representing a sensor with an installation date, inheriting from SensorModel.
+class Cameras(CamelCaseModel):
+    """Cameras model representing a camera of the alarm configuration.
+
+    Warning:
+        Untested. The fields follow the `CameraModel` of the Diagral OpenAPI
+        specification: no real installation with a camera has been seen yet. If you
+        have Diagral cameras, please open an issue at
+        https://github.com/mguyard/pydiagral/issues with what you observe and the
+        `cameras` part of the configuration logged at debug level, so this part can be
+        fully supported.
 
     Attributes:
-        installation_date (datetime | None): The date when the camera was installed.
-            Defaults to None. This attribute is aliased as 'installationDate' in metadata.
+        uid (str | None): Unique identifier of the camera.
+        name (str | None): Name of the camera.
+        type (str | None): Type of the camera.
+        group (int | None): Group to which the camera belongs.
+        index (int | None): Index of the camera.
+        installation_date (datetime | None): The date when the camera was installed,
+            aliased as "installationDate".
 
     Examples:
         >>> camera = Cameras(
         ...     uid="12345",
-        ...     type=1,
-        ...     gamme=2,
+        ...     name="Garden",
+        ...     type="OUTDOOR",
         ...     group=3,
         ...     index=4,
-        ...     label="Camera 1",
-        ...     serial="SN12345",
-        ...     is_video=True,
-        ...     ref_code="RC123",
-        ...     subtype=5,
-        ...     anomalies=None,
-        ...     inhibited=False,
-        ...     can_inhibit=True,
         ...     installation_date=datetime(2023, 10, 1)
         ... )
-        >>> print(camera.installation_date)
-        2023-10-01 00:00:00
+        >>> print(camera.name)
+        Garden
 
     """
 
+    uid: str | None = None
+    name: str | None = None
+    type: str | None = None
+    group: int | None = None
+    index: int | None = None
     installation_date: datetime | None = field(
         default=None, metadata={"alias": "installationDate"}
     )
+
+    @property
+    def label(self) -> str | None:
+        """The camera's name, read under the attribute the other devices use.
+
+        The API names a camera with `name`, while sensors, sirens, commands and
+        transmitters carry a `label`. This alias lets `DiagralAPI.get_devices_info()`
+        fill `DeviceList.cameras` the same way as the other device lists, and keeps
+        `camera.label` working for code written when `Cameras` inherited
+        `SensorModel`. It is read-only and left out of `to_dict()`.
+        """
+        return self.name
 
 
 @dataclass
@@ -954,7 +976,7 @@ class AlarmConfiguration(CamelCaseModel):
         ...     alarm=AlarmModel(name="Home Alarm"),
         ...     groups=[Group(name="Group A", index=1)],
         ...     sirens=[SensorModel(uid="12345", type=1)],
-        ...     cameras=[Cameras(uid="67890", type=2)],
+        ...     cameras=[Cameras(uid="67890", name="Garden")],
         ...     sensors=[SensorModel(uid="54321", type=3)],
         ...     commands=[SensorModel(uid="98765", type=4)],
         ...     reading_date=datetime(2023, 10, 1),
