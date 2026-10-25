@@ -182,15 +182,15 @@ serial_id = systems[0].serial_id
 
 ## Package Documentation
 
-Library documentation is available [here](https://mguyard.github.io/pydiagral/).
+Library documentation is available [here](https://mguyard.github.io/pydiagral/stable/), and for the beta [here](https://mguyard.github.io/pydiagral/beta/).
 
 ### Package Structure
 
 For detailed library documentation, please refer to the following sections:
 
-- [API Reference](https://mguyard.github.io/pydiagral/api/): Comprehensive documentation of the DiagralAPI class and its methods
-- [Data Models](https://mguyard.github.io/pydiagral/models/): Description of the data structures used
-- [Exceptions](https://mguyard.github.io/pydiagral/exceptions/): List of package exceptions
+- [API Reference](https://mguyard.github.io/pydiagral/stable/api/): Comprehensive documentation of the DiagralAPI class and its methods
+- [Data Models](https://mguyard.github.io/pydiagral/stable/models/): Description of the data structures used
+- [Exceptions](https://mguyard.github.io/pydiagral/stable/exceptions/): List of package exceptions
 
 ## Diagral API Official documentation
 
