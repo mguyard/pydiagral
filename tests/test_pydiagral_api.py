@@ -2791,6 +2791,15 @@ async def test_missing_pin_error_names_the_operation():
         await api.stop_system()
 
 
+def test_api_key_errors_are_exported():
+    """Test that the API key errors public methods raise import from the package."""
+    import pydiagral  # noqa: PLC0415
+
+    assert pydiagral.APIKeyCreationError is APIKeyCreationError
+    assert pydiagral.APIValidationError is APIValidationError
+    assert {"APIKeyCreationError", "APIValidationError"} <= set(pydiagral.__all__)
+
+
 #####################
 # Session lifecycle #
 #####################
