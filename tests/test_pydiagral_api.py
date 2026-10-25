@@ -38,6 +38,7 @@ from pydiagral.models import (
     AnomalyName,
     ApiKeys,
     ApiKeyWithSecret,
+    CentralInformation,
     DeviceList,
     Group,
     LoginResponse,
@@ -787,6 +788,14 @@ async def test_get_system_details(mock_request):
         assert isinstance(system_details, SystemDetails)
         assert system_details.device_type == "PLUG_IP~DIAGRAL"
         assert system_details.ip_address == "1.1.1.1"
+        assert [
+            system_details.is_alarm_file_present,
+            system_details.is_mjpeg_archive_video_supported,
+            system_details.is_mass_storage_present,
+            system_details.is_remote_startup_shutdown_allowed,
+            system_details.is_video_password_protected,
+        ] == [False] * 5
+        assert system_details.is_alarm_file_present is False
 
 
 @pytest.mark.asyncio
@@ -3488,6 +3497,31 @@ def test_iso_strings_become_datetimes():
         {"readingDate": "2024-01-01T10:00:00Z"}
     )
     assert configuration.reading_date == datetime(2024, 1, 1, 10, tzinfo=UTC)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("True", True), ("False", False), ("true", True), (True, True), (False, False)],
+    ids=["true-string", "false-string", "lowercase", "true", "false"],
+)
+def test_boolean_strings_become_booleans(value, expected):
+    """Test that a field annotated as bool reads Diagral's "True" / "False" strings."""
+    information = CentralInformation.from_dict({"hasPlug": value})
+    assert information.has_plug is expected
+
+
+@pytest.mark.usefixtures("unreported_fields")
+def test_unparsable_boolean_is_reported_once_and_read_as_none(caplog):
+    """Test that a string that is not a boolean warns once instead of failing the parse."""
+    payload = {"hasPlug": "private-flag"}
+    with caplog.at_level(logging.WARNING, logger="pydiagral.models"):
+        first = CentralInformation.from_dict(payload)
+        CentralInformation.from_dict(payload)
+    assert first.has_plug is None
+    warnings = [r for r in caplog.records if "has_plug" in r.getMessage()]
+    assert len(warnings) == 1
+    assert "is not a boolean" in warnings[0].getMessage()
+    assert "private-flag" not in caplog.text
 
 
 @pytest.mark.usefixtures("unreported_fields")

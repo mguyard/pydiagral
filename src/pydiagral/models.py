@@ -113,6 +113,18 @@ def _parse_datetime(model: type, name: str, value: str) -> datetime | None:
         return None
 
 
+# Some endpoints send booleans as "True" / "False" strings.
+_BOOLEAN_STRINGS = {"true": True, "false": False}
+
+
+def _parse_boolean(model: type, name: str, value: str) -> bool | None:
+    """Parse a boolean string; any other string is reported and read as None."""
+    parsed = _BOOLEAN_STRINGS.get(value.lower())
+    if parsed is None:
+        _report_unexpected_field(model, name, "is not a boolean")
+    return parsed
+
+
 class CamelCaseModel:
     """CamelCaseModel is a base class for models that need to convert between snake_case and camelCase keys.
 
@@ -188,8 +200,8 @@ class CamelCaseModel:
 
         Each field is matched, case-insensitively, against its `alias` or its name; keys
         are not converted from camelCase. Nested dictionaries and lists of dictionaries
-        become the annotated models, and ISO strings become `datetime` objects. A missing
-        field is set to None.
+        become the annotated models, ISO strings become `datetime` objects, and "True" /
+        "False" strings in any case become booleans. A missing field is set to None.
 
         Args:
             cls (type[Self]): The class that this method is a part of.
@@ -235,6 +247,8 @@ class CamelCaseModel:
                 ]
             elif spec.type is datetime and isinstance(value, str):
                 init_values[spec.name] = _parse_datetime(target_cls, spec.name, value)
+            elif spec.type is bool and isinstance(value, str):
+                init_values[spec.name] = _parse_boolean(target_cls, spec.name, value)
             else:
                 init_values[spec.name] = value
 
@@ -1028,10 +1042,13 @@ class SystemDetails(CamelCaseModel):
         mode (str): The mode of the device.
         first_vocal_contact (str): The first vocal contact information.
         is_alarm_file_present (bool): Indicates if the alarm file is present.
-        is_mjpeg_archive_video_supported (str): Indicates if MJPEG archive video is supported.
-        is_mass_storage_present (str): Indicates if mass storage is present.
-        is_remote_startup_shutdown_allowed (str): Indicates if remote startup/shutdown is allowed.
-        is_video_password_protected (str): Indicates if the video is password protected.
+        is_mjpeg_archive_video_supported (bool): Indicates if MJPEG archive video is supported.
+        is_mass_storage_present (bool): Indicates if mass storage is present.
+        is_remote_startup_shutdown_allowed (bool): Indicates if remote startup/shutdown is allowed.
+        is_video_password_protected (bool): Indicates if the video is password protected.
+
+    The API sends the five `Is*` fields as "True" / "False" strings; they are parsed
+    into booleans.
 
     Example:
         >>> system_details = SystemDetails(
@@ -1042,10 +1059,10 @@ class SystemDetails(CamelCaseModel):
         ...     mode="Active",
         ...     first_vocal_contact="2023-10-01T12:00:00Z",
         ...     is_alarm_file_present=True,
-        ...     is_mjpeg_archive_video_supported="Yes",
-        ...     is_mass_storage_present="Yes",
-        ...     is_remote_startup_shutdown_allowed="No",
-        ...     is_video_password_protected="Yes"
+        ...     is_mjpeg_archive_video_supported=True,
+        ...     is_mass_storage_present=True,
+        ...     is_remote_startup_shutdown_allowed=False,
+        ...     is_video_password_protected=True
         ... )
         >>> print(system_details.device_type)
         Camera
@@ -1059,14 +1076,14 @@ class SystemDetails(CamelCaseModel):
     mode: str = field(metadata={"alias": "Mode"})
     first_vocal_contact: str = field(metadata={"alias": "FirstVocalContact"})
     is_alarm_file_present: bool = field(metadata={"alias": "IsAlarmFilePresent"})
-    is_mjpeg_archive_video_supported: str = field(
+    is_mjpeg_archive_video_supported: bool = field(
         metadata={"alias": "IsMJPEGArchiveVideoSupported"}
     )
-    is_mass_storage_present: str = field(metadata={"alias": "IsMassStoragePresent"})
-    is_remote_startup_shutdown_allowed: str = field(
+    is_mass_storage_present: bool = field(metadata={"alias": "IsMassStoragePresent"})
+    is_remote_startup_shutdown_allowed: bool = field(
         metadata={"alias": "IsRemoteStartupShutdownAllowed"}
     )
-    is_video_password_protected: str = field(
+    is_video_password_protected: bool = field(
         metadata={"alias": "IsVideoPasswordProtected"}
     )
 
