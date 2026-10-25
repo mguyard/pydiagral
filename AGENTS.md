@@ -160,6 +160,7 @@ Tests: ✅ N passed, ❌ 0 failed, ⚠️ 0 errors
 - The body explains **why**. Never restate what the diff already shows.
 - A breaking change to a contract listed above takes a `BREAKING CHANGE:` footer, after the `Tests:` line. The commit parser appends every following line to the note, so a `Tests:` line placed after it ends up in the release notes.
 - Keep issue and PR references (`#N`, `owner/repo#N`) out of a `BREAKING CHANGE:` paragraph. The commit parser ends the note at the first line that holds one and drops that line from the release notes. Put the reference in the body instead.
+- Never write a closing keyword (`close`, `fix`, `resolve` and their forms) before an issue number in a commit message or PR body, even in quotes, unless that pydiagral issue should close. GitHub closes it when the commit reaches `main`, and at release time the semantic-release GitHub plugin looks up every such number and fails the release when one does not exist. To quote one, put it in backticks, which its parser skips.
 
 `release.config.cjs` uses semantic-release's default (Angular) presets: only `feat`, `fix` and `perf` — plus reverts and breaking changes — trigger a release and appear in `CHANGELOG.md`. A `docs`, `refactor` or `chore` commit is invisible to users and to PyPI.
 
