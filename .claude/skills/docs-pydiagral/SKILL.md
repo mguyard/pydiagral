@@ -43,6 +43,7 @@ A new page must be added to `nav` in `mkdocs.yml`, or `--strict` fails on it.
 - Use backticks for code. A cross-reference to another object is `[Name][pydiagral.models.Name]`.
 - Never put real values in examples: no serial, e-mail, key or PIN.
 - Put examples under `Examples:`, plural. `Example:` is rendered as a box of plain text, where `>>>` lines become nested quotes on a single line.
+- `models.py` examples run as doctests: write them as a session would print them (`print()` output without quotes, every name defined in the example).
 
 ---
 

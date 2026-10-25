@@ -193,7 +193,7 @@ The reference pages (`docs/api.md`, `models.md`, `exceptions.md`) are generated 
 
 Docstrings follow the Google style (`Args:`, `Returns:`, `Raises:`), which mkdocstrings renders. Ruff's `D` rules require a docstring on every public object but set no `convention`, so they do not check the sections. `exceptions.py` still uses `:param:`; do not spread it.
 
-Examples go under an `Examples:` section, plural: griffe renders its `>>>` lines as code, while an `Example:` section becomes a box of plain Markdown, where `>>>` reads as nested quotes and the lines run together. Any other unknown section (`Warning:`, `Note:`) also becomes a box of that kind.
+Examples go under an `Examples:` section, plural: griffe renders its `>>>` lines as code, while an `Example:` section becomes a box of plain Markdown, where `>>>` reads as nested quotes and the lines run together. Any other unknown section (`Warning:`, `Note:`) also becomes a box of that kind. The `Examples:` blocks of `models.py` run as doctests with the suite (`testpaths` and `--doctest-modules` in `pyproject.toml`): an example that no longer matches the model fails `pytest`.
 
 ## Comments
 
