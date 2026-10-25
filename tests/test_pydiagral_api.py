@@ -2655,7 +2655,9 @@ async def test_request_timeout_is_passed_to_aiohttp(kwargs, expected):
         ) as mock_session_request:
             await diagral._request("GET", "users/me")  # noqa: SLF001
 
-    assert mock_session_request.call_args.kwargs["timeout"] == expected
+    assert mock_session_request.call_args.kwargs["timeout"] == aiohttp.ClientTimeout(
+        total=expected
+    )
     assert diagral.request_timeout == expected
 
 
@@ -2669,7 +2671,9 @@ async def test_per_call_timeout_overrides_request_timeout():
         ) as mock_session_request:
             await diagral._request("GET", "users/me", timeout=10)  # noqa: SLF001
 
-    assert mock_session_request.call_args.kwargs["timeout"] == 10
+    assert mock_session_request.call_args.kwargs["timeout"] == aiohttp.ClientTimeout(
+        total=10
+    )
 
 
 @pytest.mark.parametrize(

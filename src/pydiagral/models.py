@@ -8,12 +8,22 @@ and other related data structures.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields
+from dataclasses import Field, dataclass, field, fields
 from datetime import UTC, datetime
 import logging
 import re
 import types
-from typing import Self, Union, get_args, get_origin, get_type_hints
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Self,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from .exceptions import ModelValidationError
 from .utils import Redacted
@@ -24,6 +34,9 @@ logger: logging.Logger = logging.getLogger(__name__)
 #######################################################
 # Class for converting between camelCase and snake_case
 #######################################################
+
+
+_ModelT = TypeVar("_ModelT", bound="CamelCaseModel")
 
 
 class CamelCaseModel:
@@ -56,6 +69,10 @@ class CamelCaseModel:
         ExampleModel(first_name='Luke', last_name='Skywalker')
 
     """
+
+    if TYPE_CHECKING:
+        # Every subclass is a dataclass; this lets `fields()` accept the base type.
+        __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
 
     def to_dict(self) -> dict:
         """Convert the instance attributes to a dictionary, transforming attribute names.
@@ -90,7 +107,7 @@ class CamelCaseModel:
         return result
 
     @classmethod
-    def _from_dict_recursive(cls, data: dict, target_cls: type[Self]) -> Self:
+    def _from_dict_recursive(cls, data: dict, target_cls: type[_ModelT]) -> _ModelT:
         """Recursively converts a dictionary to an instance of the specified target class.
 
         This method handles nested dictionaries and lists, converting them to the appropriate
@@ -100,7 +117,7 @@ class CamelCaseModel:
         Args:
             cls (type[Self]): The class that this method is a part of.
             data (dict): The dictionary to convert.
-            target_cls (type[Self]): The target class to convert the dictionary to.
+            target_cls (type[_ModelT]): The target class to convert the dictionary to.
 
         Returns:
             An instance of the target class populated with the data from the dictionary.
@@ -125,13 +142,14 @@ class CamelCaseModel:
             target_cls = next(t for t in get_args(target_cls) if t is not type(None))
             logger.debug("Extracted target_cls: %s", target_cls)
 
-        init_values = {}
+        init_values: dict[str, Any] = {}
         fields_dict = {field.name: field for field in fields(target_cls)}
         for field_name, field_type in get_type_hints(target_cls).items():
             field = fields_dict.get(field_name)
-            logger.debug("Field Metadata: %s", field.metadata if field else {})
+            metadata = field.metadata if field else {}
+            logger.debug("Field Metadata: %s", metadata)
             # alias = cls.snake_to_camel(field_name) # Old version who don't support field with underscore and without alias
-            alias = field.metadata.get("alias", field_name)
+            alias = metadata.get("alias", field_name)
             logger.debug(
                 "Processing field: %s (alias: %s, type: %s)",
                 field_name,

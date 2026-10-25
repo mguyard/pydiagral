@@ -104,8 +104,8 @@ class DiagralAPI:
         self.serial_id: str = serial_id
 
         # Set apikey and secret_key
-        self.__apikey = apikey
-        self.__secret_key = secret_key
+        self.__apikey: str | None = apikey
+        self.__secret_key: str | None = secret_key
 
         # Validate pincode
         if pincode is not None:
@@ -203,7 +203,9 @@ class DiagralAPI:
                 method,
                 url,
                 headers=headers,
-                timeout=self.__request_timeout if timeout is None else timeout,
+                timeout=aiohttp.ClientTimeout(
+                    total=self.__request_timeout if timeout is None else timeout
+                ),
                 **kwargs,
             ) as response:
                 status = response.status
@@ -345,12 +347,12 @@ class DiagralAPI:
             set_apikey_response: ApiKeyWithSecret = ApiKeyWithSecret.from_dict(
                 response_data
             )
-            self.__apikey: str = set_apikey_response.api_key
+            self.__apikey = set_apikey_response.api_key
             if not self.__apikey:
                 error_msg = "API key not found in response"
                 _LOGGER.error(error_msg)
                 raise APIKeyCreationError(error_msg)
-            self.__secret_key: str = set_apikey_response.secret_key
+            self.__secret_key = set_apikey_response.secret_key
             if not self.__secret_key:
                 error_msg = "Secret key not found in response"
                 _LOGGER.error(error_msg)
@@ -392,7 +394,7 @@ class DiagralAPI:
 
         """
 
-        apikey_to_validate: str = apikey or self.__apikey
+        apikey_to_validate = apikey or self.__apikey
 
         if not apikey_to_validate:
             _LOGGER.warning("No API key provided to validate")
@@ -438,7 +440,7 @@ class DiagralAPI:
 
         """
 
-        apikey_to_delete: str = apikey or self.__apikey
+        apikey_to_delete = apikey or self.__apikey
 
         if not apikey_to_delete:
             raise AuthenticationError("An API key is required to delete it")
@@ -523,7 +525,7 @@ class DiagralAPI:
         result.result = True
         return result
 
-    async def get_configuration(self) -> None:
+    async def get_configuration(self) -> AlarmConfiguration:
         """Asynchronously retrieve the configuration of the Diagral system.
 
         This method retrieves the configuration of the Diagral system by sending a GET
