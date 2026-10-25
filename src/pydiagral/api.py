@@ -401,6 +401,7 @@ class DiagralAPI:
             APIKeyCreationError: If the API key creation fails.
             APIValidationError: If the API key validation fails.
             DiagralAPIError: If authentication, transport or the Diagral service fails.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -463,7 +464,7 @@ class DiagralAPI:
             apikey (str | None, optional): The API key to validate. If not provided, the instance's API key is used. Defaults to None.
 
         Raises:
-            ConfigurationError: If no API key is provided or if the API key is invalid.
+            ConfigurationError: If no API key is provided or if the API key is invalid, or if the client was created without a serial ID.
             APIValidationError: If the API key is invalid or not found in the list of valid keys.
 
         """
@@ -511,6 +512,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key is not available.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -589,6 +591,7 @@ class DiagralAPI:
             ValidationError: If the request results in a 422 status code.
             ServerError: If the request results in a 500 or 503 status code.
             ClientError: If there is a network error.
+            ConfigurationError: If the client was created without a serial ID.
 
         Note:
             If API credentials are not provided during client initialization, temporary
@@ -695,6 +698,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key or the secret key is missing.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -715,7 +719,7 @@ class DiagralAPI:
                 configuration does not name it.
 
         Raises:
-            ConfigurationError: If unable to retrieve the alarm configuration.
+            ConfigurationError: If unable to retrieve the alarm configuration, or if the client was created without a serial ID.
 
         Note:
             This method will attempt to fetch the configuration if it hasn't been loaded yet.
@@ -741,7 +745,7 @@ class DiagralAPI:
             DeviceList: One list of `DeviceInfos` per device type.
 
         Raises:
-            ConfigurationError: If the alarm configuration cannot be retrieved.
+            ConfigurationError: If the alarm configuration cannot be retrieved, or if the client was created without a serial ID.
 
         """
 
@@ -783,6 +787,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -807,6 +812,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -865,7 +871,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after starting the system.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is missing.
 
         """
@@ -881,7 +887,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after stopping the system.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is missing.
 
         """
@@ -895,7 +901,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after starting the system in presence mode.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is missing.
 
         """
@@ -912,7 +918,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after performing the partial start.
 
         Raises:
-            ConfigurationError: If the provided ID is not 1 or 2.
+            ConfigurationError: If the provided ID is not 1 or 2, or if the client was created without a serial ID.
 
         """
 
@@ -987,7 +993,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after activating the groups.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
@@ -1009,7 +1015,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after disabling the groups.
 
         Raises:
-            ConfigurationError: If the action is not one of the allowed actions.
+            ConfigurationError: If the action is not one of the allowed actions, or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
@@ -1071,7 +1077,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after enabling the product.
 
         Raises:
-            ConfigurationError: If the action is not 'enable'
+            ConfigurationError: If the action is not 'enable', or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
@@ -1092,7 +1098,7 @@ class DiagralAPI:
             SystemStatus: An instance of SystemStatus containing the system status after disabling the product.
 
         Raises:
-            ConfigurationError: If the action is not 'disable'
+            ConfigurationError: If the action is not 'disable', or if the client was created without a serial ID.
             AuthenticationError: If the API key, secret key, or PIN code is not provided.
 
         """
@@ -1110,6 +1116,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key or secret key is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -1149,6 +1156,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key or secret key is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -1185,6 +1193,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key or secret key is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         """
 
@@ -1283,6 +1292,12 @@ class DiagralAPI:
         Returns:
             Webhook | None: The registered Webhook object if successful, otherwise None.
 
+        Raises:
+            AuthenticationError: If the API key or secret key is missing.
+            ConfigurationError: If the client was created without a serial ID.
+            ValidationError: If the webhook URL does not start with http:// or https://.
+            DiagralAPIError: If a subscription already exists; use `update_webhook()`.
+
         """
         return await self.__webhook_action_create_update(
             "register",
@@ -1310,6 +1325,12 @@ class DiagralAPI:
         Returns:
             Webhook | None: The registered Webhook object if successful, otherwise None.
 
+        Raises:
+            AuthenticationError: If the API key or secret key is missing.
+            ConfigurationError: If the client was created without a serial ID.
+            ValidationError: If the webhook URL does not start with http:// or https://.
+            DiagralAPIError: If no subscription exists yet; use `register_webhook()`.
+
         """
         return await self.__webhook_action_create_update(
             "update",
@@ -1324,6 +1345,7 @@ class DiagralAPI:
 
         Raises:
             AuthenticationError: If the API key or secret key is not provided.
+            ConfigurationError: If the client was created without a serial ID.
 
         Returns:
             None
