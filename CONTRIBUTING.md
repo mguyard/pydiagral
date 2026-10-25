@@ -33,7 +33,7 @@ The repository ships a [dev container](https://containers.dev/): open it in VS C
 
 **Signing commits.** When GPG is installed on your machine, VS Code forwards its agent into the container and copies your Git configuration, so commits are signed as on your machine. In Codespaces, enable [GPG verification](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-gpg-verification-for-github-codespaces): GitHub then signs the commits you make there.
 
-**Trying your changes on your alarm.** `python try_pydiagral.py` runs the script against the code of the container. It reads `.env` in the workspace, or, in Codespaces, the `DIAGRAL_*` [secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces) the dev container suggests. See the [guide to try_pydiagral.py](https://mguyard.github.io/pydiagral/stable/try-pydiagral/).
+**Trying your changes on your alarm.** `python try_pydiagral.py` runs the script against the code of the container. It reads `.env` in the workspace, or, in Codespaces, the `DIAGRAL_*` [secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces) the dev container suggests, which *Code > Codespaces > ⋯ > New with options* asks for. See the [guide to try_pydiagral.py](https://mguyard.github.io/pydiagral/stable/try-pydiagral/).
 
 ## 🔀 Workflow
 

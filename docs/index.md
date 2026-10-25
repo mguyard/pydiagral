@@ -87,7 +87,7 @@ uv run try_pydiagral.py arm --wait 10    # arm, wait 10 s, then disarm
 uv run try_pydiagral.py --help           # every scenario and option
 ```
 
-No Python at hand? The script also runs in [GitHub Codespaces](https://codespaces.new/mguyard/pydiagral), from your browser, with nothing to install.
+No Python at hand? The script also runs in [GitHub Codespaces](try-pydiagral.md#in-github-codespaces-nothing-to-install), from your browser, with nothing to install.
 
 Every scenario, option and message is explained in [Try it on your alarm](try-pydiagral.md).
 

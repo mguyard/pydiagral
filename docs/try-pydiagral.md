@@ -12,15 +12,34 @@
 
 [Codespaces](https://docs.github.com/en/codespaces/overview) runs the repository on a machine in the cloud, from your browser. It is free within a [monthly allowance](https://docs.github.com/en/billing/reference/product-usage-included) that a session with the script barely touches. Every scenario works there, and it is the simplest way to [test webhooks](#testing-webhooks).
 
-1. Open the repository in a codespace: [codespaces.new/mguyard/pydiagral](https://codespaces.new/mguyard/pydiagral). It starts the repository's [dev container](https://github.com/mguyard/pydiagral/blob/main/CONTRIBUTING.md#-dev-container), with pydiagral and every tool installed.
-2. Give it your credentials, either way:
-    - as [Codespaces secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces): the creation page offers to fill in the `DIAGRAL_*` ones the dev container suggests. A codespace reads its secrets when it starts: after adding one, stop and restart it;
-    - or in a `.env`, copied from `.env.example` in the workspace.
-3. Run the commands of [Run](#3-run) in the codespace's terminal, with:
+1. **Fork the repository** to your account: [github.com/mguyard/pydiagral/fork](https://github.com/mguyard/pydiagral/fork). **Untick *Copy the `main` branch only***, so that your fork also gets `beta`, the branch with the latest version of pydiagral and of this script. Later, the *Sync fork* button of your fork brings it up to date.
+2. **Create the codespace with *New with options***: on your fork, *Code > Codespaces*, then the *⋯* menu > *New with options*.
+    1. Pick the `beta` branch.
+    2. The page asks for the secrets the dev container suggests, the variables of [Configure](#2-configure). GitHub shows none as mandatory, since it lets you leave any empty, but the script needs:
+        - `DIAGRAL_USERNAME` and `DIAGRAL_PASSWORD`: always;
+        - `DIAGRAL_SERIAL_ID`: for every scenario but `ping` and `systems`. If you do not know it, leave it empty, run `systems` to find it, then add it as described in the note below;
+        - `DIAGRAL_PIN_CODE`: to read the status and details, and to arm or disarm.
+    3. Click *Create codespace*. It starts the repository's [dev container](https://github.com/mguyard/pydiagral/blob/main/CONTRIBUTING.md#-dev-container), with pydiagral and every tool installed. On first start, it opens this guide in a browser tab; its terminal shows the guide's address on every start.
+
+    GitHub keeps these secrets [encrypted in your account](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces), never in the repository, and gives them to the script as environment variables. It does not ask again for your next codespaces on this fork.
+
+3. **Run** the commands of [Run](#3-run) in the codespace's terminal, with:
     - `python try_pydiagral.py …` to try the code of the branch the codespace opened;
     - `uv run try_pydiagral.py …` to try the latest release, betas included.
 
-Stop the codespace once done, and delete it when you no longer need it: its storage counts against the allowance as long as it exists, and so does a `.env` you created there.
+!!! note "Adding or changing a secret afterwards"
+
+    Only *New with options* asks for the secrets. If you created the codespace with the *Create codespace on …* button instead, or left a secret empty, add it yourself:
+
+    1. open [Settings > Codespaces](https://github.com/settings/codespaces) on GitHub, and click *New secret*;
+    2. enter its name, `DIAGRAL_SERIAL_ID` for instance, and its value;
+    3. under *Repository access*, select your fork.
+
+    To change a value, edit the secret on the same page.
+
+    In both cases, stop and restart the codespace (*Codespaces: Stop Current Codespace* in the command palette, or from [github.com/codespaces](https://github.com/codespaces)): a codespace reads its secrets when it starts.
+
+Stop the codespace once done, and delete it when you no longer need it: its storage counts against the allowance as long as it exists.
 
 ### On your machine
 
@@ -46,7 +65,12 @@ pip install --upgrade --pre pydiagral python-dotenv
 
 ## 2. Configure
 
-Copy `.env.example` to `.env`, next to the script, and fill it in, or, in Codespaces, set the same variables as secrets. Every variable starts with `DIAGRAL_`, and an empty value counts as unset:
+Where the settings come from depends on where the script runs:
+
+- **In Codespaces**, the secrets you entered on *New with options* are the settings: nothing to do here. To add an optional one from the table below, or one you left empty, see the note *Adding or changing a secret afterwards* [above](#in-github-codespaces-nothing-to-install).
+- **On your machine**, copy `.env.example` to `.env`, next to the script, and fill it in.
+
+Every variable starts with `DIAGRAL_`, and an empty value counts as unset:
 
 | Variable | Needed for | Purpose |
 |---|---|---|
@@ -57,7 +81,7 @@ Copy `.env.example` to `.env`, next to the script, and fill it in, or, in Codesp
 | `DIAGRAL_API_KEY`, `DIAGRAL_SECRET_KEY` | optional | An existing API key. Left empty, the script creates a temporary one — see [API keys](#api-keys) |
 | `DIAGRAL_VENDOR` | optional | The brand of your account: `DIAGRAL` (default), `DAITEM`, `EDAITEM`, `LOGISTYALMA` or `DISTRIBUTION` |
 
-Variables already set in your shell take precedence over `.env`.
+Variables already set in the environment, Codespaces secrets included, take precedence over `.env`.
 
 !!! danger
 
@@ -65,16 +89,27 @@ Variables already set in your shell take precedence over `.env`.
 
 ## 3. Run
 
+The commands start with `python` or `uv run`, depending on where the script runs and which pydiagral it should use:
+
+| Where | Command | pydiagral used |
+|---|---|---|
+| Codespaces | `python try_pydiagral.py …` | The code of the branch the codespace opened, `beta` of your fork: the usual choice |
+| Codespaces | `uv run try_pydiagral.py …` | The latest release on PyPI, betas included, whatever the branch |
+| Your machine, with uv | `uv run try_pydiagral.py …` | The latest release on PyPI, betas included |
+| Your machine, without uv | `python try_pydiagral.py …` | The one you installed with pip |
+
+The examples below use `python`; replace it with `uv run` where the table says so.
+
 ```bash
-uv run try_pydiagral.py                  # every read-only scenario
-uv run try_pydiagral.py ping systems     # only these, in this order
-uv run try_pydiagral.py arm --wait 10    # arm, wait 10 s, then disarm
-uv run try_pydiagral.py --help           # every scenario and option
+python try_pydiagral.py                  # every read-only scenario
+python try_pydiagral.py ping systems     # only these, in this order
+python try_pydiagral.py arm --wait 10    # arm, wait 10 s, then disarm
+python try_pydiagral.py --help           # every scenario and option
 ```
 
 Without arguments, the script runs every read-only scenario: nothing changes on your alarm. Each scenario prints a `== name ==` header followed by what it found. When one fails, its error is printed and the next one runs.
 
-A good first run is `uv run try_pydiagral.py ping systems`: it only needs the username and password, checks that the Diagral cloud answers, and shows the serial ID of each system of your account.
+A good first run is `ping systems`: it only needs the username and password, checks that the Diagral cloud answers, and shows the serial ID of each system of your account.
 
 ## Scenarios
 
@@ -103,7 +138,12 @@ A good first run is `uv run try_pydiagral.py ping systems`: it only needs the us
 | `groups` | Arms the groups given by `--groups`, waits, then disarms |
 | `webhook-listen` | Receives the alarm's notifications on a temporary listener — see [Testing webhooks](#testing-webhooks) |
 
-The scenarios that arm **always disarm at the end**: after the wait, when the arming call fails, and when you press Ctrl+C during the wait. If disarming itself fails, the script says so: check your alarm.
+The scenarios that arm **always disarm at the end**: after the wait, and when the arming call fails. If disarming itself fails, the script says so: check your alarm.
+
+**Ctrl+C** depends on when you press it:
+
+- while the script waits or listens, as its message says, it ends that wait only: the scenarios that armed disarm at once, and the run goes on to the end, [diagnostics report](#diagnostics-report) included;
+- at any other moment, it stops the run, after the usual clean-up: disarming, deleting the temporary API key and the webhook subscription.
 
 ## Options
 
@@ -134,8 +174,10 @@ Diagral must reach the listener from the Internet, which a computer at home usua
 In a codespace [set up as above](#in-github-codespaces-nothing-to-install), run:
 
 ```bash
-python try_pydiagral.py webhook-listen --trigger presence
+python try_pydiagral.py webhook-listen
 ```
+
+While it listens, two minutes by default, arm or disarm the alarm yourself, from a keypad, a badge or the Diagral app, and watch the notifications arrive. To let the script arm and disarm instead, see [Triggers](#triggers).
 
 Nothing else is needed: the script builds the public URL of the codespace's port, makes the port public with the GitHub CLI, and makes it private again at the end. When it cannot, it says so and waits up to two minutes: in the *Ports* tab, right-click port 8080, then *Port Visibility > Public*.
 
@@ -153,7 +195,7 @@ A [Quick Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/conne
 3. Run the scenario with that address:
 
     ```bash
-    uv run try_pydiagral.py webhook-listen --trigger presence --public-url https://….trycloudflare.com
+    uv run try_pydiagral.py webhook-listen --public-url https://….trycloudflare.com
     ```
 
 The address changes every time the tunnel starts: pass the new one on each run. Do not add `--allowed-mail` to the tunnel, since Diagral cannot sign in. Any other tunnel to the same port, ngrok for instance, works the same way.
@@ -163,7 +205,7 @@ The address changes every time the tunnel starts: pass the new one on each run. 
 | `--trigger` | What happens |
 |---|---|
 | `none` (default) | The script listens for `--listen-for` seconds, while you arm or disarm the alarm yourself, from a keypad, a badge or the Diagral app |
-| `presence` | The script arms in presence mode, listens for `--listen-for` seconds, disarms, then listens 30 seconds more for the disarm notification. Presence mode has no exit delay: the recommended trigger |
+| `presence` | The script arms in presence mode, listens for `--listen-for` seconds, disarms, then listens 30 seconds more for the disarm notification. Presence mode has no exit delay: the quickest way to let the script provoke a notification |
 | `arm` | The same with the whole alarm. Its notification only arrives once the exit delay is over, about four minutes, so the script stays armed and listens at least five minutes |
 
 With `presence` or `arm`, the scenario fails when no notification arrived.
@@ -205,7 +247,7 @@ Neither holds a value you typed nor an identifier: it is made to be attached to 
 `--debug` logs every request and answer of pydiagral on the standard error. Keys, tokens, PIN codes and serial numbers are redacted, but the log still shows the names of your devices and groups: read it before posting it.
 
 ```bash
-uv run try_pydiagral.py status --debug 2> debug.log
+python try_pydiagral.py status --debug 2> debug.log
 ```
 
 ## Troubleshooting
