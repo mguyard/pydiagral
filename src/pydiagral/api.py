@@ -66,6 +66,7 @@ class DiagralAPI:
         pincode: str | None = None,
         *,
         request_timeout: float = DEFAULT_REQUEST_TIMEOUT,
+        session: aiohttp.ClientSession | None = None,
     ) -> None:
         """Initialize the DiagralAPI instance.
 
@@ -79,6 +80,10 @@ class DiagralAPI:
             request_timeout (float, optional): Seconds allowed for each request to the Diagral
                 cloud, keyword-only. Defaults to 30. To give one call a shorter deadline, wrap it
                 in `asyncio.timeout()`; that deadline cannot exceed this value.
+            session (aiohttp.ClientSession | None, optional): A session to send requests
+                with, keyword-only. The caller keeps ownership: it is neither replaced nor
+                closed. Defaults to None, where the client opens its own session on enter
+                and closes it on exit.
 
         Raises:
             ConfigurationError: If any required field is empty or invalid.
@@ -126,7 +131,8 @@ class DiagralAPI:
         self.__request_timeout: float = request_timeout
 
         # Initialize session and access_token
-        self.session: aiohttp.ClientSession | None = None
+        self.session: aiohttp.ClientSession | None = session
+        self.__owns_session: bool = session is None
         self.__access_token: str | None = None
 
         # Set default values for other attributes
@@ -138,16 +144,16 @@ class DiagralAPI:
         return self.__request_timeout
 
     async def __aenter__(self) -> Self:
-        """Open the aiohttp ClientSession."""
+        """Open the aiohttp ClientSession, unless the caller provided one."""
         # Entering twice must not orphan the first session.
-        if self.session is None or self.session.closed:
+        if self.__owns_session and (self.session is None or self.session.closed):
             self.session = aiohttp.ClientSession()
             _LOGGER.info("Successfully initialized DiagralAPI session")
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
-        """Close the aiohttp ClientSession."""
-        if self.session:
+        """Close the aiohttp ClientSession, unless the caller provided it."""
+        if self.__owns_session and self.session:
             await self.session.close()
             self.session = None
 

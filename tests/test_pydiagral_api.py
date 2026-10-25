@@ -2734,6 +2734,34 @@ async def test_client_reopens_its_session_after_exit():
         assert not diagral.session.closed
 
 
+async def test_injected_session_is_used_and_left_open():
+    """Test that a caller's session carries the requests and is not closed on exit."""
+    async with aiohttp.ClientSession() as session:
+        async with DiagralAPI(
+            username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, session=session
+        ) as diagral:
+            assert diagral.session is session
+            with patch.object(
+                session, "request", return_value=_FakeResponse(200, {})
+            ) as mock_session_request:
+                await diagral._request("GET", "users/me")  # noqa: SLF001
+        mock_session_request.assert_called_once()
+        assert diagral.session is session
+        assert not session.closed
+
+
+async def test_closed_injected_session_raises_session_error():
+    """Test that a caller's closed session is reported, not replaced."""
+    session = aiohttp.ClientSession()
+    await session.close()
+    async with DiagralAPI(
+        username=USERNAME, password=PASSWORD, serial_id=SERIAL_ID, session=session
+    ) as diagral:
+        assert diagral.session is session
+        with pytest.raises(SessionError):
+            await diagral._request("GET", "users/me")  # noqa: SLF001
+
+
 class Response:
     """Supply the asynchronous response context consumed by ``_request``."""
 
