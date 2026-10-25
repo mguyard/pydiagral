@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
@@ -12,7 +12,8 @@ authors = [
 maintainers = [
   {name = "Marc Guyard" }
 ]
-license = {file = "LICENSE"}
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">= 3.11"
 dependencies = [
@@ -30,23 +31,24 @@ classifiers = [
 
     "Programming Language :: Python :: 3",
 
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-
     "Operating System :: OS Independent",
 
     "Topic :: Security",
+
+    "Typing :: Typed",
 ]
 keywords = ["diagral", "home automation", "python"]
 
 [project.urls]
 Homepage = "https://github.com/mguyard/pydiagral"
-Documentation = "https://github.com/mguyard/pydiagral"
+Documentation = "https://mguyard.github.io/pydiagral/"
 Repository = "https://github.com/mguyard/pydiagral.git"
 Issues = "https://github.com/mguyard/pydiagral/issues"
 Changelog = "https://github.com/mguyard/pydiagral/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
+    "mypy==2.4.0",
     "python-dotenv",
     "pytest",
     "pytest-asyncio",
@@ -57,6 +59,16 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pydiagral"]
+
+# The sdist ships what builds and tests the package, not the repository tooling.
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src/pydiagral",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+]
 
 [tool.hatch.version]
 source = "env"
@@ -212,6 +224,13 @@ split-on-trailing-comma = false
 
 [tool.ruff.lint.mccabe]
 max-complexity = 25
+
+[tool.mypy]
+files = ["src/pydiagral"]
+# The requires-python floor, so 3.12+ only typing is caught.
+python_version = "3.11"
+warn_redundant_casts = true
+warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

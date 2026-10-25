@@ -26,7 +26,7 @@ The `DiagralAPI` class offers the following functionalities:
 - **Authentication**:
 
   - Connect to the Diagral API with username and password
-  - Manage access tokens and their expiration
+  - Log in to obtain an access token
   - Create, validate, and delete API keys
 
 - **System Configuration**:
@@ -42,7 +42,7 @@ The `DiagralAPI` class offers the following functionalities:
 
 - **System Interraction**:
   - Activate or Desactivate system (partially or globally)
-  - Automatism actions
+  - List automatism rules (running their actions is not implemented yet)
 
 ## Quick Start
 
@@ -89,6 +89,23 @@ async with DiagralAPI(
 ```
 
 To give a single call a shorter deadline, wrap it in `asyncio.timeout()`. That deadline cannot exceed `request_timeout`.
+
+4. Shared session
+
+To send requests through an `aiohttp.ClientSession` you already manage, pass it as `session`. The client uses it as is and never closes it:
+
+```python
+async with aiohttp.ClientSession() as session:
+    async with DiagralAPI(
+        username=username,
+        password=password,
+        serial_id=serial_id,
+        session=session,
+    ) as diagral:
+        ...
+```
+
+Without `session`, the client opens its own on `async with` and closes it on exit.
 
 ## API Structure
 

@@ -6,6 +6,9 @@ API_VERSION = "v1"
 # Seconds allowed for a whole request (connection, sending, response).
 DEFAULT_REQUEST_TIMEOUT = 30
 
+# Where the models ask users to report a payload they do not fit.
+ISSUES_URL = "https://github.com/mguyard/pydiagral/issues"
+
 # Header and field names whose values are replaced by REDACTED in debug logs.
 # Compared lowercase.
 SENSITIVE_KEYS = frozenset(
