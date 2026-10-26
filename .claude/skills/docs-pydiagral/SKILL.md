@@ -24,6 +24,7 @@ Check mkdocs-material and mkdocstrings options with Context7 before using one; d
 | Page | Content |
 |---|---|
 | `docs/index.md` | Hand-written: requirements, features, installation, usage |
+| `docs/try-pydiagral.md` | Hand-written: guide to `try_pydiagral.py`, its scenarios, options and `.env` variables |
 | `docs/api.md` | `::: pydiagral.api` — generated |
 | `docs/models.md` | `::: pydiagral.models` — generated |
 | `docs/exceptions.md` | `::: pydiagral.exceptions` — generated |
@@ -65,6 +66,7 @@ After any change to the public behaviour — a method, a model field, an excepti
 
 1. Docstrings in the changed code — always.
 2. `docs/index.md` and `README.md` — if the feature list, requirements or usage changed.
-3. When in doubt, ask with `AskUserQuestion`.
+3. `try_pydiagral.py`, `docs/try-pydiagral.md` and `.env.example` — if a method the script calls changed. They describe the script and must stay in step with it.
+4. When in doubt, ask with `AskUserQuestion`.
 
 Commit type: `docs(<scope>): 📝 ...` for `docs/`, `mkdocs.yml` and `README.md` changes. A docstring change made alongside code goes in that code's commit. `docs` commits do not trigger a release, so the published site only refreshes on the next push to `main` or `beta` that touches `docs/`.

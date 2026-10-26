@@ -1,53 +1,65 @@
 {
-  "name": "pydiagral Dev",
-  "context": "..",
-  "dockerFile": "./Dockerfile.dev",
+  "name": "pydiagral",
+  // The Python version CI tests on, and that Home Assistant requires.
+  "image": "mcr.microsoft.com/devcontainers/python:3.14",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "postCreateCommand": "PYPROJECT_VERSION=0.1.0-dev pip install -e .[dev] && mkdir -p ~/.gnupg && chmod 700 ~/.gnupg && echo -n '' > ~/.gnupg/common.conf && gpg --import /tmp/gpg-devcontainer.asc 2>&1 | grep -v secret && echo 'export GPG_TTY=$(tty)' >> ~/.zshrc",
-  "runArgs": [
-    "-e",
-    "GIT_EDITOR=code --wait"
-  ],
-  "mounts": [
-    "source=${localEnv:HOME}/.config/gpg-devcontainer.asc,target=/tmp/gpg-devcontainer.asc,type=bind,readonly"
-  ],
+  "containerEnv": {
+    // hatchling reads the version from it: without it, the install fails.
+    "PYPROJECT_VERSION": "0.1.0-dev"
+  },
+  // A virtual environment outside the workspace, so it never lands in the host checkout.
+  "postCreateCommand": "python -m venv /home/vscode/.venv && /home/vscode/.venv/bin/pip install --upgrade pip && /home/vscode/.venv/bin/pip install -e '.[dev]' mkdocs 'mkdocstrings[python]' mkdocs-material mike uv",
+  "postAttachCommand": "sh .devcontainer/welcome.sh",
+  "remoteEnv": {
+    "PATH": "/home/vscode/.venv/bin:${containerEnv:PATH}"
+  },
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "MkDocs",
+      "onAutoForward": "notify"
+    },
+    // try_pydiagral.py webhook-listen makes it public for the run.
+    "8080": {
+      "label": "Diagral webhooks",
+      "onAutoForward": "silent"
+    }
+  },
+  // Offered by Codespaces as environment variables, which try_pydiagral.py reads like .env.
+  "secrets": {
+    "DIAGRAL_USERNAME": {
+      "description": "Required by try_pydiagral.py: the e-mail address of your Diagral account",
+      "documentationUrl": "https://mguyard.github.io/pydiagral/stable/try-pydiagral/"
+    },
+    "DIAGRAL_PASSWORD": {
+      "description": "Required by try_pydiagral.py: the password of your Diagral account",
+      "documentationUrl": "https://mguyard.github.io/pydiagral/stable/try-pydiagral/"
+    },
+    "DIAGRAL_SERIAL_ID": {
+      "description": "Needed by every try_pydiagral.py scenario but ping and systems: the serial ID of your Diagral box. Leave it empty if unknown, and run the systems scenario to find it",
+      "documentationUrl": "https://mguyard.github.io/pydiagral/stable/try-pydiagral/"
+    },
+    "DIAGRAL_PIN_CODE": {
+      "description": "Needed by try_pydiagral.py to read the status and details, and to arm or disarm: the PIN code of your alarm",
+      "documentationUrl": "https://mguyard.github.io/pydiagral/stable/try-pydiagral/"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
+        "ms-python.python",
         "charliermarsh.ruff",
-        "ms-python.vscode-pylance",
+        "ms-python.mypy-type-checker",
         "redhat.vscode-yaml",
-        "esbenp.prettier-vscode",
+        "github.vscode-github-actions",
         "GitHub.vscode-pull-request-github"
       ],
-      // Please keep this file in sync with settings in .vscode/settings.default.json
+      // Editor settings live in .vscode/settings.json, shared with local checkouts.
       "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "python.pythonPath": "/usr/local/bin/python",
-        "python.terminal.activateEnvInCurrentTerminal": true,
-        "python.testing.pytestArgs": [
-          "--no-cov"
-        ],
-        "pylint.importStrategy": "fromEnvironment",
-        "python.linting.enabled": true,
-        "python.linting.ruffEnabled": true,
-        "python.linting.pylintEnabled": false,
-        "python.linting.flake8Enabled": false,
-        "editor.formatOnPaste": false,
-        "editor.formatOnSave": true,
-        "editor.formatOnType": true,
-        "files.trimTrailingWhitespace": true,
-        "terminal.integrated.profiles.linux": {
-          "zsh": {
-            "path": "/usr/bin/zsh"
-          }
-        },
-        "terminal.integrated.defaultProfile.linux": "zsh",
-        "[python]": {
-          "editor.defaultFormatter": "charliermarsh.ruff"
-        }
+        "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python",
+        "mypy-type-checker.importStrategy": "fromEnvironment"
       }
     }
   }

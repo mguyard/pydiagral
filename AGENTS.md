@@ -17,7 +17,7 @@ The known divergences, so they do not have to be rediscovered:
 | Scan with `bandit` | Ruff's full `S` rule set (flake8-bandit); `tests/` ignores `S101`, `S105`, `S106`. `bandit -r src/` finds nothing either. Neither catches secrets written to logs — see Invariants. |
 | `@pytest.mark.unit` / `.integration`, E2E tests | No marker is registered in `pyproject.toml`. Every test is a unit test; a real integration test would need live Diagral credentials in CI, which is not acceptable. End-to-end coverage lives in hass-diagral, against its fake Diagral cloud. |
 | Prefer `@dataclass(frozen=True)` | Models are plain `@dataclass`. Freezing them changes the public API for every consumer, for no gain on response objects. |
-| Load secrets from `.env` with `python-dotenv` | `.env` exists for the maintainer's manual scripts only (`example_code.py`, `diag_code.py`). The library itself takes credentials as constructor arguments. Agents never read `.env` — see Secrets. |
+| Load secrets from `.env` with `python-dotenv` | `.env` exists only for `try_pydiagral.py`, the manual script that runs the library against a real alarm. The library itself takes credentials as constructor arguments. Agents never read `.env` — see Secrets. |
 | Anything about FastAPI | `rules/ecc/python/fastapi.md` has nothing to do with this library. Its `**/*_api.py` glob happens to match `tests/test_pydiagral_api.py`; ignore it there. |
 
 ## Project
@@ -42,10 +42,11 @@ tests/
 ├── test_pydiagral_api.py   # The whole suite
 └── data/                   # JSON fixtures: configuration_sample.json, system_details_sample.json
 docs/               # MkDocs pages — generated from docstrings, see Documentation
-example_code.py     # Manual end-to-end script, reads .env
+try_pydiagral.py    # Manual end-to-end script against a real alarm, reads .env
+.env.example        # Template of the .env that try_pydiagral.py reads
 ```
 
-`diag_code.py` (diagnostic script) and `.env` are local to the maintainer's machine and git-ignored.
+`.env` is local to the maintainer's machine and git-ignored.
 
 ## Invariants
 
@@ -66,17 +67,17 @@ example_code.py     # Manual end-to-end script, reads .env
 
 These are relied on by the integration. Changing any of them is a breaking change and needs a `BREAKING CHANGE:` footer and a coordinated update of hass-diagral.
 
-- **Import paths**, not only `__all__`: hass-diagral imports from `pydiagral`, `pydiagral.api` (`DiagralAPI`), `pydiagral.constants` (`AUTOMATISM_CANALS`, which its diagnostics use to show only known canals), `pydiagral.exceptions` (`AuthenticationError`, `ClientError`, `ConfigurationError`, `DiagralAPIError`, `ModelValidationError`, `PinCodeError`, `ServerError`, `SessionError`, `ValidationError`) and `pydiagral.models` (`AlarmConfiguration`, `Anomalies`, `AnomalyDetail`, `ApiKeyWithSecret`, `DeviceInfos`, `DeviceList`, `Group`, `SystemStatus`, `TryConnectResult`, `Webhook`, `WebHookNotification`, `WebHookNotificationUser`, and the `unexpected_data` function; its tests also import `AnomalyName` and `WebHookNotificationDetail`).
+- **Import paths**, not only `__all__`: hass-diagral imports from `pydiagral`, `pydiagral.api` (`DiagralAPI`), `pydiagral.constants` (`AUTOMATISM_CANALS`, which its diagnostics use to show only known canals), `pydiagral.utils` (`schema_key`), `pydiagral.exceptions` (`AuthenticationError`, `ClientError`, `ConfigurationError`, `DiagralAPIError`, `ModelValidationError`, `PinCodeError`, `ServerError`, `SessionError`, `ValidationError`) and `pydiagral.models` (`AlarmConfiguration`, `Anomalies`, `AnomalyDetail`, `ApiKeyWithSecret`, `DeviceInfos`, `DeviceList`, `Group`, `SystemStatus`, `TryConnectResult`, `Webhook`, `WebHookNotification`, `WebHookNotificationUser`, and the `unexpected_data` function; its tests also import `AnomalyName` and `WebHookNotificationDetail`).
 - **`pydiagral.api.BASE_URL` is read at call time.** `_request()` looks the name up in the `api` module on every request, and hass-diagral's fake Diagral cloud reassigns `pydiagral.api.BASE_URL` to redirect traffic. Do not move the lookup to `constants.BASE_URL`, cache it in `__init__`, or bind it as a default argument.
 - **Error strings.** hass-diagral matches `"No subscription found for"` in the `DiagralAPIError` raised by `get_webhook()` when no subscription exists — so that 404's message must keep Diagral's detail — and by the webhook register/update actions. `get_anomalies()` returns `{}` when the API answers 404 with `"No anomalies found"`, and hass-diagral relies on that empty result.
 - **Every exception the library raises derives from `DiagralAPIError`**, so a single `except DiagralAPIError` covers it. aiohttp errors are wrapped by `_request()`.
 - **`request_timeout`** is set by hass-diagral as a ceiling (≥ 60 s); it drives each attempt's deadline below it with `asyncio.timeout()`. Keep it keyword-only and applied to every request.
 - **Return values.** hass-diagral uses the `AlarmConfiguration` that `get_configuration()` returns, and the `str | None` from `get_alarm_name()`, `None` when the configuration names no alarm. `Anomalies.created_at` is None when Diagral sends no readable date, and hass-diagral guards it.
-- **Diagnostics.** hass-diagral writes `models.unexpected_data()` and `DiagralAPI.response_shapes()` into the diagnostics file users attach to public issues. Neither may ever carry a value a user typed or an identifier: a new value made visible in `utils.shape()` needs the same review as a log line. `unexpected_data()` entries keep their `model`, `field`, `problem` and `value` keys, which hass-diagral copies one by one, so a new key stays out until it is added there. `response_shapes()` stays keyed by read method name.
+- **Diagnostics.** hass-diagral writes `models.unexpected_data()` and `DiagralAPI.response_shapes()` into the diagnostics file users attach to public issues. Neither may ever carry a value a user typed or an identifier: a new value made visible in `utils.shape()` needs the same review as a log line. `unexpected_data()` entries keep their `model`, `field`, `problem` and `value` keys, which hass-diagral copies one by one, so a new key stays out until it is added there. `response_shapes()` stays keyed by read method name. hass-diagral also passes the top-level keys of each webhook payload through `utils.schema_key()` for its diagnostics, so it must keep returning `"<key>"` for any key that may be an identifier.
 
 ## Secrets
 
-`.env` holds real Diagral credentials for the maintainer's manual scripts. **Never read, print, copy or commit it**, and never run `example_code.py` or `diag_code.py`: they talk to the real alarm. Tests use the dummy values at the top of `tests/test_pydiagral_api.py`.
+`.env` holds real Diagral credentials for `try_pydiagral.py`. **Never read, print, copy or commit it**, and never run `try_pydiagral.py`: it talks to the real alarm. Tests use the dummy values at the top of `tests/test_pydiagral_api.py`.
 
 ## Commands
 
@@ -190,7 +191,7 @@ The patterns are in the `testing-pydiagral` skill.
 
 ## Documentation
 
-The reference pages (`docs/api.md`, `models.md`, `exceptions.md`) are generated by mkdocstrings from the docstrings. **A docstring change is a documentation change.** Hand-written content is `docs/index.md` and `README.md`; update them when a feature or requirement changes. See the `docs-pydiagral` skill.
+The reference pages (`docs/api.md`, `models.md`, `exceptions.md`) are generated by mkdocstrings from the docstrings. **A docstring change is a documentation change.** Hand-written content is `docs/index.md`, `docs/try-pydiagral.md` and `README.md`; update them when a feature or requirement changes. `docs/try-pydiagral.md` and `.env.example` describe `try_pydiagral.py`: change them with the script. See the `docs-pydiagral` skill.
 
 Docstrings follow the Google style (`Args:`, `Returns:`, `Raises:`), which mkdocstrings renders. Ruff's `D` rules require a docstring on every public object but set no `convention`, so they do not check the sections. The Sphinx style (`:param:`) is not parsed: it shows as raw text.
 

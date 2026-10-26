@@ -16,6 +16,12 @@ body:
         >
         > [ei]: https://github.com/mguyard/pydiagral/issues?q=label%3Abug
 
+        > [!IMPORTANT]
+        >
+        > **Fill in every field with care.** pydiagral is maintained on free time: an issue that is incomplete, or that leaves the maintainer guessing, cannot be acted on and **will be closed**.
+        >
+        > When you are asked for more information, please reply: an issue waiting for your answer is marked stale after 30 days without activity, then closed 7 days later.
+
   - type: textarea
     attributes:
       label: Reproduction steps
@@ -93,7 +99,7 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I have filled out the issue template to the best of my ability.
+        - label: I have filled out the issue template to the best of my ability, and I understand that an incomplete issue will be closed.
           required: true
         - label: This issue only contains 1 issue (if you have multiple issues, open one issue for each issue).
           required: true

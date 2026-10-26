@@ -159,7 +159,7 @@ mypy
 
 ## 8. Rules
 
-- Never make a real call to the Diagral cloud, and never run `example_code.py` or `diag_code.py`.
+- Never make a real call to the Diagral cloud, and never run `try_pydiagral.py`.
 - Nominal path and error path for every public method.
 - Name tests `test_<method>_<condition>` — e.g. `test_get_system_status_without_pincode`.
 - Prefer `pytest.mark.parametrize` with `ids` over near-identical functions, for new tests.
