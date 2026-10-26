@@ -16,6 +16,12 @@ body:
         >
         > Paste **only the diagnostics report**. The rest of the script's output shows your serial number and the names of your devices.
 
+        > [!IMPORTANT]
+        >
+        > **Fill in every field with care.** pydiagral is maintained on free time: an issue that is incomplete, or that leaves the maintainer guessing, cannot be acted on and **will be closed**.
+        >
+        > When you are asked for more information, please reply: an issue waiting for your answer is marked stale after 30 days without activity, then closed 7 days later.
+
   - type: dropdown
     id: source
     attributes:
@@ -79,4 +85,6 @@ body:
       label: Confirmation
       options:
         - label: I pasted only the diagnostics report, not the rest of the output, which shows my serial number and device names.
+          required: true
+        - label: I have filled out this form to the best of my ability, and I understand that an incomplete issue will be closed.
           required: true
