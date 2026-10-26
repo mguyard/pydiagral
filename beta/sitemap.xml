@@ -2,18 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://mguyard.github.io/pydiagral/beta/</loc>
-         <lastmod>2026-10-25</lastmod>
+         <lastmod>2026-10-26</lastmod>
     </url>
     <url>
          <loc>https://mguyard.github.io/pydiagral/beta/api/</loc>
-         <lastmod>2026-10-25</lastmod>
+         <lastmod>2026-10-26</lastmod>
     </url>
     <url>
          <loc>https://mguyard.github.io/pydiagral/beta/exceptions/</loc>
-         <lastmod>2026-10-25</lastmod>
+         <lastmod>2026-10-26</lastmod>
     </url>
     <url>
          <loc>https://mguyard.github.io/pydiagral/beta/models/</loc>
-         <lastmod>2026-10-25</lastmod>
+         <lastmod>2026-10-26</lastmod>
+    </url>
+    <url>
+         <loc>https://mguyard.github.io/pydiagral/beta/try-pydiagral/</loc>
+         <lastmod>2026-10-26</lastmod>
     </url>
 </urlset>

@@ -1,0 +1,1428 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A Python library for interacting with Diagral systems">
+      
+      
+        <meta name="author" content="Marc Guyard">
+      
+      
+        <link rel="canonical" href="https://mguyard.github.io/pydiagral/beta/try-pydiagral/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../api/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>Try it on your alarm - pydiagral</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#try-pydiagral-on-your-alarm" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You're reading the documentation of the beta.
+  <a href="../..">
+    <strong>Read the stable version.</strong>
+  </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL(".."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="pydiagral" class="md-header__button md-logo" aria-label="pydiagral" data-md-component="logo">
+      
+  <img src="../pydiagral-Logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pydiagral
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Try it on your alarm
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mguyard/pydiagral" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="pydiagral" class="md-nav__button md-logo" aria-label="pydiagral" data-md-component="logo">
+      
+  <img src="../pydiagral-Logo.png" alt="logo">
+
+    </a>
+    pydiagral
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mguyard/pydiagral" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Try it on your alarm
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Try it on your alarm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-choose-where-to-run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Choose where to run it
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Choose where to run it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#in-github-codespaces-nothing-to-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In GitHub Codespaces — nothing to install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-your-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On your machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-configure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Configure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenarios
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scenarios">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-only-run-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read-only — run by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#named-only-never-run-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Named only — never run by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing webhooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing webhooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#in-github-codespaces-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In GitHub Codespaces — recommended
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-your-machine-with-a-cloudflare-quick-tunnel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On your machine, with a Cloudflare Quick Tunnel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Triggers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-you-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you see
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API keys
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagnostics-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics report
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debug-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DiagralAPI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exceptions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exceptions Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-choose-where-to-run-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Choose where to run it
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Choose where to run it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#in-github-codespaces-nothing-to-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In GitHub Codespaces — nothing to install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-your-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On your machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-configure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Configure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenarios
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scenarios">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-only-run-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read-only — run by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#named-only-never-run-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Named only — never run by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing webhooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing webhooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#in-github-codespaces-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In GitHub Codespaces — recommended
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-your-machine-with-a-cloudflare-quick-tunnel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On your machine, with a Cloudflare Quick Tunnel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Triggers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-you-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you see
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API keys
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagnostics-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics report
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debug-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="try-pydiagral-on-your-alarm">Try pydiagral on your alarm</h1>
+<p><a href="https://github.com/mguyard/pydiagral/blob/main/try_pydiagral.py"><code>try_pydiagral.py</code></a> runs ready-made scenarios against your own Diagral alarm: check that everything answers, read the configuration and the status, arm and disarm, test a webhook. It is the quickest way to see what pydiagral does with your installation, and to collect what an issue needs when something looks wrong.</p>
+<div class="admonition tip">
+<p class="admonition-title">Help improve pydiagral in a few minutes</p>
+<p>pydiagral's models do not cover yet everything Diagral can answer, and some calls were built from the Diagral documentation alone. The <a href="#diagnostics-report">diagnostics report</a> the script ends with describes the structure of Diagral's answers on your installation, without any value you typed and without any identifier: shared in a <a href="https://github.com/mguyard/pydiagral/issues/new?template=diagnostics_report.yml"><em>Diagnostics report</em> issue</a>, it lets pydiagral cover what it has not seen yet.</p>
+<p>In a <a href="#in-github-codespaces-nothing-to-install">codespace</a>, it takes a few minutes and nothing to install: run <code>python try_pydiagral.py</code>, which only reads, and share the report. What helps most:</p>
+<ul>
+<li><code>configuration</code>, when your alarm has cameras;</li>
+<li><code>automatisms</code>, when it has automatisms;</li>
+<li><code>anomalies</code>, while an anomaly is in progress;</li>
+<li><code>webhook-listen</code>, to receive alert and anomaly notifications: only state changes have been observed so far.</li>
+</ul>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The script talks to your real alarm. Read what a scenario does before naming it: some arm the alarm, so make sure nobody moves in a protected area meanwhile.</p>
+</div>
+<h2 id="1-choose-where-to-run-it">1. Choose where to run it</h2>
+<h3 id="in-github-codespaces-nothing-to-install">In GitHub Codespaces — nothing to install</h3>
+<p><a href="https://docs.github.com/en/codespaces/overview">Codespaces</a> runs the repository on a machine in the cloud, from your browser. It is free within a <a href="https://docs.github.com/en/billing/reference/product-usage-included">monthly allowance</a> that a session with the script barely touches. Every scenario works there, and it is the simplest way to <a href="#testing-webhooks">test webhooks</a>.</p>
+<ol>
+<li><strong>Fork the repository</strong> to your account: <a href="https://github.com/mguyard/pydiagral/fork">github.com/mguyard/pydiagral/fork</a>. <strong>Untick <em>Copy the <code>main</code> branch only</em></strong>, so that your fork also gets <code>beta</code>, the branch with the latest version of pydiagral and of this script. Later, the <em>Sync fork</em> button of your fork brings it up to date.</li>
+<li>
+<p><strong>Create the codespace with <em>New with options</em></strong>: on your fork, <em>Code &gt; Codespaces</em>, then the <em>⋯</em> menu &gt; <em>New with options</em>.</p>
+<ol>
+<li>Pick the <code>beta</code> branch.</li>
+<li>
+<p>The page asks for the secrets the dev container suggests, the variables of <a href="#2-configure">Configure</a>. GitHub shows none as mandatory, since it lets you leave any empty, but the script needs:</p>
+<ul>
+<li><code>DIAGRAL_USERNAME</code> and <code>DIAGRAL_PASSWORD</code>: always;</li>
+<li><code>DIAGRAL_SERIAL_ID</code>: for every scenario but <code>ping</code> and <code>systems</code>. If you do not know it, leave it empty, run <code>systems</code> to find it, then add it as described in the note below;</li>
+<li><code>DIAGRAL_PIN_CODE</code>: to read the status and details, and to arm or disarm.</li>
+</ul>
+<p>This page saves the values you enter in your account's Codespaces secrets. So when you create another codespace, a secret entered the first time shows <em>Associated with repository</em> instead of a field: the codespace uses the saved value. Change it as described in the note below.</p>
+</li>
+<li>
+<p>Click <em>Create codespace</em>. It starts the repository's <a href="https://github.com/mguyard/pydiagral/blob/main/CONTRIBUTING.md#-dev-container">dev container</a>, with pydiagral and every tool installed. On first start, it opens this guide in a browser tab; its terminal shows the guide's address on every start.</p>
+</li>
+</ol>
+<p>GitHub keeps these secrets <a href="https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces">encrypted in your account</a>, never in the repository, and gives them to the script as environment variables. It does not ask again for your next codespaces on this fork.</p>
+</li>
+<li>
+<p><strong>Run</strong> the commands of <a href="#3-run">Run</a> in the codespace's terminal, with:</p>
+<ul>
+<li><code>python try_pydiagral.py …</code> to try the code of the branch the codespace opened;</li>
+<li><code>uv run try_pydiagral.py …</code> to try the latest release, betas included.</li>
+</ul>
+</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Adding or changing a secret afterwards</p>
+<p>Only <em>New with options</em> asks for the secrets. If you created the codespace with the <em>Create codespace on …</em> button instead, or left a secret empty, add it yourself:</p>
+<ol>
+<li>open <a href="https://github.com/settings/codespaces">Settings &gt; Codespaces</a> on GitHub, and click <em>New secret</em>;</li>
+<li>enter its name, <code>DIAGRAL_SERIAL_ID</code> for instance, and its value;</li>
+<li>under <em>Repository access</em>, select your fork.</li>
+</ol>
+<p>To change a value, edit the secret on the same page.</p>
+<p>In both cases, stop and restart the codespace (<em>Codespaces: Stop Current Codespace</em> in the command palette, or from <a href="https://github.com/codespaces">github.com/codespaces</a>): a codespace reads its secrets when it starts.</p>
+</div>
+<p>Stop the codespace once done, and delete it when you no longer need it: its storage counts against the allowance as long as it exists.</p>
+<h3 id="on-your-machine">On your machine</h3>
+<p>Download <a href="https://github.com/mguyard/pydiagral/blob/main/try_pydiagral.py"><code>try_pydiagral.py</code></a> and <a href="https://github.com/mguyard/pydiagral/blob/main/.env.example"><code>.env.example</code></a> into the same folder, or clone the repository.</p>
+<p>The recommended way to run the script is <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a>. The script declares what it needs at its top (<a href="https://packaging.python.org/en/latest/specifications/inline-script-metadata/">inline script metadata</a>), and <code>uv run</code> installs it in an environment of its own, apart from your other projects: nothing else to install.</p>
+<div class="admonition info">
+<p class="admonition-title">Always the latest pydiagral</p>
+<p>The script is meant to show what the library does today: on every run, uv checks for the latest pydiagral, <strong>betas included</strong>, and uses it. A new release can take a few minutes to show up, while uv's cache of the package index expires.</p>
+</div>
+<p>Without uv, install the dependencies yourself, ideally in a virtual environment, and run the commands below with <code>python</code> instead of <code>uv run</code>:</p>
+<pre><code class="language-bash">pip install --upgrade --pre pydiagral python-dotenv
+</code></pre>
+<p><code>--pre</code> lets pip pick a beta. Run the same command again to move to a newer release.</p>
+<div class="admonition tip">
+<p class="admonition-title">Testing your own changes to pydiagral</p>
+<p><code>uv run</code> always takes pydiagral from PyPI, even inside the repository. To try a local change, install the repository in editable mode (<code>PYPROJECT_VERSION=0.1.0-dev pip install -e ".[dev]"</code>, which the <a href="https://github.com/mguyard/pydiagral/blob/main/CONTRIBUTING.md#-dev-container">dev container</a> does for you) and run <code>python try_pydiagral.py</code>.</p>
+</div>
+<h2 id="2-configure">2. Configure</h2>
+<p>Where the settings come from depends on where the script runs:</p>
+<ul>
+<li><strong>In Codespaces</strong>, the secrets you entered on <em>New with options</em> are the settings: nothing to do here. To add an optional one from the table below, or one you left empty, see the note <em>Adding or changing a secret afterwards</em> <a href="#in-github-codespaces-nothing-to-install">above</a>.</li>
+<li><strong>On your machine</strong>, copy <code>.env.example</code> to <code>.env</code>, next to the script, and fill it in.</li>
+</ul>
+<p>Every variable starts with <code>DIAGRAL_</code>, and an empty value counts as unset:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Needed for</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DIAGRAL_USERNAME</code></td>
+<td>everything</td>
+<td>The e-mail address of your Diagral account</td>
+</tr>
+<tr>
+<td><code>DIAGRAL_PASSWORD</code></td>
+<td>everything</td>
+<td>The password of your Diagral account</td>
+</tr>
+<tr>
+<td><code>DIAGRAL_SERIAL_ID</code></td>
+<td>every scenario but <code>ping</code> and <code>systems</code></td>
+<td>The serial ID of your box. Run the <code>systems</code> scenario to find it</td>
+</tr>
+<tr>
+<td><code>DIAGRAL_PIN_CODE</code></td>
+<td><code>status</code>, <code>details</code>, and every scenario that arms</td>
+<td>Your alarm PIN code, also named master code</td>
+</tr>
+<tr>
+<td><code>DIAGRAL_API_KEY</code>, <code>DIAGRAL_SECRET_KEY</code></td>
+<td>optional</td>
+<td>An existing API key. Left empty, the script creates a temporary one — see <a href="#api-keys">API keys</a></td>
+</tr>
+<tr>
+<td><code>DIAGRAL_VENDOR</code></td>
+<td>optional</td>
+<td>The brand of your account: <code>DIAGRAL</code> (default), <code>DAITEM</code>, <code>EDAITEM</code>, <code>LOGISTYALMA</code> or <code>DISTRIBUTION</code></td>
+</tr>
+</tbody>
+</table>
+<p>Variables already set in the environment, Codespaces secrets included, take precedence over <code>.env</code>.</p>
+<div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p><code>.env</code> holds your credentials: never commit it, attach it to an issue or share it.</p>
+</div>
+<h2 id="3-run">3. Run</h2>
+<p>The commands start with <code>python</code> or <code>uv run</code>, depending on where the script runs and which pydiagral it should use:</p>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>Command</th>
+<th>pydiagral used</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Codespaces</td>
+<td><code>python try_pydiagral.py …</code></td>
+<td>The code of the branch the codespace opened, <code>beta</code> of your fork: the usual choice</td>
+</tr>
+<tr>
+<td>Codespaces</td>
+<td><code>uv run try_pydiagral.py …</code></td>
+<td>The latest release on PyPI, betas included, whatever the branch</td>
+</tr>
+<tr>
+<td>Your machine, with uv</td>
+<td><code>uv run try_pydiagral.py …</code></td>
+<td>The latest release on PyPI, betas included</td>
+</tr>
+<tr>
+<td>Your machine, without uv</td>
+<td><code>python try_pydiagral.py …</code></td>
+<td>The one you installed with pip</td>
+</tr>
+</tbody>
+</table>
+<p>The examples below use <code>python</code>; replace it with <code>uv run</code> where the table says so.</p>
+<pre><code class="language-bash">python try_pydiagral.py                  # every read-only scenario
+python try_pydiagral.py ping systems     # only these, in this order
+python try_pydiagral.py arm --wait 10    # arm, wait 10 s, then disarm
+python try_pydiagral.py --help           # every scenario and option
+</code></pre>
+<p>Without arguments, the script runs every read-only scenario: nothing changes on your alarm. Each scenario prints a <code>== name ==</code> header, what it found, then how long it took, such as <code>(status: 2.4 s)</code>. When one fails, its error is printed with the time it took, and the next one runs.</p>
+<p>A good first run is <code>ping systems</code>: it only needs the username and password, checks that the Diagral cloud answers, and shows the serial ID of each system of your account.</p>
+<h2 id="scenarios">Scenarios</h2>
+<h3 id="read-only-run-by-default">Read-only — run by default</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ping</code></td>
+<td>Whether the Diagral cloud answers. Needs no API key</td>
+</tr>
+<tr>
+<td><code>systems</code></td>
+<td>The serial ID of each system of your account, and how many API keys each has. Needs no serial ID</td>
+</tr>
+<tr>
+<td><code>configuration</code></td>
+<td>The alarm name, its groups, and how many devices of each type it has</td>
+</tr>
+<tr>
+<td><code>devices</code></td>
+<td>Every device of the alarm, by type, with its index and label</td>
+</tr>
+<tr>
+<td><code>details</code></td>
+<td>The box model, firmware version and mode. Needs the PIN code</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Whether the alarm is armed, and which groups are active. Needs the PIN code</td>
+</tr>
+<tr>
+<td><code>anomalies</code></td>
+<td>The current anomalies, by device</td>
+</tr>
+<tr>
+<td><code>webhook</code></td>
+<td>The webhook subscription, if any, with the host of its URL only</td>
+</tr>
+<tr>
+<td><code>automatisms</code></td>
+<td>The automatism rules. This call is <a href="https://github.com/mguyard/pydiagral#-untested-features">untested</a>: pydiagral logs a warning</td>
+</tr>
+</tbody>
+</table>
+<h3 id="named-only-never-run-by-default">Named only — never run by default</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>connection</code></td>
+<td>Tests the connection the way hass-diagral's setup does. Without an API key, it creates a temporary one and deletes it</td>
+</tr>
+<tr>
+<td><code>arm</code></td>
+<td>Arms the whole alarm, waits, then disarms</td>
+</tr>
+<tr>
+<td><code>presence</code></td>
+<td>Arms in presence mode, waits, then disarms</td>
+</tr>
+<tr>
+<td><code>partial</code></td>
+<td>Runs partial start 1 or 2 (<code>--partial</code>), waits, then disarms</td>
+</tr>
+<tr>
+<td><code>groups</code></td>
+<td>Arms the groups given by <code>--groups</code>, waits, then disarms</td>
+</tr>
+<tr>
+<td><code>webhook-listen</code></td>
+<td>Receives the alarm's notifications on a temporary listener — see <a href="#testing-webhooks">Testing webhooks</a></td>
+</tr>
+</tbody>
+</table>
+<p>The scenarios that arm <strong>always disarm at the end</strong>: after the wait, and when the arming call fails. If disarming itself fails, the script says so: check your alarm.</p>
+<p><strong>Ctrl+C</strong> depends on when you press it:</p>
+<ul>
+<li>while the script waits or listens, as its message says, it ends that wait only: the scenarios that armed disarm at once, and the run goes on to the end, <a href="#diagnostics-report">diagnostics report</a> included;</li>
+<li>at any other moment, it stops the run, after the usual clean-up: disarming, deleting the temporary API key and the webhook subscription.</li>
+</ul>
+<h2 id="options">Options</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--wait SECONDS</code></td>
+<td><code>30</code></td>
+<td>How long the arming scenarios stay armed before disarming</td>
+</tr>
+<tr>
+<td><code>--timeout SECONDS</code></td>
+<td><code>30</code></td>
+<td>How long each request to Diagral may take before it fails — see <a href="#troubleshooting">Troubleshooting</a></td>
+</tr>
+<tr>
+<td><code>--partial {1,2}</code></td>
+<td><code>1</code></td>
+<td>Which partial start <code>partial</code> runs</td>
+</tr>
+<tr>
+<td><code>--groups N [N ...]</code></td>
+<td><code>1</code></td>
+<td>Which groups <code>groups</code> arms, e.g. <code>--groups 1 2</code></td>
+</tr>
+<tr>
+<td><code>--keep-apikey</code></td>
+<td>off</td>
+<td>Keeps the API key the script creates, and prints it</td>
+</tr>
+<tr>
+<td><code>--trigger {none,presence,arm}</code></td>
+<td><code>none</code></td>
+<td>What <code>webhook-listen</code> does to provoke a notification</td>
+</tr>
+<tr>
+<td><code>--listen-for SECONDS</code></td>
+<td><code>120</code></td>
+<td>How long <code>webhook-listen</code> listens</td>
+</tr>
+<tr>
+<td><code>--port PORT</code></td>
+<td><code>8080</code></td>
+<td>The local port <code>webhook-listen</code> listens on</td>
+</tr>
+<tr>
+<td><code>--public-url URL</code></td>
+<td>found alone in Codespaces</td>
+<td>The public URL of your tunnel to that port</td>
+</tr>
+<tr>
+<td><code>--debug</code></td>
+<td>off</td>
+<td>Logs every request and answer — see <a href="#debug-log">Debug log</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="testing-webhooks">Testing webhooks</h2>
+<p>Diagral can push the alarm's events to a URL: state changes, alerts and anomalies. <code>webhook-listen</code> checks that they reach you and that pydiagral reads them. It starts a temporary listener, makes sure the public URL reaches it, subscribes it, waits for notifications and shows each one, then deletes the subscription.</p>
+<div class="admonition warning">
+<p class="admonition-title">One subscription per box</p>
+<p>Diagral keeps a single webhook subscription per box. When one exists, hass-diagral's for instance, the scenario stops before doing anything, since it would replace it. With hass-diagral, disable the Diagral entry in Home Assistant (<em>Settings &gt; Devices &amp; services</em>), run the test, then enable the entry again: the integration subscribes again when the entry starts.</p>
+</div>
+<p>Diagral must reach the listener from the Internet, which a computer at home usually does not allow. Two free ways around it:</p>
+<h3 id="in-github-codespaces-recommended">In GitHub Codespaces — recommended</h3>
+<p>In a codespace <a href="#in-github-codespaces-nothing-to-install">set up as above</a>, run:</p>
+<pre><code class="language-bash">python try_pydiagral.py webhook-listen
+</code></pre>
+<p>While it listens, two minutes by default, arm or disarm the alarm yourself, from a keypad, a badge or the Diagral app, and watch the notifications arrive. To let the script arm and disarm instead, see <a href="#triggers">Triggers</a>.</p>
+<p>Nothing else is needed: the script builds the public URL of the codespace's port, makes the port public with the GitHub CLI, and makes it private again at the end. When it cannot, it says so and waits up to two minutes: in the <em>Ports</em> tab, right-click port 8080, then <em>Port Visibility &gt; Public</em>.</p>
+<h3 id="on-your-machine-with-a-cloudflare-quick-tunnel">On your machine, with a Cloudflare Quick Tunnel</h3>
+<p>A <a href="https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/">Quick Tunnel</a> gives a public <code>trycloudflare.com</code> address to a local port, without a Cloudflare account.</p>
+<ol>
+<li>Install <code>cloudflared</code> by following <a href="https://developers.cloudflare.com/tunnel/downloads/">Cloudflare's downloads page</a>.</li>
+<li>
+<p>In another terminal, start the tunnel to the listener's port, and copy the <code>https://….trycloudflare.com</code> address it prints:</p>
+<p><code>bash
+cloudflared tunnel --url http://localhost:8080</code></p>
+</li>
+<li>
+<p>Run the scenario with that address:</p>
+<p><code>bash
+uv run try_pydiagral.py webhook-listen --public-url https://….trycloudflare.com</code></p>
+</li>
+</ol>
+<p>The address changes every time the tunnel starts: pass the new one on each run. Do not add <code>--allowed-mail</code> to the tunnel, since Diagral cannot sign in. Any other tunnel to the same port, ngrok for instance, works the same way.</p>
+<h3 id="triggers">Triggers</h3>
+<table>
+<thead>
+<tr>
+<th><code>--trigger</code></th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>none</code> (default)</td>
+<td>The script listens for <code>--listen-for</code> seconds, while you arm or disarm the alarm yourself, from a keypad, a badge or the Diagral app</td>
+</tr>
+<tr>
+<td><code>presence</code></td>
+<td>The script arms in presence mode, listens for <code>--listen-for</code> seconds, disarms, then listens 30 seconds more for the disarm notification. Presence mode has no exit delay: the quickest way to let the script provoke a notification</td>
+</tr>
+<tr>
+<td><code>arm</code></td>
+<td>The same with the whole alarm. Its notification only arrives once the exit delay is over, about four minutes, so the script stays armed and listens at least five minutes</td>
+</tr>
+</tbody>
+</table>
+<p>With <code>presence</code> or <code>arm</code>, the scenario fails when no notification arrived.</p>
+<h3 id="what-you-see">What you see</h3>
+<p>Each notification prints its type, code and description, the group, the device type and the type of user who acted. The transmitter ID, which is your serial number, and the user name are never printed. The structure of each notification, without its values, joins the <a href="#diagnostics-report">diagnostics report</a> under <code>webhook_shapes</code>.</p>
+<h3 id="safety">Safety</h3>
+<ul>
+<li>The listener only accepts connections from the computer itself (<code>127.0.0.1</code>), which the tunnel uses, and only on a random path drawn for the run: any other request is refused.</li>
+<li>The script deletes the subscription, disarms if it armed, and makes the Codespaces port private again at the end, even after an error or Ctrl+C.</li>
+<li>If the script is killed before cleaning up, its subscription stays in place. Recent versions of hass-diagral then show a repair, <em>webhook used by another installation</em>, that lets you take the subscription back. With older versions, disabling then enabling the Diagral entry does the same.</li>
+</ul>
+<h2 id="api-keys">API keys</h2>
+<p>Most calls are signed with an API key. When <code>.env</code> holds none and a scenario needs one, the script creates a temporary key at the start and <strong>deletes it at the end</strong>, even when a scenario fails or you press Ctrl+C.</p>
+<p>To stop creating a key on every run, run once with <code>--keep-apikey</code>: the script prints two lines to paste into <code>.env</code>.</p>
+<pre><code class="language-text">  DIAGRAL_API_KEY=…
+  DIAGRAL_SECRET_KEY=…
+</code></pre>
+<p>The next runs use that key. The <code>systems</code> scenario shows how many keys each system has, which helps spot keys left behind.</p>
+<h2 id="diagnostics-report">Diagnostics report</h2>
+<p>Every run that completes ends with a <code>== diagnostics ==</code> section, in JSON:</p>
+<ul>
+<li><code>unexpected_data</code>: what Diagral sent that pydiagral's models did not expect, such as a missing field or an unknown value;</li>
+<li><code>response_shapes</code>: the structure of the last answer of each read, keys kept and values replaced.</li>
+</ul>
+<p>Neither holds a value you typed nor an identifier: it is made to be shared as is, in a <a href="https://github.com/mguyard/pydiagral/issues/new?template=diagnostics_report.yml"><em>Diagnostics report</em> issue</a>. The report also gives <code>pydiagral_version</code>, and <code>webhook_shapes</code> after <a href="#testing-webhooks"><code>webhook-listen</code></a>. When the output of a scenario looks wrong, or a warning asks you to report something, run that scenario and attach the report.</p>
+<h2 id="debug-log">Debug log</h2>
+<p><code>--debug</code> logs every request and answer of pydiagral on the standard error. Keys, tokens, PIN codes and serial numbers are redacted, but the log still shows the names of your devices and groups: read it before posting it.</p>
+<pre><code class="language-bash">python try_pydiagral.py status --debug 2&gt; debug.log
+</code></pre>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DIAGRAL_USERNAME and DIAGRAL_PASSWORD are required</code></td>
+<td><code>.env</code> is missing, not next to the script, or does not set them</td>
+</tr>
+<tr>
+<td><code>DIAGRAL_SERIAL_ID is required for these scenarios</code></td>
+<td>Set it, or run <code>systems</code> to find it</td>
+</tr>
+<tr>
+<td><code>!! status failed: PIN code required to …</code></td>
+<td>Set <code>DIAGRAL_PIN_CODE</code></td>
+</tr>
+<tr>
+<td><code>error: unknown scenario</code></td>
+<td>A typo in a scenario name: <code>--help</code> lists them</td>
+</tr>
+<tr>
+<td><code>Diagral request timed out</code></td>
+<td>Diagral did not answer within <code>--timeout</code>, 30 seconds by default. Its answers can be slow, which is why hass-diagral allows 60 seconds or more: run the scenario again with <code>--timeout 60</code>. The time printed after each scenario shows which ones are slow</td>
+</tr>
+<tr>
+<td><code>A webhook subscription already exists</code></td>
+<td>See <a href="#testing-webhooks">One subscription per box</a></td>
+</tr>
+<tr>
+<td><code>Outside Codespaces, start a tunnel</code></td>
+<td>Start a tunnel and pass its address with <code>--public-url</code></td>
+</tr>
+<tr>
+<td><code>The listener is not reachable</code></td>
+<td>In Codespaces, port 8080 is still private. Locally, the tunnel is not running, points to another port than <code>--port</code>, or a firewall blocks it: <code>cloudflared</code> needs to reach Cloudflare on port 7844</td>
+</tr>
+<tr>
+<td><code>Cannot listen on port</code></td>
+<td>Another program uses the port: pick another with <code>--port</code>, and point the tunnel to it</td>
+</tr>
+<tr>
+<td><code>No notification arrived</code></td>
+<td>With <code>--trigger arm</code>, the exit delay may be longer than the listening time: raise <code>--listen-for</code>. Otherwise, run <code>webhook</code> to check that no other subscription took over</td>
+</tr>
+</tbody>
+</table>
+<p>The script exits with code <code>0</code> when every scenario succeeded, <code>1</code> when one failed or the run stopped, and <code>2</code> on a wrong command line.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+    
+  </body>
+</html>

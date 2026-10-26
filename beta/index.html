@@ -16,7 +16,7 @@
       
       
       
-        <link rel="next" href="api/">
+        <link rel="next" href="try-pydiagral/">
       
       
         
@@ -402,6 +402,33 @@
   
   
     <li class="md-nav__item">
+      <a href="try-pydiagral/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Try it on your alarm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="api/" class="md-nav__link">
         
   
@@ -677,8 +704,9 @@ The user installs and uses this integration at their own risk and with full know
 <li><strong>Anomaly deletion</strong>: <code>delete_anomalies()</code> deletes an anomaly. Which identifier it expects is unknown: the anomalies <code>get_anomalies()</code> returns have none of their own.</li>
 <li><strong>Product enabling and disabling</strong>: <code>enable_product()</code> and <code>disable_product()</code> follow the specification. What disabling does, and which identifier designates a device, are unknown.</li>
 </ul>
-<p>If you own the matching equipment or use these calls, please <a href="https://github.com/mguyard/pydiagral/issues">open an issue</a> describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:</p>
+<p>If you own the matching equipment or use these calls, please <a href="https://github.com/mguyard/pydiagral/issues/new?template=diagnostics_report.yml">open a <em>Diagnostics report</em> issue</a> describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:</p>
 <ul>
+<li><strong>In a few minutes, with nothing to install:</strong> open a GitHub Codespace as <a href="try-pydiagral/#in-github-codespaces-nothing-to-install">Try it on your alarm</a> explains, run <code>python try_pydiagral.py</code>, which only reads, and attach the diagnostics report its output ends with.</li>
 <li>With <a href="https://github.com/mguyard/hass-diagral">hass-diagral</a>, attach the integration's diagnostics: they include both lists below.</li>
 <li>From Python, attach the output of <code>pydiagral.models.unexpected_data()</code>, and of <code>response_shapes()</code> called on the client after the calls in question.</li>
 </ul>
@@ -693,19 +721,18 @@ The user installs and uses this integration at their own risk and with full know
 <ol>
 <li>Example</li>
 </ol>
-<p>A modular and easy-to-use test script is available <a href="https://github.com/mguyard/pydiagral/blob/main/example_code.py">example_code.py</a> to help you get started with the library.</p>
-<p>Simply create a <code>.env</code> file with the following content:</p>
-<pre><code class="language-properties">USERNAME=your_email@example.com
-PASSWORD=your_password
-SERIAL_ID=your_serial_id
-PIN_CODE=your_pin_code  // Also named Master Code
-LOG_LEVEL=DEBUG
+<p><a href="https://github.com/mguyard/pydiagral/blob/main/try_pydiagral.py">try_pydiagral.py</a> runs ready-made scenarios against your own alarm. Copy <a href="https://github.com/mguyard/pydiagral/blob/main/.env.example">.env.example</a> to <code>.env</code> next to the script, fill it in, then run it with <a href="https://docs.astral.sh/uv/">uv</a>, which installs the latest pydiagral, betas included:</p>
+<pre><code class="language-bash">uv run try_pydiagral.py                  # every read-only scenario
+uv run try_pydiagral.py status anomalies # only these
+uv run try_pydiagral.py arm --wait 10    # arm, wait 10 s, then disarm
+uv run try_pydiagral.py --help           # every scenario and option
 </code></pre>
-<p>And run the <a href="https://github.com/mguyard/pydiagral/blob/main/example_code.py">example_code.py</a>.</p>
-<blockquote>
-<p>TIP</p>
-<p>You can customize the actions performed by <a href="https://github.com/mguyard/pydiagral/blob/main/example_code.py">example_code.py</a> by modifying the parameters in the code, as indicated by the <code>CUSTOMIZE THE TESTS</code> section title.</p>
-</blockquote>
+<p>No Python at hand? The script also runs in <a href="try-pydiagral/#in-github-codespaces-nothing-to-install">GitHub Codespaces</a>, from your browser, with nothing to install.</p>
+<p>Every scenario, option and message is explained in <a href="try-pydiagral/">Try it on your alarm</a>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Without arguments, the script changes nothing on your alarm: the scenarios that arm, disarm or register a webhook only run when you name them, and those that arm always disarm at the end, even on an error or Ctrl+C. Its output ends with a diagnostics report, ready to attach to an issue.</p>
+</div>
 <ol>
 <li>Request timeout</li>
 </ol>
