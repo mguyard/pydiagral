@@ -9,7 +9,7 @@ The file above holds every repository rule and is shared with other agents. What
 - **`gh` is installed and is the way to reach GitHub** — issues, PRs, comments, checks, API calls. There is no MCP GitHub server configured here.
 - Use `AskUserQuestion` when a decision is genuinely the user's to make. Do not ask about choices that have an obvious default or facts the repository can answer.
 - Context7 is available for library documentation. Prefer it over web search for aiohttp, pytest, MkDocs or mkdocstrings APIs.
-- **Never read `.env`**, not even to check which variables it defines: it holds real Diagral credentials. Never run `example_code.py` or `diag_code.py`.
+- **Never read `.env`**, not even to check which variables it defines: it holds real Diagral credentials. Never run `try_pydiagral.py`.
 
 ## Skills
 

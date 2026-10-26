@@ -28,6 +28,7 @@ extra:
 
 nav:
   - Home: index.md
+  - Try it on your alarm: try-pydiagral.md
   - DiagralAPI Reference: api.md
   - Models Reference: models.md
   - Exceptions Reference: exceptions.md

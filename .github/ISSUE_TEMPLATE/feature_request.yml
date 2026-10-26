@@ -16,6 +16,12 @@ body:
         >
         > [fr]: https://github.com/mguyard/pydiagral/issues?q=label%3Afeature
 
+        > [!IMPORTANT]
+        >
+        > **Fill in every field with care.** pydiagral is maintained on free time: an issue that is incomplete, or that leaves the maintainer guessing, cannot be acted on and **will be closed**.
+        >
+        > When you are asked for more information, please reply: an issue waiting for your answer is marked stale after 30 days without activity, then closed 7 days later.
+
   - type: textarea
     attributes:
       label: "Is your feature request related to a problem? Please describe."
@@ -56,7 +62,7 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: I have filled out the template to the best of my ability.
+        - label: I have filled out the template to the best of my ability, and I understand that an incomplete issue will be closed.
           required: true
         - label: This only contains 1 feature request (if you have multiple feature requests, open one feature request for each feature request).
           required: true

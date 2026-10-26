@@ -59,8 +59,9 @@ Some parts of pydiagral are built from the Diagral API documentation only, becau
 - **Anomaly deletion**: `delete_anomalies()` deletes an anomaly. Which identifier it expects is unknown: the anomalies `get_anomalies()` returns have none of their own.
 - **Product enabling and disabling**: `enable_product()` and `disable_product()` follow the specification. What disabling does, and which identifier designates a device, are unknown.
 
-If you own the matching equipment or use these calls, please [open an issue](https://github.com/mguyard/pydiagral/issues) describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:
+If you own the matching equipment or use these calls, please [open a *Diagnostics report* issue](https://github.com/mguyard/pydiagral/issues/new?template=diagnostics_report.yml) describing what you observe, with what pydiagral recorded about it, which holds no value you typed and no identifier:
 
+- **In a few minutes, with nothing to install:** open a GitHub Codespace as [Try it on your alarm](try-pydiagral.md#in-github-codespaces-nothing-to-install) explains, run `python try_pydiagral.py`, which only reads, and attach the diagnostics report its output ends with.
 - With [hass-diagral](https://github.com/mguyard/hass-diagral), attach the integration's diagnostics: they include both lists below.
 - From Python, attach the output of `pydiagral.models.unexpected_data()`, and of `response_shapes()` called on the client after the calls in question.
 
@@ -78,23 +79,22 @@ To get started with pydiagral, follow these steps:
 
 2. Example
 
-A modular and easy-to-use test script is available [example_code.py](https://github.com/mguyard/pydiagral/blob/main/example_code.py) to help you get started with the library.
+[try_pydiagral.py](https://github.com/mguyard/pydiagral/blob/main/try_pydiagral.py) runs ready-made scenarios against your own alarm. Copy [.env.example](https://github.com/mguyard/pydiagral/blob/main/.env.example) to `.env` next to the script, fill it in, then run it with [uv](https://docs.astral.sh/uv/), which installs the latest pydiagral, betas included:
 
-Simply create a `.env` file with the following content:
-
-```properties
-USERNAME=your_email@example.com
-PASSWORD=your_password
-SERIAL_ID=your_serial_id
-PIN_CODE=your_pin_code  // Also named Master Code
-LOG_LEVEL=DEBUG
+```bash
+uv run try_pydiagral.py                  # every read-only scenario
+uv run try_pydiagral.py status anomalies # only these
+uv run try_pydiagral.py arm --wait 10    # arm, wait 10 s, then disarm
+uv run try_pydiagral.py --help           # every scenario and option
 ```
 
-And run the [example_code.py](https://github.com/mguyard/pydiagral/blob/main/example_code.py).
+No Python at hand? The script also runs in [GitHub Codespaces](try-pydiagral.md#in-github-codespaces-nothing-to-install), from your browser, with nothing to install.
 
-> TIP
->
-> You can customize the actions performed by [example_code.py](https://github.com/mguyard/pydiagral/blob/main/example_code.py) by modifying the parameters in the code, as indicated by the `CUSTOMIZE THE TESTS` section title.
+Every scenario, option and message is explained in [Try it on your alarm](try-pydiagral.md).
+
+!!! tip
+
+    Without arguments, the script changes nothing on your alarm: the scenarios that arm, disarm or register a webhook only run when you name them, and those that arm always disarm at the end, even on an error or Ctrl+C. Its output ends with a diagnostics report, ready to attach to an issue.
 
 3. Request timeout
 

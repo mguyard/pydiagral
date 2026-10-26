@@ -1,0 +1,90 @@
+---
+name: "Diagnostics report"
+description: "Share what Diagral answers on your installation, to help cover what pydiagral has not seen yet"
+title: "[Diagnostics]: "
+labels: [diagnostic-report]
+assignees: mguyard
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping! pydiagral's models do not cover yet everything Diagral can answer: cameras, automatisms, alert and anomaly notifications, and more. A diagnostics report describes the structure of Diagral's answers on your installation, **without any value you typed and without any identifier**.
+
+        The quickest way to get one takes a few minutes, with nothing to install: open a GitHub Codespace and run `python try_pydiagral.py`, as the guide explains ([stable](https://mguyard.github.io/pydiagral/stable/try-pydiagral/) · [beta](https://mguyard.github.io/pydiagral/beta/try-pydiagral/)). The report is the JSON at the end of its output, after `== diagnostics ==`.
+
+        > [!WARNING]
+        >
+        > Paste **only the diagnostics report**. The rest of the script's output shows your serial number and the names of your devices.
+
+        > [!IMPORTANT]
+        >
+        > **Fill in every field with care.** pydiagral is maintained on free time: an issue that is incomplete, or that leaves the maintainer guessing, cannot be acted on and **will be closed**.
+        >
+        > When you are asked for more information, please reply: an issue waiting for your answer is marked stale after 30 days without activity, then closed 7 days later.
+
+  - type: dropdown
+    id: source
+    attributes:
+      label: Where does the report come from?
+      options:
+        - try_pydiagral.py, in GitHub Codespaces
+        - try_pydiagral.py, on my machine
+        - hass-diagral diagnostics
+        - Python, from unexpected_data() and response_shapes()
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: pydiagral version
+      description: The `pydiagral_version` line of the report, or the version you installed. With `python` in a codespace, the report reads `0.1.0-dev`; give the branch instead, such as `beta`.
+    validations:
+      required: true
+
+  - type: input
+    id: scenarios
+    attributes:
+      label: Scenarios run
+      description: The command you ran, with try_pydiagral.py.
+      placeholder: python try_pydiagral.py configuration automatisms webhook-listen
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: covers
+    attributes:
+      label: What does this report cover?
+      description: Tick what applies, so the report goes where it helps.
+      options:
+        - label: Cameras
+        - label: Automatisms
+        - label: An anomaly in progress
+        - label: Alert or anomaly notifications received with webhook-listen
+
+  - type: textarea
+    id: report
+    attributes:
+      label: Diagnostics report
+      description: The JSON after `== diagnostics ==`, as is.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed
+    attributes:
+      label: What did you observe?
+      description: Anything that looked wrong or surprising, such as a warning, an error, or a value shown differently than in the Diagral app.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I pasted only the diagnostics report, not the rest of the output, which shows my serial number and device names.
+          required: true
+        - label: I have filled out this form to the best of my ability, and I understand that an incomplete issue will be closed.
+          required: true

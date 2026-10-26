@@ -208,6 +208,9 @@ ignore = [
     "S105", # dummy credentials
     "S106", # dummy credentials
 ]
+"try_pydiagral.py" = [
+    "T201", # a console script reports on stdout
+]
 
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false

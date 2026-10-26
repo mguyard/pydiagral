@@ -32,6 +32,10 @@
 - name: breaking
   description: Breaking Changes
   color: bfd4f2
+# Set by the "Diagnostics report" issue template.
+- name: diagnostic-report
+  description: Diagnostics report from try_pydiagral.py or hass-diagral
+  color: c5def5
 - name: help wanted
   description: Extra attention is needed
   color: 008672

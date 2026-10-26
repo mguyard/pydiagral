@@ -164,9 +164,8 @@ cython_debug/
 # Exclusion of .DS_Store
 .DS_Store
 
-# Exclusion of diagnostic code files
+# Devcontainer lock file
 .devcontainer/devcontainer-lock.json
-diag_code.py
 
 # Agent tooling
 #  Catalogue of MCP servers dropped in by the ECC plugin: a template to copy
