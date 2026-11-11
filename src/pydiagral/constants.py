@@ -115,3 +115,9 @@ STATUS_OFF = "off"
 STATUS_GROUP = "group"
 STATUS_PRESENCE = "presence"
 STATUS_TEMPO_GROUP = "tempo_group"
+
+# Probe actual Emerald reads before using the alternate cloud service.
+FAILOVER_PRIMARY_TIMEOUT = 10
+FAILOVER_TOPAZE_TIMEOUT = 120
+API_EMERALD = "emerald"
+API_TOPAZE = "topaze"

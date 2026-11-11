@@ -189,3 +189,20 @@ class TestStatusMapping:
         config = build_configuration(*source_data)
         with pytest.raises(ModelValidationError):
             normalize_status(payload, config)
+
+
+@pytest.mark.parametrize(
+    "selection", [{"group": True}, {"1": "true"}, {"3": True}, {"1": True, "01": True}]
+)
+def test_invalid_group_selection_is_rejected(source_data, selection):
+    """Presence configuration cannot select unknown, duplicate or malformed groups."""
+    source_data[0]["centralSettingsZone"]["groupesMarchePresence"] = selection
+    with pytest.raises(ModelValidationError):
+        build_configuration(*source_data)
+
+
+def test_device_collection_must_be_a_list(source_data):
+    """A dictionary cannot be mistaken for a list of declared equipment."""
+    source_data[0]["centralLearningZone"]["sensors"] = {}
+    with pytest.raises(ModelValidationError, match="device list"):
+        build_configuration(*source_data)
