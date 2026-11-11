@@ -36,6 +36,78 @@
 
 It powers [**hass-diagral**](https://github.com/mguyard/hass-diagral), the Home Assistant integration for Diagral alarms.
 
+### Automatic fallback and recovery
+
+`FailoverDiagralAPI` automatically uses Topaze when authenticated Emerald core reads
+time out or fail with a transient network/server error. Every poll tries a complete
+fresh Emerald snapshot again and returns to Emerald as soon as configuration,
+identity and live state are valid. A successful ping alone cannot trigger recovery.
+The standard `DiagralAPI` remains available with its original Emerald-only behavior.
+
+```python
+from pydiagral import FailoverDiagralAPI
+
+async with FailoverDiagralAPI(
+    username=username,
+    password=password,
+    serial_id=serial_id,
+    pincode=pin_code,
+    apikey=api_key,
+    secret_key=secret_key,
+) as api:
+    api.expected_central_serial = known_central_serial
+    snapshot = await api.get_core_snapshot()
+    configuration = snapshot.alarm_config
+    status = snapshot.system_status
+    selected_backend = api.active_api
+```
+
+The snapshot publishes configuration, device labels and live state together from one
+backend. Authentication, PIN, identity and validation errors never trigger fallback.
+Whole-system commands select a backend with a read-only preflight and send exactly
+one command; a lost response never causes a replay on either backend. Anomalies,
+webhooks, group commands and account management still depend on Emerald.
+
+### Direct Topaze client
+
+`TopazeDiagralAPI` is an explicit alternative for an existing installation when the
+Emerald service is degraded. It implements configuration, device labels, live system
+status and whole-system commands through Topaze, returning the same models as
+`DiagralAPI`. The standard client remains unchanged; this is not automatic failover.
+
+```python
+from pydiagral import TopazeDiagralAPI
+
+async with TopazeDiagralAPI(
+    username=username,
+    password=password,
+    serial_id=serial_id,
+    pincode=pin_code,
+    apikey=api_key,
+    secret_key=secret_key,
+) as api:
+    api.expected_central_serial = known_central_serial
+    configuration = await api.get_configuration()
+    status = await api.get_system_status()
+```
+
+Credentials are constructor inputs as for `DiagralAPI`. Anomalies, webhooks, group
+commands and account management still use Emerald and can remain unavailable.
+Topaze is another cloud service, not a local connection to the alarm or a guarantee
+against a wider outage. Rate limits are undocumented; keep polling conservative.
+
+Each core read or whole-system command owns a short account/TTM session, releases it
+on exit, and never disconnects a mobile application's session. Commands are sent
+once and require a subsequent matching state read; an ambiguous response is an error,
+never a reason to replay the command. Initial configuration must be valid. Metadata
+is cached for one hour and retained on transient refresh failures, while live status
+still requires a fresh successful read. Authentication, identity and validation
+errors are never replaced with cached results.
+
+Read operations were checked on one real installation. Command behavior is covered
+by mocked tests only; no real arming/disarming command was used during validation.
+See [the emergency-client guide](docs/topaze.md) for scope and protocol details.
+
 > [!CAUTION]
 >
 > Please note that the Diagral alarm system is a security system, and it may be preferable not to connect it to any automation platform for security reasons.

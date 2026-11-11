@@ -17,10 +17,15 @@ from .exceptions import (
     SessionError,
     ValidationError,
 )
-from .models import ApiKeyWithSecret
+from .failover_api import FailoverDiagralAPI
+from .models import ApiKeyWithSecret, CoreSnapshot
+from .topaze_api import TopazeDiagralAPI
 
 __all__ = [
     "DiagralAPI",
+    "FailoverDiagralAPI",
+    "CoreSnapshot",
+    "TopazeDiagralAPI",
     "DiagralAPIError",
     "AuthenticationError",
     "PinCodeError",

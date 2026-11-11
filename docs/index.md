@@ -161,6 +161,15 @@ For detailed API documentation, please refer to the following sections:
 - [Data Models](models.md): Description of the data structures used
 - [Exceptions](exceptions.md): List of package exceptions
 
+## Emergency access during partial outages
+
+[`FailoverDiagralAPI`](topaze.md) automatically reads core data through Topaze when
+Emerald suffers a transient outage, and returns to Emerald after a successful fresh
+configuration and status read. Authentication errors are not masked. Whole-system
+commands are never replayed on another backend. `DiagralAPI` retains its Emerald-only
+behavior; anomalies, webhooks, group commands and account management still depend on
+Emerald. See the guide for session ownership, timeouts and validation limits.
+
 ## Contribution
 
 Contributions to pydiagral are welcome! Please check our contribution guidelines for more information on how to participate in the development of this library.

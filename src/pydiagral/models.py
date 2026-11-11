@@ -1243,6 +1243,22 @@ class SystemStatus(CamelCaseModel):
     activated_groups: list[int]
 
 
+@dataclass
+class CoreSnapshot(CamelCaseModel):
+    """One validated configuration, device list and live state from one backend.
+
+    Attributes:
+        alarm_config (AlarmConfiguration): Configuration used to validate the state.
+        devices_infos (DeviceList): Device names from that configuration.
+        system_status (SystemStatus): Fresh status from the same backend.
+
+    """
+
+    alarm_config: AlarmConfiguration = field(metadata={"alias": "alarmConfig"})
+    devices_infos: DeviceList = field(metadata={"alias": "devicesInfos"})
+    system_status: SystemStatus = field(metadata={"alias": "systemStatus"})
+
+
 #######################################
 # Data model for anomalies informations
 #######################################
