@@ -161,6 +161,14 @@ For detailed API documentation, please refer to the following sections:
 - [Data Models](models.md): Description of the data structures used
 - [Exceptions](exceptions.md): List of package exceptions
 
+## Emergency access during partial outages
+
+The optional [`TopazeDiagralAPI`](topaze.md) client reads configuration and live
+status and dispatches whole-system commands through Topaze. It must be selected
+explicitly; `DiagralAPI` remains the default Emerald client. Anomalies, webhooks,
+group commands and account management still depend on Emerald. See the guide for
+session ownership, timeouts, cache behavior and validation limits.
+
 ## Contribution
 
 Contributions to pydiagral are welcome! Please check our contribution guidelines for more information on how to participate in the development of this library.
