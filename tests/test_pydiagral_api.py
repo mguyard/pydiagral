@@ -3584,6 +3584,27 @@ async def test_versioned_requests_keep_the_api_version(
     assert request.call_args.args == ("GET", "http://fake-cloud/v1/users/me")
 
 
+async def test_service_override_does_not_change_default_base_url(
+    api: DiagralAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One Topaze request leaves the dynamic Emerald URL contract unchanged."""
+    monkeypatch.setattr("pydiagral.api.BASE_URL", "http://fake-cloud/emerald")
+    install_response(api, 200, {})
+    await api._request(  # noqa: SLF001
+        "POST",
+        "authenticate/login",
+        base_url="http://fake-cloud/topaze",
+        versioned=False,
+    )
+    request = api.session.request
+    assert request.call_args.args == (
+        "POST",
+        "http://fake-cloud/topaze/authenticate/login",
+    )
+    await api._request("GET", "users/me")  # noqa: SLF001
+    assert request.call_args.args == ("GET", "http://fake-cloud/emerald/v1/users/me")
+
+
 async def test_ping_reports_an_unavailable_cloud(api: DiagralAPI) -> None:
     """Test that ping raises ServerError when the cloud answers with a 5xx status."""
     install_response(api, 503, {"detail": "maintenance"})

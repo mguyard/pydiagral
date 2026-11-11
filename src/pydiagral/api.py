@@ -222,6 +222,7 @@ class DiagralAPI:
         timeout: float | None = None,
         *,
         log_endpoint: str | None = None,
+        base_url: str | None = None,
         versioned: bool = True,
         list_body: Literal[False] = False,
         **kwargs: Any,
@@ -235,6 +236,7 @@ class DiagralAPI:
         timeout: float | None = None,
         *,
         log_endpoint: str | None = None,
+        base_url: str | None = None,
         versioned: bool = True,
         list_body: Literal[True],
         **kwargs: Any,
@@ -247,6 +249,7 @@ class DiagralAPI:
         timeout: float | None = None,
         *,
         log_endpoint: str | None = None,
+        base_url: str | None = None,
         versioned: bool = True,
         list_body: bool = False,
         **kwargs: Any,
@@ -261,6 +264,8 @@ class DiagralAPI:
             log_endpoint (str | None, optional): The endpoint to show in the debug log instead of
                 `endpoint`, when the path itself carries a secret. The serial ID is
                 redacted from either one. Defaults to None.
+            base_url (str | None, optional): An internal service base URL override.
+                Defaults to the module's BASE_URL, read at call time.
             versioned (bool, optional): Whether `endpoint` sits under the API version.
                 Defaults to True; False only for the unversioned root.
             list_body (bool, optional): Whether the endpoint answers with a JSON list instead
@@ -288,7 +293,8 @@ class DiagralAPI:
             _LOGGER.error(error_msg)
             raise SessionError(error_msg)
 
-        prefix: str = f"{BASE_URL}/{API_VERSION}" if versioned else BASE_URL
+        service_url = BASE_URL if base_url is None else base_url
+        prefix: str = f"{service_url}/{API_VERSION}" if versioned else service_url
         url: str = f"{prefix}/{endpoint}"
         headers: Any = kwargs.pop("headers", {})
         logged_endpoint = log_endpoint or endpoint

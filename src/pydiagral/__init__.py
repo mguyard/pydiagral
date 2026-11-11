@@ -18,9 +18,11 @@ from .exceptions import (
     ValidationError,
 )
 from .models import ApiKeyWithSecret
+from .topaze_api import TopazeDiagralAPI
 
 __all__ = [
     "DiagralAPI",
+    "TopazeDiagralAPI",
     "DiagralAPIError",
     "AuthenticationError",
     "PinCodeError",

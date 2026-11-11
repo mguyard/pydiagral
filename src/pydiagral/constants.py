@@ -69,6 +69,16 @@ SENSITIVE_KEYS = frozenset(
         "api_keys",
         "authorization",
         "password",
+        "mastercode",
+        "ttmsessionid",
+        "sessionid",
+        "centralid",
+        "transmitterid",
+        "systemid",
+        "radioid",
+        "cryptkey",
+        "encryptionkey",
+        "privatekey",
         "pincode",
         "secret_key",
         "serial",
@@ -84,3 +94,24 @@ SENSITIVE_KEYS = frozenset(
 # events): the scheme and host are kept, the path is replaced by REDACTED.
 SENSITIVE_URL_PATH_KEYS = frozenset({"webhook_url"})
 REDACTED = "**REDACTED**"
+
+# Emergency path: short sessions, bounded inventory polling, no command retry.
+TOPAZE_REQUEST_TIMEOUT = 8
+TOPAZE_CLEANUP_TIMEOUT = 3
+TOPAZE_INVENTORY_TIMEOUT = 18
+TOPAZE_INVENTORY_POLL_INTERVAL = 1
+TOPAZE_CONFIGURATION_TTL = 3600
+TOPAZE_BASE_URL = "https://appv3.tt-monitor.com/topaze"
+TOPAZE_HEADERS = {
+    "Accept": "application/json",
+    "Content-Type": "application/json;charset=UTF-8",
+    "X-App-Version": "1.12.1",
+    "X-Identity-Provider": "JANRAIN",
+    "ttmSessionIdNotRequired": "true",
+    "X-Vendor": "diagral",
+}
+
+STATUS_OFF = "off"
+STATUS_GROUP = "group"
+STATUS_PRESENCE = "presence"
+STATUS_TEMPO_GROUP = "tempo_group"
