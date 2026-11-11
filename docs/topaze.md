@@ -1,4 +1,62 @@
-# Optional Topaze emergency client
+# Automatic fallback and recovery
+
+`FailoverDiagralAPI` automatically handles partial Emerald outages. Every
+`get_core_snapshot()` call first reads authenticated Emerald configuration and live
+status under a ten-second deadline. A network error, timeout or server error switches
+that core read to Topaze. Every subsequent poll tries Emerald again; only a complete
+valid snapshot of the same central restores the primary backend. A successful public
+ping alone is insufficient. Authentication, PIN, identity and validation errors
+propagate without using the alternate service.
+
+`CoreSnapshot` contains `alarm_config`, `devices_infos` and `system_status` from one
+backend. It is published only after all fields validate, so a failed primary status
+read cannot mix newly read primary configuration into an alternate snapshot.
+`active_api` reports `emerald` or `topaze`; `uses_topaze` follows that selection.
+`fallback_api_connected` is unknown before a core read, true after a successful
+alternate read, and false when idle or failed. Returning to Emerald does not open
+any Topaze session.
+
+`primary_api_connected` follows the authenticated core probe, not the public ping:
+it is unknown initially, false on any failed probe, and true only after a validated
+primary snapshot. `primary_error` contains only the exception category (for example,
+`ClientError` or `ServerError`), never raw server text, and is cleared on recovery.
+If both backends fail, both connection flags are false; the last `active_api` alone
+must not be interpreted as proof of current connectivity.
+
+```python
+from pydiagral import FailoverDiagralAPI
+
+async with FailoverDiagralAPI(
+    username=username,
+    password=password,
+    serial_id=serial_id,
+    pincode=pin_code,
+    apikey=api_key,
+    secret_key=secret_key,
+) as api:
+    api.expected_central_serial = known_central_serial
+    snapshot = await api.get_core_snapshot()
+    status = snapshot.system_status
+```
+
+`get_configuration()` refreshes the complete snapshot and returns its configuration;
+`get_devices_info()` returns labels from the last validated snapshot;
+`get_system_status()` refreshes the snapshot and returns fresh state. A consumer
+polling all core data should call `get_core_snapshot()` once per poll.
+
+Core reads and whole-system commands share a lock. Each whole-system command performs
+a read-only preflight to select a working backend before sending its POST exactly
+once. An uncertain response is never retried on either service. The caller can make
+a later read-only status check. Group commands, anomalies, webhooks and account
+management continue to use Emerald.
+
+The primary probe has a ten-second deadline. The alternate snapshot has a 120-second
+deadline, allowing its owned-session cleanup to complete after cancellation. A
+normal poll never needs Topaze while authenticated Emerald reads remain healthy.
+Unit tests and local HTTP servers cover failure, atomic snapshots, recovery,
+cancellation, session ownership and no command replay without calling the real cloud.
+
+## Direct Topaze client
 
 `TopazeDiagralAPI` provides an explicit alternative for installations affected by a
 partial Emerald outage. The standard `DiagralAPI` client and its behavior are
@@ -88,6 +146,13 @@ Historical protocol references:
 <!-- prettier-ignore-start -->
 
 ## API reference
+
+::: pydiagral.failover_api.FailoverDiagralAPI
+    handler: python
+    options:
+      show_root_heading: true
+      show_root_toc_entry: false
+      members_order: source
 
 ::: pydiagral.topaze_api.TopazeDiagralAPI
     handler: python

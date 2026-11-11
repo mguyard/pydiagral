@@ -36,7 +36,39 @@
 
 It powers [**hass-diagral**](https://github.com/mguyard/hass-diagral), the Home Assistant integration for Diagral alarms.
 
-### Optional emergency client
+### Automatic fallback and recovery
+
+`FailoverDiagralAPI` automatically uses Topaze when authenticated Emerald core reads
+time out or fail with a transient network/server error. Every poll tries a complete
+fresh Emerald snapshot again and returns to Emerald as soon as configuration,
+identity and live state are valid. A successful ping alone cannot trigger recovery.
+The standard `DiagralAPI` remains available with its original Emerald-only behavior.
+
+```python
+from pydiagral import FailoverDiagralAPI
+
+async with FailoverDiagralAPI(
+    username=username,
+    password=password,
+    serial_id=serial_id,
+    pincode=pin_code,
+    apikey=api_key,
+    secret_key=secret_key,
+) as api:
+    api.expected_central_serial = known_central_serial
+    snapshot = await api.get_core_snapshot()
+    configuration = snapshot.alarm_config
+    status = snapshot.system_status
+    selected_backend = api.active_api
+```
+
+The snapshot publishes configuration, device labels and live state together from one
+backend. Authentication, PIN, identity and validation errors never trigger fallback.
+Whole-system commands select a backend with a read-only preflight and send exactly
+one command; a lost response never causes a replay on either backend. Anomalies,
+webhooks, group commands and account management still depend on Emerald.
+
+### Direct Topaze client
 
 `TopazeDiagralAPI` is an explicit alternative for an existing installation when the
 Emerald service is degraded. It implements configuration, device labels, live system
